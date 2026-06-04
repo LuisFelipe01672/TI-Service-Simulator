@@ -12,7 +12,7 @@ public class Interactable : MonoBehaviour
         jogador = GameObject.FindWithTag("Player").transform;
     }
 
-    void Update()
+    protected virtual void Update()
     {
         if (jogador == null) return;
 

@@ -84,6 +84,13 @@ public class MissionManager : MonoBehaviour
     {
         if (chamadoAtivo == null) return;
         chamadoAtivo.concluido = true;
+
+        if (GameEconomy.Instance != null)
+        {
+            GameEconomy.Instance.ReceberPagamento(chamadoAtivo.recompensa);
+            GameEconomy.Instance.AlterarReputacao(10f);
+        }
+
         Debug.Log($"[MissionManager] Chamado concluído! Recompensa: R${chamadoAtivo.recompensa}");
         chamadoAtivo = null;
     }

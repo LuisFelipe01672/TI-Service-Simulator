@@ -4,6 +4,21 @@ public class NotebookInteractable : Interactable
 {
     private bool painelAberto = false;
 
+    protected override void Update()
+    {
+        base.Update();
+
+        if (MissionManager.Instance != null && MissionManager.Instance.chamadoAtivo != null)
+        {
+            if (Input.GetKeyDown(KeyCode.Tab))
+            {
+                bool livre = Cursor.lockState == CursorLockMode.None;
+                Cursor.lockState = livre ? CursorLockMode.Locked : CursorLockMode.None;
+                Cursor.visible = !livre;
+            }
+        }
+    }
+
     void OnGUI()
     {
         Transform jogador = GameObject.FindWithTag("Player").transform;
@@ -18,6 +33,11 @@ public class NotebookInteractable : Interactable
         if (painelAberto)
         {
             MostrarPainelChamados();
+        }
+
+        if (MissionManager.Instance != null && MissionManager.Instance.chamadoAtivo != null)
+        {
+            MostrarPainelChamadoAtivo();
         }
     }
 
@@ -61,6 +81,22 @@ public class NotebookInteractable : Interactable
         if (GUI.Button(new Rect(Screen.width / 2 - 50, Screen.height / 2 + 120, 100, 30), "Fechar"))
         {
             painelAberto = false;
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+    }
+
+    void MostrarPainelChamadoAtivo()
+    {
+        var chamado = MissionManager.Instance.chamadoAtivo;
+
+        GUI.Box(new Rect(10, 70, 220, 90), "Chamado Ativo");
+        GUI.Label(new Rect(20, 90, 200, 25), $"Cliente: {chamado.nomeCliente}");
+        GUI.Label(new Rect(20, 110, 200, 25), $"Problema: {chamado.descricaoProblema}");
+
+        if (GUI.Button(new Rect(20, 135, 200, 25), $"✔ Concluir (R${chamado.recompensa})"))
+        {
+            MissionManager.Instance.ConcluirChamado();
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }

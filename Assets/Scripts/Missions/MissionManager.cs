@@ -7,6 +7,9 @@ public class MissionManager : MonoBehaviour
 
     public List<Chamado> chamadosDisponiveis = new List<Chamado>();
     public Chamado chamadoAtivo;
+    public Transform[] locaisClientes;
+
+    private Transform jogador;
 
     void Awake()
     {
@@ -18,6 +21,7 @@ public class MissionManager : MonoBehaviour
 
     void Start()
     {
+        jogador = GameObject.FindWithTag("Player").transform;
         GerarChamadosIniciais();
     }
 
@@ -58,6 +62,22 @@ public class MissionManager : MonoBehaviour
         chamadoAtivo = chamado;
         chamadosDisponiveis.Remove(chamado);
         Debug.Log($"[MissionManager] Chamado aceito: {chamado.nomeCliente} - {chamado.descricaoProblema}");
+        TeleportarParaCliente();
+    }
+
+    void TeleportarParaCliente()
+    {
+        if (jogador == null)
+            jogador = GameObject.FindWithTag("Player").transform;
+
+        if (locaisClientes != null && locaisClientes.Length > 0)
+        {
+            CharacterController cc = jogador.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
+            jogador.position = locaisClientes[0].position;
+            if (cc != null) cc.enabled = true;
+            Debug.Log($"[MissionManager] Teleportado para: {locaisClientes[0].position}");
+        }
     }
 
     public void ConcluirChamado()

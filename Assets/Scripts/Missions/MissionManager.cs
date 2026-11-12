@@ -173,12 +173,9 @@ public class MissionManager : MonoBehaviour
         if (jogador == null)
             jogador = GameObject.FindWithTag("Player").transform;
 
-        if (locaisClientes != null && locaisClientes.Length > 0)
+        if (locaisClientes != null && locaisClientes.Length > 0 && locaisClientes[0] != null)
         {
-            CharacterController cc = jogador.GetComponent<CharacterController>();
-            if (cc != null) cc.enabled = false;
-            jogador.position = locaisClientes[0].position;
-            if (cc != null) cc.enabled = true;
+            Teleporte.MoverJogador(jogador, locaisClientes[0]); // posição e direção do olhar
             Debug.Log($"[MissionManager] Teleportado para: {locaisClientes[0].position}");
         }
     }

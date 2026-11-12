@@ -19,6 +19,9 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        // Parado enquanto o tablet, o diagnóstico ou a pausa estiverem abertos
+        if (GameUI.Instance != null && GameUI.Instance.PainelAberto) return;
+
         MoverJogador();
         RotacionarCamera();
     }

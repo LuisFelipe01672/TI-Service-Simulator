@@ -7,40 +7,55 @@ public class MissionManager : MonoBehaviour
 
     [Header("Chamados")]
     public List<Chamado> chamadosDisponiveis = new List<Chamado>();
-    public Chamado chamadoAtivo;
+    // NonSerialized: sem isso o Unity cria um chamado "vazio" pelo Inspector e o jogo acha que tem chamado ativo
+    [System.NonSerialized] public Chamado chamadoAtivo;
     public int maxChamadosSimultaneos = 3;
+
+    [Header("Penalidades")]
+    [Tooltip("Reputação perdida a cada ação de diagnóstico errada")]
+    public float penalidadeAcaoErrada = 3f;
 
     [Header("Locais")]
     public Transform[] locaisClientes;
 
-    private static readonly string[] problemasImpressoraFacil = {
-        "Não consigo imprimir.",
-        "Impressora offline no sistema.",
-        "Papel preso na impressora.",
+    // Catálogo de problemas: cada um diz qual equipamento olhar e qual ação resolve.
+    // As ações precisam bater com as opções de Equipamento.GetOpcoes().
+    struct Problema
+    {
+        public string descricao;
+        public TipoEquipamento equipamento;
+        public string solucao;
+        public Problema(string d, TipoEquipamento e, string s) { descricao = d; equipamento = e; solucao = s; }
+    }
+
+    static readonly Problema[] problemasFaceis = {
+        new Problema("Não consigo imprimir nada.",                      TipoEquipamento.Impressora, "Reiniciar spooler"),
+        new Problema("Impressora aparece offline no sistema.",          TipoEquipamento.Impressora, "Verificar cabo"),
+        new Problema("Um documento travou e nada mais imprime.",        TipoEquipamento.Impressora, "Verificar fila de impressão"),
+        new Problema("A impressão está saindo clara e falhada.",        TipoEquipamento.Impressora, "Trocar toner"),
     };
-    private static readonly string[] problemasRedeMedio = {
-        "Computador sem acesso à rede.",
-        "Wi-Fi caindo toda hora.",
-        "VPN não conecta.",
+    static readonly Problema[] problemasMedios = {
+        new Problema("Computador sem acesso à rede.",                   TipoEquipamento.Computador, "Verificar cabo de rede"),
+        new Problema("Aparece \"conflito de IP\" e a rede não conecta.", TipoEquipamento.Computador, "Verificar IP"),
+        new Problema("A placa de rede sumiu depois de uma atualização.", TipoEquipamento.Computador, "Reinstalar driver"),
+        new Problema("O computador está travando e lento.",             TipoEquipamento.Computador, "Reiniciar equipamento"),
     };
-    private static readonly string[] problemasHardwareDificil = {
-        "Roteador desconfigurado, ninguém acessa a internet.",
-        "Servidor travando, sistema fora do ar.",
-        "HD corrompido, dados inacessíveis.",
+    static readonly Problema[] problemasDificeis = {
+        new Problema("Roteador desconfigurado, ninguém acessa a internet.", TipoEquipamento.Roteador, "Resetar para padrão"),
+        new Problema("A internet cai para todo mundo a cada 10 minutos.",   TipoEquipamento.Roteador, "Reiniciar roteador"),
+        new Problema("A rede Wi-Fi sumiu depois de mexerem no roteador.",   TipoEquipamento.Roteador, "Verificar configurações"),
+        new Problema("Os computadores pegam IP errado e não navegam.",      TipoEquipamento.Roteador, "Verificar IP"),
     };
 
-    private static readonly string[] clientesFase1 = {
-        "Contabilidade Alfa", "Escritório Beta", "Clínica Gama"
-    };
-    private static readonly string[] clientesFase2 = {
-        "Indústria Delta", "Construtora Épsilon", "Farmácia Zeta"
-    };
-    private static readonly string[] clientesFase3 = {
-        "Banco Eta", "Hospital Theta", "Multinacional Iota"
-    };
+    static readonly string[] clientesFase1 = { "Contabilidade Alfa", "Escritório Beta", "Clínica Gama" };
+    static readonly string[] clientesFase2 = { "Indústria Delta", "Construtora Épsilon", "Farmácia Zeta" };
+    static readonly string[] clientesFase3 = { "Banco Eta", "Hospital Theta", "Multinacional Iota" };
 
     private Transform jogador;
     private float tempoInicioAtendimento;
+
+    public float TempoDecorrido => chamadoAtivo != null ? Time.time - tempoInicioAtendimento : 0f;
+    public float TempoRestante => chamadoAtivo != null ? chamadoAtivo.tempoLimite - TempoDecorrido : 0f;
 
     void Awake()
     {
@@ -58,11 +73,8 @@ public class MissionManager : MonoBehaviour
     {
         chamadosDisponiveis.Clear();
 
-        int fase = ReputationManager.Instance != null
-                   ? ReputationManager.Instance.FaseAtual : 1;
-
-        int quantidade = Mathf.Min(fase == 1 ? 3 : fase == 2 ? 4 : 5,
-                                   maxChamadosSimultaneos);
+        int fase = ReputationManager.Instance != null ? ReputationManager.Instance.FaseAtual : 1;
+        int quantidade = Mathf.Min(fase == 1 ? 3 : fase == 2 ? 4 : 5, maxChamadosSimultaneos);
 
         for (int i = 0; i < quantidade; i++)
             chamadosDisponiveis.Add(CriarChamadoPorFase(fase));
@@ -74,35 +86,25 @@ public class MissionManager : MonoBehaviour
     {
         DificuldadeChamado dif;
         if      (fase == 1) dif = DificuldadeChamado.Facil;
-        else if (fase == 2) dif = Random.value < 0.5f
-                                  ? DificuldadeChamado.Facil
-                                  : DificuldadeChamado.Medio;
-        else                dif = Random.value < 0.4f
-                                  ? DificuldadeChamado.Medio
-                                  : DificuldadeChamado.Dificil;
+        else if (fase == 2) dif = Random.value < 0.5f ? DificuldadeChamado.Facil : DificuldadeChamado.Medio;
+        else                dif = Random.value < 0.4f ? DificuldadeChamado.Medio : DificuldadeChamado.Dificil;
 
-        string[] problemas = dif == DificuldadeChamado.Facil  ? problemasImpressoraFacil :
-                             dif == DificuldadeChamado.Medio  ? problemasRedeMedio :
-                                                                problemasHardwareDificil;
+        Problema[] pool = dif == DificuldadeChamado.Facil ? problemasFaceis :
+                          dif == DificuldadeChamado.Medio ? problemasMedios : problemasDificeis;
+        Problema p = pool[Random.Range(0, pool.Length)];
 
-        string[] clientes  = fase == 1 ? clientesFase1 :
-                             fase == 2 ? clientesFase2 : clientesFase3;
+        string[] clientes = fase == 1 ? clientesFase1 : fase == 2 ? clientesFase2 : clientesFase3;
 
-        TipoChamado tipo   = dif == DificuldadeChamado.Facil  ? TipoChamado.Impressora :
-                             dif == DificuldadeChamado.Medio  ? TipoChamado.Rede :
-                                                                TipoChamado.Notebook;
+        TipoChamado tipo = p.equipamento == TipoEquipamento.Impressora ? TipoChamado.Impressora :
+                           p.equipamento == TipoEquipamento.Roteador   ? TipoChamado.Rede : TipoChamado.Notebook;
 
-        float tempoLimite  = dif == DificuldadeChamado.Facil  ? 300f :
-                             dif == DificuldadeChamado.Medio  ? 200f : 120f;
+        float tempoLimite = dif == DificuldadeChamado.Facil ? 300f : dif == DificuldadeChamado.Medio ? 200f : 120f;
+        float recompensa  = dif == DificuldadeChamado.Facil ? 150f : dif == DificuldadeChamado.Medio ? 300f : 500f;
 
-        float recompensa   = dif == DificuldadeChamado.Facil  ? 150f :
-                             dif == DificuldadeChamado.Medio  ? 300f : 500f;
-
-        return new Chamado(
-            clientes[Random.Range(0, clientes.Length)],
-            problemas[Random.Range(0, problemas.Length)],
-            tipo, dif, recompensa, tempoLimite
-        );
+        var chamado = new Chamado(clientes[Random.Range(0, clientes.Length)], p.descricao, tipo, dif, recompensa, tempoLimite);
+        chamado.equipamento = p.equipamento;
+        chamado.solucao = p.solucao;
+        return chamado;
     }
 
     public void AceitarChamado(Chamado chamado)
@@ -110,29 +112,58 @@ public class MissionManager : MonoBehaviour
         chamadoAtivo = chamado;
         chamadosDisponiveis.Remove(chamado);
         tempoInicioAtendimento = Time.time;
+        EventBus<ChamadoAceitoEvent>.Raise(new ChamadoAceitoEvent { chamado = chamado });
         Debug.Log($"[MissionManager] Chamado aceito: {chamado.nomeCliente} — {chamado.descricaoProblema}");
         TeleportarParaCliente();
+    }
+
+    // Chamado pelo Equipamento quando o jogador escolhe uma ação de diagnóstico.
+    // Devolve true se a ação resolveu o chamado ativo.
+    public bool TentarSolucao(TipoEquipamento equipamento, string acao)
+    {
+        if (chamadoAtivo == null) return false;
+
+        bool acertou = chamadoAtivo.equipamento == equipamento && chamadoAtivo.solucao == acao;
+        if (acertou)
+        {
+            ConcluirChamado(false);
+        }
+        else
+        {
+            chamadoAtivo.tentativasErradas++;
+            ReputationManager.Instance?.AlterarReputacao(-penalidadeAcaoErrada);
+            EventBus<AcaoErradaEvent>.Raise(new AcaoErradaEvent { acao = acao, penalidade = penalidadeAcaoErrada });
+        }
+        return acertou;
     }
 
     public void ConcluirChamado(bool cometeuErro = false)
     {
         if (chamadoAtivo == null) return;
 
-        float tempoGasto = Time.time - tempoInicioAtendimento;
+        float tempoGasto = TempoDecorrido;
 
-        if (ReputationManager.Instance != null)
-            ReputationManager.Instance.AvaliarChamado(tempoGasto, chamadoAtivo.tempoLimite, cometeuErro);
-
-        if (GameEconomy.Instance != null)
-            GameEconomy.Instance.ReceberPagamento(
-                cometeuErro ? chamadoAtivo.recompensa * 0.3f : chamadoAtivo.recompensa
-            );
+        ReputationManager.Instance?.AvaliarChamado(tempoGasto, chamadoAtivo.tempoLimite, cometeuErro);
+        GameEconomy.Instance?.ReceberPagamento(cometeuErro ? chamadoAtivo.recompensa * 0.3f : chamadoAtivo.recompensa);
 
         Debug.Log($"[MissionManager] Concluído em {tempoGasto:F1}s (limite: {chamadoAtivo.tempoLimite}s) | Erro: {cometeuErro}");
 
         chamadoAtivo.concluido = true;
+        EventBus<ChamadoConcluidoEvent>.Raise(new ChamadoConcluidoEvent { chamado = chamadoAtivo, tempoGasto = tempoGasto, cometeuErro = cometeuErro, porFuncionario = false });
         chamadoAtivo = null;
 
+        if (chamadosDisponiveis.Count < 2)
+            GerarChamados();
+    }
+
+    // Desistir do chamado: o cliente fica insatisfeito
+    public void AbandonarChamado()
+    {
+        if (chamadoAtivo == null) return;
+        Debug.Log($"[MissionManager] Chamado abandonado: {chamadoAtivo.nomeCliente}");
+        chamadoAtivo.falhou = true;
+        ReputationManager.Instance?.AlterarReputacao(-ReputationManager.Instance.punicaoErro);
+        chamadoAtivo = null;
         if (chamadosDisponiveis.Count < 2)
             GerarChamados();
     }

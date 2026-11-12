@@ -7,6 +7,12 @@ public class FuncionarioManager : MonoBehaviour
     public static FuncionarioManager Instance;
 
     public List<Funcionario> equipe = new List<Funcionario>();
+    public List<Funcionario> candidatos = new List<Funcionario>();
+
+    static readonly string[] nomes = {
+        "Carlos Silva", "Ana Souza", "Roberto Lima", "Julia Mendes", "Pedro Alves", "Mariana Costa",
+        "Lucas Rocha", "Beatriz Nunes", "Rafael Dias", "Camila Freitas", "Thiago Moreira", "Larissa Pinto"
+    };
 
     void Awake()
     {
@@ -27,7 +33,33 @@ public class FuncionarioManager : MonoBehaviour
 
         Funcionario novo = new Funcionario(nome, nivel);
         equipe.Add(novo);
+        EventBus<FuncionarioContratadoEvent>.Raise(new FuncionarioContratadoEvent { funcionario = novo });
         Debug.Log($"[FuncionarioManager] Contratado: {nome} ({novo.NivelTexto()}) — R${novo.salarioMensal}/mês");
+        return true;
+    }
+
+    public void GerarCandidatosSeVazio()
+    {
+        if (candidatos.Count > 0) return;
+        var usados = new HashSet<string>();
+        foreach (var f in equipe) usados.Add(f.nome);
+
+        int quantidade = 4;
+        for (int i = 0; i < quantidade * 4 && candidatos.Count < quantidade; i++)
+        {
+            string nome = nomes[Random.Range(0, nomes.Length)];
+            if (usados.Contains(nome)) continue;
+            usados.Add(nome);
+            float r = Random.value;
+            var nivel = r < 0.5f ? NivelFuncionario.Junior : r < 0.85f ? NivelFuncionario.Pleno : NivelFuncionario.Senior;
+            candidatos.Add(new Funcionario(nome, nivel));
+        }
+    }
+
+    public bool ContratarCandidato(Funcionario candidato)
+    {
+        if (!ContratarFuncionario(candidato.nome, candidato.nivel)) return false;
+        candidatos.Remove(candidato);
         return true;
     }
 
@@ -68,6 +100,7 @@ public class FuncionarioManager : MonoBehaviour
 
         chamado.concluido = true;
         func.ocupado = false;
+        EventBus<ChamadoConcluidoEvent>.Raise(new ChamadoConcluidoEvent { chamado = chamado, tempoGasto = tempo, cometeuErro = errou, porFuncionario = true });
 
         if (MissionManager.Instance.chamadosDisponiveis.Count < 2)
             MissionManager.Instance.GerarChamados();

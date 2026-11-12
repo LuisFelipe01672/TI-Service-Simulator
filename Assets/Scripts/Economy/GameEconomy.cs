@@ -1,3 +1,4 @@
+using NaughtyAttributes;
 using UnityEngine;
 
 public class GameEconomy : MonoBehaviour
@@ -17,8 +18,19 @@ public class GameEconomy : MonoBehaviour
     public void ReceberPagamento(float valor)
     {
         saldo += valor;
+        EventBus<SaldoAlteradoEvent>.Raise(new SaldoAlteradoEvent { saldo = saldo, delta = valor });
         Debug.Log($"[Economy] Pagamento recebido: R${valor} | Saldo: R${saldo}");
     }
+
+    public void DefinirSaldo(float valor)
+    {
+        float delta = valor - saldo;
+        saldo = valor;
+        EventBus<SaldoAlteradoEvent>.Raise(new SaldoAlteradoEvent { saldo = saldo, delta = delta });
+    }
+
+    [Button("Teste: +R$ 1.000")]
+    void DebugMaisDinheiro() => ReceberPagamento(1000f);
 
     // Mantido para não quebrar chamadas antigas, mas agora delega ao ReputationManager
     public void AlterarReputacao(float valor)
@@ -26,13 +38,5 @@ public class GameEconomy : MonoBehaviour
         ReputationManager.Instance?.AlterarReputacao(valor);
     }
 
-    void OnGUI()
-    {
-        float rep = ReputationManager.Instance != null
-                    ? ReputationManager.Instance.GetReputacao() : 0f;
-
-        GUI.Box(new Rect(10, 10, 180, 55), "");
-        GUI.Label(new Rect(20, 15, 160, 25), $"💰 Saldo: R${saldo:F2}");
-        GUI.Label(new Rect(20, 35, 160, 25), $"⭐ Reputação: {rep:F0}/100");
-    }
+    // O HUD agora é desenhado pela GameUI (Assets/Scripts/UI/GameUI.cs)
 }

@@ -26,7 +26,12 @@ public class Chamado
     public bool concluido;
     public bool falhou;
 
-    public Chamado(string cliente, string problema, TipoChamado tipo, 
+    [Header("Diagnóstico")]
+    public TipoEquipamento equipamento;   // onde está o problema
+    public string solucao;                // ação que resolve
+    public int tentativasErradas;
+
+    public Chamado(string cliente, string problema, TipoChamado tipo,
                    DificuldadeChamado dificuldade, float recompensa, float tempoLimite)
     {
         this.nomeCliente = cliente;
@@ -38,4 +43,12 @@ public class Chamado
         this.concluido = false;
         this.falhou = false;
     }
+
+    public string DificuldadeTexto() =>
+        dificuldade == DificuldadeChamado.Facil ? "Fácil" :
+        dificuldade == DificuldadeChamado.Medio ? "Médio" : "Difícil";
+
+    public string EquipamentoTexto() =>
+        equipamento == TipoEquipamento.Impressora ? "Impressora" :
+        equipamento == TipoEquipamento.Roteador   ? "Roteador" : "Computador";
 }

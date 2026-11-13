@@ -42,7 +42,7 @@ public partial class GameUI : MonoBehaviour
     RectTransform tablet, pausa;
     readonly List<RectTransform> janelas = new List<RectTransform>();   // todas as janelas modais
     RectTransform tabletConteudo;
-    Button abaChamados, abaEquipe, abaLoja, abaEmpresa;
+    Button abaChamados, abaEquipe, abaLoja, abaEmpresa, abaContratos;
     int abaAtiva;
     TextMeshProUGUI txtTabletInfo;
 
@@ -284,10 +284,11 @@ public partial class GameUI : MonoBehaviour
         abas.pivot = new Vector2(0.5f, 1);
         abas.offsetMin = new Vector2(32, -152); abas.offsetMax = new Vector2(-32, -100);
         UIFactory.Horizontal(abas, 10);
-        abaChamados = UIFactory.Botao(abas, "Chamados", () => TrocarAba(0), UIFactory.Destaque, 220, 52);
-        abaEquipe = UIFactory.Botao(abas, "Equipe", () => TrocarAba(1), UIFactory.CartaoClaro, 220, 52);
-        abaLoja = UIFactory.Botao(abas, "Loja e mochila", () => TrocarAba(2), UIFactory.CartaoClaro, 240, 52);
-        abaEmpresa = UIFactory.Botao(abas, "Empresa", () => TrocarAba(3), UIFactory.CartaoClaro, 200, 52);
+        abaChamados = UIFactory.Botao(abas, "Chamados", () => TrocarAba(0), UIFactory.Destaque, 170, 52, 22);
+        abaEquipe = UIFactory.Botao(abas, "Equipe", () => TrocarAba(1), UIFactory.CartaoClaro, 150, 52, 22);
+        abaLoja = UIFactory.Botao(abas, "Loja e mochila", () => TrocarAba(2), UIFactory.CartaoClaro, 210, 52, 22);
+        abaEmpresa = UIFactory.Botao(abas, "Empresa", () => TrocarAba(3), UIFactory.CartaoClaro, 160, 52, 22);
+        abaContratos = UIFactory.Botao(abas, "Contratos", () => TrocarAba(4), UIFactory.CartaoClaro, 180, 52, 22);
 
         // Conteúdo com rolagem
         var area = UIFactory.Vazio(tablet, "Area");
@@ -516,6 +517,7 @@ public partial class GameUI : MonoBehaviour
         abaEquipe.GetComponent<Image>().color = abaAtiva == 1 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaLoja.GetComponent<Image>().color = abaAtiva == 2 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaEmpresa.GetComponent<Image>().color = abaAtiva == 3 ? UIFactory.Destaque : UIFactory.CartaoClaro;
+        abaContratos.GetComponent<Image>().color = abaAtiva == 4 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaEquipe.GetComponentInChildren<TextMeshProUGUI>().text = fase >= 2 ? "Equipe" : "Equipe (Fase 2)";
 
         float saldo = GameEconomy.Instance != null ? GameEconomy.Instance.saldo : 0f;
@@ -525,7 +527,8 @@ public partial class GameUI : MonoBehaviour
         if (abaAtiva == 0) MontarAbaChamados();
         else if (abaAtiva == 1) MontarAbaEquipe();
         else if (abaAtiva == 2) MontarAbaLoja();
-        else MontarAbaEmpresa();
+        else if (abaAtiva == 3) MontarAbaEmpresa();
+        else MontarAbaContratos();
     }
 
     RectTransform Cartao(Color? cor = null)
@@ -598,8 +601,9 @@ public partial class GameUI : MonoBehaviour
                 $"   <color={chamado.CorPersonalidade()}><size=18>{chamado.PersonalidadeTexto().ToUpper()}</size></color>",
                 26, UIFactory.CorTexto);
             UIFactory.Texto(c, $"\"{chamado.DescricaoVisivel}\"  <color=#9AA6B8>— {chamado.contato}</color>", 21, UIFactory.CorTexto);
-            UIFactory.Texto(c, $"Paga {UIFactory.Dinheiro(chamado.recompensa)}  ·  Prazo {Tempo(chamado.tempoLimite)}  ·  {chamado.EquipamentoVisivel}" +
-                (chamado.exigeNota ? "  ·  <color=#F5B83F>exige nota fiscal</color>" : "  ·  aceita recibo"),
+            UIFactory.Texto(c, (chamado.contratoId > 0 ? "<color=#3FA9F5>Incluso no contrato de locação</color>" : $"Paga {UIFactory.Dinheiro(chamado.recompensa)}") +
+                $"  ·  Prazo {Tempo(chamado.tempoLimite)}  ·  {chamado.EquipamentoVisivel}" +
+                (chamado.contratoId > 0 ? "" : chamado.exigeNota ? "  ·  <color=#F5B83F>exige nota fiscal</color>" : "  ·  aceita recibo"),
                 19, UIFactory.CorSuave);
             string motivoBloqueio = null;
             bool liberado = EmpresaManager.Instance == null || EmpresaManager.Instance.PodeAtender(chamado, out motivoBloqueio);

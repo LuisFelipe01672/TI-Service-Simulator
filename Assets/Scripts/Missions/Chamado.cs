@@ -34,6 +34,9 @@ public class Chamado
     public int acoesFeitas;
     public float pecasCobradas;       // toner, cabos... (o cliente paga junto)
 
+    [Tooltip("Chamado de um contrato (incluso, sem cobrança). 0 = chamado avulso")]
+    public int contratoId;
+
     [Tooltip("Cliente empresa: só contrata e paga com nota fiscal")]
     public bool exigeNota;
 

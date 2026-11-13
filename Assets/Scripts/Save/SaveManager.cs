@@ -13,6 +13,7 @@ public class SaveData
     public int dia = 1;
     public Mochila.Dados mochila;
     public EmpresaManager.Dados empresa;
+    public ContratosManager.Dados contratos;
     public float saldo;
     public float reputacao;
     public int fase;
@@ -79,6 +80,7 @@ public class SaveManager : MonoBehaviour
             chamadosConcluidos = chamadosConcluidos,
             mochila = Mochila.Instance != null ? Mochila.Instance.Exportar() : null,
             empresa = EmpresaManager.Instance != null ? EmpresaManager.Instance.Exportar() : null,
+            contratos = ContratosManager.Instance != null ? ContratosManager.Instance.Exportar() : null,
             dia = DiaManager.Instance != null ? DiaManager.Instance.dia : Mathf.Max(1, DiaManager.DiaSalvo),
             equipe = FuncionarioManager.Instance != null
                      ? new List<Funcionario>(FuncionarioManager.Instance.equipe)
@@ -108,6 +110,8 @@ public class SaveManager : MonoBehaviour
         if (Mochila.Instance != null) Mochila.Instance.Inicial();
         EmpresaManager.dadosSalvos = null;
         EmpresaManager.Instance?.NovoJogo();
+        ContratosManager.dadosSalvos = null;
+        ContratosManager.Instance?.NovoJogo();
         GameEconomy.Instance?.DefinirSaldo(saldoInicial);
         Debug.Log($"[Save] Jogo novo: R${saldoInicial:F0} para começar.");
     }
@@ -144,6 +148,8 @@ public class SaveManager : MonoBehaviour
         else Mochila.dadosSalvos = data.mochila;
         if (EmpresaManager.Instance != null) EmpresaManager.Instance.Carregar(data.empresa);
         else EmpresaManager.dadosSalvos = data.empresa;
+        if (ContratosManager.Instance != null) ContratosManager.Instance.Carregar(data.contratos);
+        else ContratosManager.dadosSalvos = data.contratos;
         if (DiaManager.Instance != null) DiaManager.Instance.dia = DiaManager.DiaSalvo;
 
         Debug.Log($"[Save] Jogo carregado (salvo em {data.salvoEm}): R${data.saldo:F2}, reputação {data.reputacao:F0}, fase {data.fase}, {data.equipe?.Count ?? 0} funcionário(s)");

@@ -48,7 +48,8 @@ public class MissionManager : MonoBehaviour
 
     public void GerarChamados()
     {
-        chamadosDisponiveis.Clear();
+        // Chamados de contrato continuam na lista; só os avulsos são trocados
+        chamadosDisponiveis.RemoveAll(c => c.contratoId <= 0);
 
         int fase = ReputationManager.Instance != null ? ReputationManager.Instance.FaseAtual : 1;
         int quantidade = Mathf.Min(fase == 1 ? 3 : fase == 2 ? 4 : 5, maxChamadosSimultaneos);
@@ -92,6 +93,18 @@ public class MissionManager : MonoBehaviour
         // Quanto maior o cliente, mais exige nota fiscal
         chamado.exigeNota = Random.value < (fase == 1 ? 0.25f : fase == 2 ? 0.6f : 0.9f);
         return chamado;
+    }
+
+    // Defeito num equipamento alugado: vira um chamado incluso no contrato (não paga, mas o cliente espera rapidez)
+    public void AdicionarChamadoDeContrato(int contratoId, string empresa)
+    {
+        var p = CatalogoProblemas.Sortear(DificuldadeChamado.Facil);
+        var ch = new Chamado(empresa, p.descricao, TipoChamado.Impressora, DificuldadeChamado.Facil, 0f, 240f)
+        {
+            equipamento = p.equipamento, solucao = p.solucao, problema = p, contratoId = contratoId,
+            personalidade = Personalidade.Tranquilo, contato = CatalogoProblemas.SortearContato()
+        };
+        chamadosDisponiveis.Insert(0, ch);
     }
 
     public void AceitarChamado(Chamado chamado)
@@ -200,7 +213,13 @@ public class MissionManager : MonoBehaviour
 
         ReputationManager.Instance?.AvaliarChamado(tempoGasto, ch.tempoLimite, cometeuErro, ch.MultReputacao);
         float valor = (cometeuErro ? ch.recompensa * 0.3f : ch.recompensa) + ch.pecasCobradas;
-        if (EmpresaManager.Instance != null)
+        if (ch.contratoId > 0)
+        {
+            // Incluso no contrato: não cobra o serviço; peças podem ser cobradas
+            ContratosManager.Instance?.ChamadoContratoEncerrado(ch.contratoId, true, tempoGasto <= ch.tempoLimite);
+            if (ch.pecasCobradas > 0f && EmpresaManager.Instance != null) EmpresaManager.Instance.RegistrarServico(ch, ch.pecasCobradas, false);
+        }
+        else if (EmpresaManager.Instance != null)
             GameUI.Instance?.Toast(EmpresaManager.Instance.RegistrarServico(ch, valor, false), UIFactory.Destaque, 4f);
         else
             GameEconomy.Instance?.ReceberPagamento(valor);
@@ -233,6 +252,7 @@ public class MissionManager : MonoBehaviour
         if (chamadoAtivo == null) return;
         Debug.Log($"[MissionManager] Chamado abandonado: {chamadoAtivo.nomeCliente}");
         chamadoAtivo.falhou = true;
+        if (chamadoAtivo.contratoId > 0) ContratosManager.Instance?.ChamadoContratoEncerrado(chamadoAtivo.contratoId, false, false);
         ReputationManager.Instance?.AlterarReputacao(-ReputationManager.Instance.punicaoErro);
         chamadoAtivo = null;
         if (chamadosDisponiveis.Count < 2)

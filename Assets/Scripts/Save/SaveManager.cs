@@ -11,6 +11,7 @@ public class SaveData
 {
     public int versao = 2;
     public int dia = 1;
+    public Mochila.Dados mochila;
     public float saldo;
     public float reputacao;
     public int fase;
@@ -61,8 +62,7 @@ public class SaveManager : MonoBehaviour
 
     void Start()
     {
-        if (CarregarAoIniciar) Carregar();
-        else DiaManager.DiaSalvo = 0;   // jogo novo começa no dia 1
+        if (!CarregarAoIniciar || !Carregar()) NovoJogo();
     }
 
     void OnApplicationQuit() => Salvar();
@@ -76,6 +76,7 @@ public class SaveManager : MonoBehaviour
             reputacao = ReputationManager.Instance != null ? ReputationManager.Instance.GetReputacao() : 50f,
             fase = ReputationManager.Instance != null ? ReputationManager.Instance.FaseAtual : 1,
             chamadosConcluidos = chamadosConcluidos,
+            mochila = Mochila.Instance != null ? Mochila.Instance.Exportar() : null,
             dia = DiaManager.Instance != null ? DiaManager.Instance.dia : Mathf.Max(1, DiaManager.DiaSalvo),
             equipe = FuncionarioManager.Instance != null
                      ? new List<Funcionario>(FuncionarioManager.Instance.equipe)
@@ -92,6 +93,19 @@ public class SaveManager : MonoBehaviour
         {
             Debug.LogError($"[Save] Falha ao salvar: {e.Message}");
         }
+    }
+
+    [Tooltip("Dinheiro com que um jogo novo começa (para comprar as primeiras ferramentas)")]
+    public float saldoInicial = 300f;
+
+    // Jogo novo: dia 1, mochila só com o notebook e um dinheirinho para as primeiras ferramentas
+    void NovoJogo()
+    {
+        DiaManager.DiaSalvo = 0;
+        Mochila.dadosSalvos = null;
+        if (Mochila.Instance != null) Mochila.Instance.Inicial();
+        GameEconomy.Instance?.DefinirSaldo(saldoInicial);
+        Debug.Log($"[Save] Jogo novo: R${saldoInicial:F0} para começar.");
     }
 
     [Button("Carregar")]
@@ -122,6 +136,8 @@ public class SaveManager : MonoBehaviour
         }
         chamadosConcluidos = data.chamadosConcluidos;
         DiaManager.DiaSalvo = Mathf.Max(1, data.dia);
+        if (Mochila.Instance != null) Mochila.Instance.Carregar(data.mochila);
+        else Mochila.dadosSalvos = data.mochila;
         if (DiaManager.Instance != null) DiaManager.Instance.dia = DiaManager.DiaSalvo;
 
         Debug.Log($"[Save] Jogo carregado (salvo em {data.salvoEm}): R${data.saldo:F2}, reputação {data.reputacao:F0}, fase {data.fase}, {data.equipe?.Count ?? 0} funcionário(s)");

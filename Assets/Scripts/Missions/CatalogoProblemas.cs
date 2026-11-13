@@ -30,10 +30,9 @@ public class Problema
     public string[] respostas;      // uma por Pergunta (mesma ordem do enum)
     public Pergunta perguntaMentira;
     public string mentira;          // o que o Mentiroso responde nessa pergunta
-    public string[] testes;         // um resultado por teste do equipamento (mesma ordem de CatalogoProblemas.Testes)
 
     public Problema(TipoEquipamento equipamento, string solucao, string descricao, string descricaoVaga,
-                    string[] respostas, Pergunta perguntaMentira, string mentira, string[] testes)
+                    string[] respostas, Pergunta perguntaMentira, string mentira)
     {
         this.equipamento = equipamento;
         this.solucao = solucao;
@@ -42,7 +41,6 @@ public class Problema
         this.respostas = respostas;
         this.perguntaMentira = perguntaMentira;
         this.mentira = mentira;
-        this.testes = testes;
     }
 
     public string Resposta(Pergunta p, bool mentir) =>
@@ -77,32 +75,90 @@ public static class CatalogoProblemas
         }
     }
 
-    // ---------------- Testes de cada equipamento ----------------
+    // ---------------- Defeitos na simulação ----------------
 
-    static readonly string[] testesImpressora = {
-        "Olhar o painel da impressora", "Abrir a fila de impressão", "Imprimir página de teste", "Conferir cabo e conexão" };
-    static readonly string[] testesComputador = {
-        "Olhar o ícone de rede", "Rodar ipconfig", "Abrir o Gerenciador de Dispositivos", "Abrir o Gerenciador de Tarefas" };
-    static readonly string[] testesRoteador = {
-        "Olhar as luzes do roteador", "Entrar no painel do roteador", "Testar ping para a internet", "Ver o log do roteador" };
+    static string Chave(Problema p) => p.equipamento + ":" + p.solucao;
 
-    // Resultado quando o problema NÃO está nesse equipamento
-    static readonly string[] normalImpressora = {
-        "Visor mostra \"Pronta\". Nenhum erro.", "Fila vazia, nada travado.", "A página de teste sai perfeita.", "Cabo firme e conectado." };
-    static readonly string[] normalComputador = {
-        "Rede conectada, sem avisos.", "IP 192.168.0.23, o roteador responde.", "Todos os dispositivos funcionando.", "Uso de CPU e memória normal." };
-    static readonly string[] normalRoteador = {
-        "Todas as luzes verdes e estáveis.", "Configurações normais.", "Ping ok, 15 ms.", "Nenhum evento estranho no log." };
-
-    public static string[] Testes(TipoEquipamento tipo) =>
-        tipo == TipoEquipamento.Impressora ? testesImpressora :
-        tipo == TipoEquipamento.Roteador   ? testesRoteador : testesComputador;
-
-    public static string ResultadoNormal(TipoEquipamento tipo, int indice)
+    // Estraga os equipamentos do cliente de acordo com o problema (com variações sorteadas)
+    public static void Quebrar(Problema p, EstadoEquipamentos e)
     {
-        var lista = tipo == TipoEquipamento.Impressora ? normalImpressora :
-                    tipo == TipoEquipamento.Roteador   ? normalRoteador : normalComputador;
-        return lista[Mathf.Clamp(indice, 0, lista.Length - 1)];
+        // Distâncias até a tomada de rede variam de cliente para cliente
+        e.impCabo.metrosNecessarios = Mathf.Round(Random.Range(1f, 6f) * 2f) / 2f;
+        e.pcCabo.metrosNecessarios = Mathf.Round(Random.Range(1f, 4f) * 2f) / 2f;
+        e.diasLigado = Random.Range(1, 4);
+        e.fila.Clear();
+
+        switch (Chave(p))
+        {
+            case "Impressora:Reiniciar spooler":
+                e.spoolerRodando = false;
+                break;
+            case "Impressora:Verificar cabo":
+                SortearDefeitoCabo(e.impCabo);
+                break;
+            case "Impressora:Verificar fila de impressão":
+                e.fila.Add(new TrabalhoImpressao("Relatorio_anual_FINAL_v3.pdf", 300, true));
+                int n = Random.Range(4, 15);
+                for (int i = 0; i < n; i++)
+                    e.fila.Add(new TrabalhoImpressao(new[] { "Boleto.pdf", "Contrato.docx", "Planilha.xlsx", "Foto.jpg", "Recibo.pdf" }[Random.Range(0, 5)], Random.Range(1, 6)));
+                break;
+            case "Impressora:Trocar toner":
+                e.impToner = Random.Range(0.01f, 0.06f);
+                break;
+            case "Computador:Verificar cabo de rede":
+                SortearDefeitoCabo(e.pcCabo);
+                break;
+            case "Computador:Verificar IP":
+                e.pcIpFixo = true;
+                e.pcIp = e.ipImpressora;
+                break;
+            case "Computador:Reinstalar driver":
+                e.driverOk = false;
+                break;
+            case "Computador:Reiniciar equipamento":
+                e.memoria = Random.Range(0.94f, 0.99f);
+                e.diasLigado = Random.Range(15, 40);
+                break;
+            case "Roteador:Resetar para padrão":
+                e.rotConfigOk = false;
+                e.rotSenhaDesconhecida = true;
+                break;
+            case "Roteador:Reiniciar roteador":
+                e.rotTravado = true;
+                break;
+            case "Roteador:Verificar configurações":
+                e.wifiAtivo = false;
+                break;
+            case "Roteador:Verificar IP":
+                e.dhcpDuplo = true;
+                e.modemEmBridge = false;
+                e.pcIpErrado = true;
+                break;
+        }
+    }
+
+    // Cabo com defeito: às vezes só está solto, às vezes o conector está ruim, às vezes rompeu
+    static void SortearDefeitoCabo(CaboRede c)
+    {
+        float r = Random.value;
+        if (r < 0.4f) { c.conectado = false; c.defeito = DefeitoCabo.Nenhum; }
+        else if (r < 0.75f) { c.conectado = true; c.defeito = DefeitoCabo.Conector; }
+        else { c.conectado = true; c.defeito = DefeitoCabo.Rompido; }
+    }
+
+    // O problema que o cliente reclamou foi resolvido? (o jogador confere imprimindo, pingando etc.)
+    public static bool Resolvido(Problema p, EstadoEquipamentos e)
+    {
+        switch (p.equipamento)
+        {
+            case TipoEquipamento.Impressora:
+                return e.impLigada && !e.impTampaAberta && e.impCartuchoPresente && !e.impCartuchoComLacre && e.impToner >= 0.1f &&
+                       e.spoolerRodando && !e.FilaTravada && e.ImpressoraOnline && e.PcNaRede;
+            case TipoEquipamento.Computador:
+                return e.PcNaInternet && e.memoria < 0.8f;
+            default:
+                return e.PcNaInternet && e.wifiAtivo && e.rotConfigOk && !e.rotTravado && !e.dhcpDuplo;
+        }
     }
 
     // ---------------- Problemas ----------------
@@ -118,12 +174,7 @@ public static class CatalogoProblemas
                 "Aparece \"O serviço de impressão não está em execução\".",
                 "Ninguém consegue mandar impressão daqui.",
                 "Desliguei e liguei a impressora, não mudou nada." },
-            Pergunta.MensagemErro, "Mensagem? Não reparei em nenhuma.",
-            new[] {
-                "Visor mostra \"Pronta\". Nenhum erro na impressora.",
-                "A fila nem abre: \"O spooler de impressão não está em execução\".",
-                "Página de teste direto pela impressora sai perfeita.",
-                "Cabo firme, luz de rede piscando normal." }),
+            Pergunta.MensagemErro, "Mensagem? Não reparei em nenhuma."),
 
         new Problema(TipoEquipamento.Impressora, "Verificar cabo",
             "Impressora aparece offline no sistema.",
@@ -134,12 +185,7 @@ public static class CatalogoProblemas
                 "Só diz \"Impressora offline\".",
                 "Ninguém consegue usar ela.",
                 "Reiniciei o computador, continuou offline." },
-            Pergunta.MexeramEmAlgo, "Ninguém mexeu em nada aqui, juro.",
-            new[] {
-                "Ícone de rede com um X no visor: \"Rede desconectada\".",
-                "Documentos parados com status \"Offline\".",
-                "A página de teste sai normal: a impressora em si funciona.",
-                "O cabo de rede está meio solto atrás da impressora!" }),
+            Pergunta.MexeramEmAlgo, "Ninguém mexeu em nada aqui, juro."),
 
         new Problema(TipoEquipamento.Impressora, "Verificar fila de impressão",
             "Um documento travou e nada mais imprime.",
@@ -150,12 +196,7 @@ public static class CatalogoProblemas
                 "No documento aparece \"Erro - imprimindo\".",
                 "Todo mundo, porque a impressora é uma só.",
                 "Não, achei melhor não mexer." },
-            Pergunta.DesdeQuando, "Sei lá, parou do nada.",
-            new[] {
-                "Visor mostra \"Pronta\", sem erros.",
-                "Um PDF de 300 páginas travado em \"Erro\", com 14 documentos esperando atrás dele.",
-                "A página de teste sai normal.",
-                "Cabo ok, bem conectado." }),
+            Pergunta.DesdeQuando, "Sei lá, parou do nada."),
 
         new Problema(TipoEquipamento.Impressora, "Trocar toner",
             "A impressão está saindo clara e falhada.",
@@ -166,12 +207,7 @@ public static class CatalogoProblemas
                 "Às vezes pisca \"Toner baixo\", mas a gente ignora.",
                 "Sai assim para todo mundo.",
                 "Reiniciar não muda nada, sai clara igual." },
-            Pergunta.MensagemErro, "Nunca apareceu mensagem nenhuma.",
-            new[] {
-                "Aviso no visor: \"Toner baixo - 3%\".",
-                "Fila limpa, os trabalhos saem.",
-                "A página de teste sai clarinha, cheia de faixas brancas.",
-                "Cabo ok." }),
+            Pergunta.MensagemErro, "Nunca apareceu mensagem nenhuma."),
     };
 
     public static readonly Problema[] Medios = {
@@ -184,12 +220,7 @@ public static class CatalogoProblemas
                 "\"Cabo de rede desconectado\", no cantinho da tela.",
                 "Só eu. O pessoal do lado está navegando.",
                 "Reiniciei duas vezes." },
-            Pergunta.MexeramEmAlgo, "Ninguém mudou nada de lugar.",
-            new[] {
-                "Ícone de rede com um X vermelho: \"Cabo desconectado\".",
-                "Adaptador Ethernet: \"Mídia desconectada\".",
-                "Placa de rede instalada e funcionando.",
-                "Uso de CPU e memória normal." }),
+            Pergunta.MexeramEmAlgo, "Ninguém mudou nada de lugar."),
 
         new Problema(TipoEquipamento.Computador, "Verificar IP",
             "Aparece \"conflito de IP\" e a rede não conecta.",
@@ -200,12 +231,7 @@ public static class CatalogoProblemas
                 "\"Outro dispositivo na rede está usando o seu endereço IP\".",
                 "A impressora também começou a falhar.",
                 "Reiniciei, voltou o mesmo aviso." },
-            Pergunta.MexeramEmAlgo, "Ninguém mexeu nas configurações.",
-            new[] {
-                "Ícone com triângulo amarelo: \"Sem internet\".",
-                "IP fixo 192.168.0.50... o mesmo endereço da impressora!",
-                "Placa de rede funcionando.",
-                "Nada fora do normal." }),
+            Pergunta.MexeramEmAlgo, "Ninguém mexeu nas configurações."),
 
         new Problema(TipoEquipamento.Computador, "Reinstalar driver",
             "A placa de rede sumiu depois de uma atualização.",
@@ -216,12 +242,7 @@ public static class CatalogoProblemas
                 "Nem aparece o ícone de rede direito.",
                 "Só o meu.",
                 "Reiniciei umas três vezes." },
-            Pergunta.DesdeQuando, "Faz tempo, nem lembro.",
-            new[] {
-                "Ícone de rede: \"Nenhum adaptador encontrado\".",
-                "Nenhum adaptador Ethernet aparece na lista.",
-                "Placa de rede com triângulo amarelo: \"Driver com problema (código 10)\".",
-                "Tudo normal." }),
+            Pergunta.DesdeQuando, "Faz tempo, nem lembro."),
 
         new Problema(TipoEquipamento.Computador, "Reiniciar equipamento",
             "O computador está travando e lento.",
@@ -232,12 +253,7 @@ public static class CatalogoProblemas
                 "Às vezes: \"O programa não está respondendo\".",
                 "Só o meu.",
                 "Reiniciar? Nunca, tenho medo de perder as coisas." },
-            Pergunta.JaReiniciou, "Claro, reinicio todo dia.",
-            new[] {
-                "Rede conectada normalmente.",
-                "IP ok, rede ok.",
-                "Todos os dispositivos funcionando.",
-                "Memória em 98% e o computador ligado há 21 dias sem reiniciar." }),
+            Pergunta.JaReiniciou, "Claro, reinicio todo dia."),
     };
 
     public static readonly Problema[] Dificeis = {
@@ -250,12 +266,7 @@ public static class CatalogoProblemas
                 "O navegador diz \"Sem conexão com a internet\".",
                 "O escritório inteiro.",
                 "Já tiramos da tomada, não voltou." },
-            Pergunta.MexeramEmAlgo, "Ninguém encostou nele!",
-            new[] {
-                "Luz de internet acesa, Wi-Fi aceso.",
-                "A senha do painel foi trocada e ninguém sabe a nova.",
-                "Ping falha em todos os computadores.",
-                "\"Configuração alterada\" várias vezes ontem, com regras de bloqueio estranhas." }),
+            Pergunta.MexeramEmAlgo, "Ninguém encostou nele!"),
 
         new Problema(TipoEquipamento.Roteador, "Reiniciar roteador",
             "A internet cai para todo mundo a cada 10 minutos.",
@@ -266,12 +277,7 @@ public static class CatalogoProblemas
                 "Cai e volta sozinha em uns minutos.",
                 "Todo mundo ao mesmo tempo.",
                 "Não, ele voltou sozinho depois da queda e ficou assim." },
-            Pergunta.JaReiniciou, "Já reiniciamos, claro.",
-            new[] {
-                "A luz de internet pisca laranja de vez em quando.",
-                "O painel abre, as configurações parecem normais.",
-                "O ping falha 1 a cada 10 vezes e depois volta.",
-                "Desde a queda de energia: \"Falha na sessão\" repetida e memória cheia." }),
+            Pergunta.JaReiniciou, "Já reiniciamos, claro."),
 
         new Problema(TipoEquipamento.Roteador, "Verificar configurações",
             "A rede Wi-Fi sumiu depois de mexerem no roteador.",
@@ -282,12 +288,7 @@ public static class CatalogoProblemas
                 "A rede simplesmente não aparece na lista.",
                 "Quem usa cabo está funcionando. Só o Wi-Fi sumiu.",
                 "Reiniciamos, continua sem Wi-Fi." },
-            Pergunta.MexeramEmAlgo, "Não mexemos em nada, o Wi-Fi sumiu sozinho.",
-            new[] {
-                "Luz de internet ok, mas a luz do Wi-Fi está apagada.",
-                "Rede sem fio: DESATIVADA.",
-                "Pelo cabo, o ping funciona normal.",
-                "\"Wi-Fi desativado pelo administrador\" ontem às 17h." }),
+            Pergunta.MexeramEmAlgo, "Não mexemos em nada, o Wi-Fi sumiu sozinho."),
 
         new Problema(TipoEquipamento.Roteador, "Verificar IP",
             "Os computadores pegam IP errado e não navegam.",
@@ -298,12 +299,7 @@ public static class CatalogoProblemas
                 "\"Rede não identificada\".",
                 "Todo mundo que ligou o computador hoje.",
                 "Reiniciamos os computadores, nada." },
-            Pergunta.MexeramEmAlgo, "Nada mudou por aqui.",
-            new[] {
-                "Todas as luzes acesas normalmente.",
-                "DHCP entregando IPs de outra faixa (10.0.0.x).",
-                "Ping para a internet falha, e para o roteador também.",
-                "\"Conflito de DHCP\": dois equipamentos entregando IP na mesma rede." }),
+            Pergunta.MexeramEmAlgo, "Nada mudou por aqui."),
     };
 
     public static Problema Sortear(DificuldadeChamado dif)

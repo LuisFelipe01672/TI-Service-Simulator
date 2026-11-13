@@ -30,8 +30,9 @@ public class Chamado
     [Header("Diagnóstico")]
     public TipoEquipamento equipamento;   // onde está o problema
     public string solucao;                // ação que resolve
-    public int tentativasErradas;
-    public List<string> acoesErradas = new List<string>();
+    public int tentativasErradas;     // estragos feitos durante o atendimento
+    public int acoesFeitas;
+    public float pecasCobradas;       // toner, cabos... (o cliente paga junto)
 
     [Header("Cliente")]
     public string contato;                // quem atende o técnico (ex.: "Dona Márcia")
@@ -40,11 +41,8 @@ public class Chamado
     public List<Pergunta> perguntasFeitas = new List<Pergunta>();
     public List<string> anotacoes = new List<string>();
 
-    // Testes já feitos: chave "Equipamento:índice" e o resultado visto
-    public List<string> testesFeitos = new List<string>();
-    public List<string> resultadosTestes = new List<string>();
-
     [System.NonSerialized] public Problema problema;
+    [System.NonSerialized] public EstadoEquipamentos estado;   // equipamentos do cliente durante o atendimento
 
     public Chamado(string cliente, string problema, TipoChamado tipo,
                    DificuldadeChamado dificuldade, float recompensa, float tempoLimite)

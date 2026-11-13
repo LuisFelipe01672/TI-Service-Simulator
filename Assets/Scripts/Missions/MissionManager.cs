@@ -12,14 +12,12 @@ public class MissionManager : MonoBehaviour
     public int maxChamadosSimultaneos = 3;
 
     [Header("Penalidades")]
-    [Tooltip("Reputação perdida a cada ação de diagnóstico errada")]
-    public float penalidadeAcaoErrada = 3f;
+    [Tooltip("Reputação perdida se o técnico deixar sujeira no chão do cliente")]
+    public float penalidadeSujeira = 2f;
 
     [Header("Investigação")]
     [Tooltip("Segundos do prazo gastos em cada pergunta ao cliente")]
     public float custoPergunta = 5f;
-    [Tooltip("Segundos do prazo gastos em cada teste no equipamento")]
-    public float custoTeste = 10f;
     [Tooltip("Perguntas que um cliente apressado aguenta antes de se irritar")]
     public int pacienciaApressado = 2;
 
@@ -94,37 +92,66 @@ public class MissionManager : MonoBehaviour
     {
         chamadoAtivo = chamado;
         chamadosDisponiveis.Remove(chamado);
+        chamado.estado = new EstadoEquipamentos();
+        if (chamado.problema != null) CatalogoProblemas.Quebrar(chamado.problema, chamado.estado);
+        Sujeira.LimparTudo();
         tempoInicioAtendimento = Time.time;
         EventBus<ChamadoAceitoEvent>.Raise(new ChamadoAceitoEvent { chamado = chamado });
         Debug.Log($"[MissionManager] Chamado aceito: {chamado.nomeCliente} — {chamado.descricaoProblema}");
         TeleportarParaCliente();
     }
 
-    // Chamado pelo Equipamento quando o jogador escolhe uma ação de diagnóstico.
-    // Devolve true se a ação resolveu o chamado ativo.
-    public bool TentarSolucao(TipoEquipamento equipamento, string acao)
-    {
-        if (chamadoAtivo == null) return false;
+    // ---------- Manutenção ----------
 
-        bool acertou = chamadoAtivo.equipamento == equipamento && chamadoAtivo.solucao == acao;
-        if (acertou)
+    public EstadoEquipamentos Estado => chamadoAtivo?.estado;
+
+    // Onde fica o equipamento do chamado (para espalhar sujeira, por exemplo)
+    public Vector3 PosicaoEquipamentoAtual
+    {
+        get
         {
-            ConcluirChamado(false);
+            if (chamadoAtivo != null)
+                foreach (var eq in FindObjectsByType<Equipamento>(FindObjectsSortMode.None))
+                    if (eq.tipoEquipamento == chamadoAtivo.equipamento) return eq.transform.position;
+            return jogador != null ? jogador.position : Vector3.zero;
         }
-        else
-        {
-            float penalidade = penalidadeAcaoErrada * chamadoAtivo.MultErro;
-            chamadoAtivo.tentativasErradas++;
-            chamadoAtivo.acoesErradas.Add(equipamento + ":" + acao);
-            ReputationManager.Instance?.AlterarReputacao(-penalidade);
-            EventBus<AcaoErradaEvent>.Raise(new AcaoErradaEvent { acao = acao, penalidade = penalidade });
-        }
-        return acertou;
     }
 
-    // ---------- Investigação: conversa com o cliente e testes ----------
+    // O jogador conferiu algo (imprimiu, pingou, reiniciou...). Se o problema sumiu, o chamado acaba.
+    public bool Verificar()
+    {
+        var ch = chamadoAtivo;
+        if (ch == null || ch.problema == null || ch.estado == null) return false;
+        if (!CatalogoProblemas.Resolvido(ch.problema, ch.estado)) return false;
+        GameUI.Instance?.Toast($"<b>{ch.contato}</b> conferiu: \"Funcionou! Muito obrigado!\"", UIFactory.Sucesso, 3f);
+        ConcluirChamado(false);
+        return true;
+    }
 
-    // Gasta parte do prazo (perguntar e testar levam tempo)
+    // Uma ação que causou estrago (resetar sem precisar, desligar sem salvar...)
+    public void RegistrarErro(string motivo, float reputacao)
+    {
+        if (chamadoAtivo == null) return;
+        float penalidade = reputacao * chamadoAtivo.MultErro;
+        chamadoAtivo.tentativasErradas++;
+        ReputationManager.Instance?.AlterarReputacao(-penalidade);
+        EventBus<AcaoErradaEvent>.Raise(new AcaoErradaEvent { acao = motivo, penalidade = penalidade });
+    }
+
+    // Peças usadas no cliente (toner, cabo) entram na conta dele
+    public void CobrarPeca(float valor)
+    {
+        if (chamadoAtivo != null) chamadoAtivo.pecasCobradas += valor;
+    }
+
+    public void RegistrarAcao()
+    {
+        if (chamadoAtivo != null) chamadoAtivo.acoesFeitas++;
+    }
+
+    // ---------- Conversa com o cliente ----------
+
+    // Gasta parte do prazo (perguntar leva tempo)
     public void ConsumirTempo(float segundos)
     {
         if (chamadoAtivo != null) tempoInicioAtendimento -= segundos;
@@ -152,37 +179,6 @@ public class MissionManager : MonoBehaviour
         return resposta;
     }
 
-    public bool JaTestou(TipoEquipamento equipamento, int indice, out string resultado)
-    {
-        resultado = null;
-        if (chamadoAtivo == null) return false;
-        int i = chamadoAtivo.testesFeitos.IndexOf(equipamento + ":" + indice);
-        if (i < 0) return false;
-        resultado = chamadoAtivo.resultadosTestes[i];
-        return true;
-    }
-
-    public bool JaErrou(TipoEquipamento equipamento, string acao) =>
-        chamadoAtivo != null && chamadoAtivo.acoesErradas.Contains(equipamento + ":" + acao);
-
-    // Roda um teste no equipamento e devolve o que o técnico vê
-    public string ExecutarTeste(TipoEquipamento equipamento, int indice)
-    {
-        var ch = chamadoAtivo;
-        if (ch == null) return "Nenhum chamado em atendimento.";
-        if (JaTestou(equipamento, indice, out string visto)) return visto;
-
-        ConsumirTempo(custoTeste);
-        bool aqui = ch.problema != null && ch.equipamento == equipamento;
-        string resultado = aqui ? ch.problema.testes[indice] : CatalogoProblemas.ResultadoNormal(equipamento, indice);
-
-        ch.testesFeitos.Add(equipamento + ":" + indice);
-        ch.resultadosTestes.Add(resultado);
-        string nomeTeste = CatalogoProblemas.Testes(equipamento)[indice];
-        ch.anotacoes.Add($"<b>{equipamento}</b> ({nomeTeste}): {resultado}");
-        return resultado;
-    }
-
     public void ConcluirChamado(bool cometeuErro = false)
     {
         if (chamadoAtivo == null) return;
@@ -191,11 +187,18 @@ public class MissionManager : MonoBehaviour
         var ch = chamadoAtivo;
 
         ReputationManager.Instance?.AvaliarChamado(tempoGasto, ch.tempoLimite, cometeuErro, ch.MultReputacao);
-        GameEconomy.Instance?.ReceberPagamento(cometeuErro ? ch.recompensa * 0.3f : ch.recompensa);
+        GameEconomy.Instance?.ReceberPagamento((cometeuErro ? ch.recompensa * 0.3f : ch.recompensa) + ch.pecasCobradas);
 
-        // Bônus: investigou (conversou ou testou) e acertou de primeira, dentro do prazo
-        bool certeiro = !cometeuErro && ch.tentativasErradas == 0 && tempoGasto <= ch.tempoLimite &&
-                        (ch.perguntasFeitas.Count > 0 || ch.testesFeitos.Count > 0);
+        // Sujeira esquecida no chão: o cliente reclama
+        if (Sujeira.Todas.Count > 0)
+        {
+            ReputationManager.Instance?.AlterarReputacao(-penalidadeSujeira);
+            GameUI.Instance?.Toast($"{ch.contato} reclamou da sujeira que você deixou no chão (-{penalidadeSujeira:F0} reputação).", UIFactory.Perigo, 4f);
+            Sujeira.LimparTudo();
+        }
+
+        // Bônus: investigou (conversou) e resolveu sem fazer estrago, dentro do prazo
+        bool certeiro = !cometeuErro && ch.tentativasErradas == 0 && tempoGasto <= ch.tempoLimite && ch.perguntasFeitas.Count > 0;
         if (certeiro) ReputationManager.Instance?.AlterarReputacao(1f);
 
         Debug.Log($"[MissionManager] Concluído em {tempoGasto:F1}s (limite: {chamadoAtivo.tempoLimite}s) | Erro: {cometeuErro}");

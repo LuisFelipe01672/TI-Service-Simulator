@@ -11,6 +11,7 @@ public class ResumoDia
     public int erros;
     public float ganhos;
     public float salarios;
+    public float compras;
     public float deltaReputacao;
     public float saldoFinal;
     public string horaSaida;
@@ -109,6 +110,7 @@ public class DiaManager : MonoBehaviour
         {
             // Ignora o saldo carregado do save no começo da cena
             if (Time.timeSinceLevelLoad > 1f && e.delta > 0f) hoje.ganhos += e.delta;
+            if (Time.timeSinceLevelLoad > 1f && e.delta < 0f) hoje.compras += -e.delta;
         });
         bRep = new EventBinding<ReputacaoAlteradaEvent>(e =>
         {
@@ -188,6 +190,7 @@ public class DiaManager : MonoBehaviour
 
         hoje.dia = dia;
         hoje.salarios = salarios;
+        hoje.compras = Mathf.Max(0f, hoje.compras - salarios);   // o desconto dos salários também passou pelo saldo
         hoje.saldoFinal = GameEconomy.Instance != null ? GameEconomy.Instance.saldo : 0f;
         hoje.horaSaida = HoraTexto();
 
@@ -229,14 +232,17 @@ public class DiaManager : MonoBehaviour
     // Porta do escritório que encerra o dia (criada aqui para não precisar remontar o cenário)
     void CriarSaidaDoEscritorio()
     {
-        if (FindAnyObjectByType<SaidaEscritorio>() != null) return;
         var sala = GameObject.Find("Cenario/Escritorio");
-        if (sala == null) return;
+        if (sala == null || FindAnyObjectByType<SaidaEscritorio>() != null) return;
         var porta = new GameObject("Porta_EncerrarDia");
         porta.transform.SetParent(sala.transform, false);
         porta.transform.localPosition = new Vector3(0f, 1f, -2.75f);
         var saida = porta.AddComponent<SaidaEscritorio>();
         saida.distanciaInteracao = 1.3f;
+
+        // Bancada para fazer cabos, encostada na parede leste (embaixo da janela)
+        if (FindAnyObjectByType<Bancada>() == null)
+            Bancada.Criar(sala.transform, new Vector3(2.65f, 0f, -1.3f), -90f);
     }
 
     // ---------- Sol e céu ----------

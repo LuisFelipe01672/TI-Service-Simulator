@@ -75,6 +75,16 @@ public partial class GameUI
                 MontarConversa();
             }, UIFactory.CartaoClaro, 900, 48, 21);
         }
+        // Antes de reiniciar o PC, o técnico pede para o cliente salvar o que está fazendo
+        var est = mm != null ? mm.Estado : null;
+        if (est != null && !est.clienteSalvouTrabalho)
+            UIFactory.Botao(convPerguntas, "Pode salvar seu trabalho e fechar os programas? Vou precisar reiniciar.", () =>
+            {
+                est.clienteSalvouTrabalho = true;
+                falaAtual = ch.personalidade == Personalidade.Apressado ? "Tá, tá... pronto, salvei. Vai logo!" : "Claro! Pronto, salvei tudo e fechei.";
+                MontarConversa();
+            }, UIFactory.Hex("#2D8A5F"), 900, 48, 21);
+
         if (restantes == 0)
             UIFactory.Texto(convPerguntas, "Você já perguntou tudo. Agora é com você: vá ao equipamento e teste.", 20, UIFactory.CorSuave);
         else

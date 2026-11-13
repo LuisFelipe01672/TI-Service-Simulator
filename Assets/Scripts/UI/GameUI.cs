@@ -13,7 +13,7 @@ public partial class GameUI : MonoBehaviour
 {
     public static GameUI Instance;
 
-    enum Modal { Nenhum, Tablet, Diagnostico, Pausa, Conversa, Resumo }
+    enum Modal { Nenhum, Tablet, Manutencao, Pausa, Conversa, Resumo, Computador, Crimpagem, Bancada }
     Modal modal = Modal.Nenhum;
     public bool PainelAberto => modal != Modal.Nenhum;
 
@@ -39,14 +39,12 @@ public partial class GameUI : MonoBehaviour
     // Modais
     RectTransform overlay;
     CanvasGroup overlayGrupo;
-    RectTransform tablet, diagnostico, pausa;
+    RectTransform tablet, pausa;
+    readonly List<RectTransform> janelas = new List<RectTransform>();   // todas as janelas modais
     RectTransform tabletConteudo;
-    Button abaChamados, abaEquipe;
+    Button abaChamados, abaEquipe, abaLoja;
     int abaAtiva;
     TextMeshProUGUI txtTabletInfo;
-    Equipamento equipamentoDiag;
-    TextMeshProUGUI txtDiagTitulo, txtDiagProblema;
-    RectTransform diagBotoes;
 
     EventBinding<SaldoAlteradoEvent> bSaldo;
     EventBinding<ReputacaoAlteradaEvent> bRep;
@@ -108,7 +106,7 @@ public partial class GameUI : MonoBehaviour
         });
         bConcluido = new EventBinding<ChamadoConcluidoEvent>(AoConcluirChamado);
         bErro = new EventBinding<AcaoErradaEvent>(e =>
-            Toast($"\"{e.acao}\" não resolveu. O cliente ficou impaciente (-{e.penalidade:F0} reputação)", UIFactory.Perigo));
+            Toast($"{e.acao} (-{e.penalidade:F0} reputação)", UIFactory.Perigo, 4f));
         bContratado = new EventBinding<FuncionarioContratadoEvent>(e =>
             { Toast($"{e.funcionario.nome} ({e.funcionario.NivelTexto()}) entrou na equipe!", UIFactory.Sucesso); AtualizarTablet(); });
 
@@ -162,6 +160,7 @@ public partial class GameUI : MonoBehaviour
         AtualizarPrompt();
         AtualizarCardChamado();
         AtualizarRelogio();
+        AtualizarComputador();
     }
 
     // ---------- Montagem da interface ----------
@@ -198,7 +197,8 @@ public partial class GameUI : MonoBehaviour
         overlayGrupo = overlay.gameObject.AddComponent<CanvasGroup>();
 
         ConstruirTablet(overlay);
-        ConstruirDiagnostico(overlay);
+        ConstruirManutencao(overlay);
+        ConstruirComputador(overlay);
         ConstruirPausa(overlay);
         ConstruirConversa(overlay);
         ConstruirResumo(overlay, raiz);
@@ -258,6 +258,7 @@ public partial class GameUI : MonoBehaviour
         UIFactory.Ancorar(janela, new Vector2(0.5f, 0.5f), Vector2.zero, tamanho);
         janela.pivot = new Vector2(0.5f, 0.5f);
         janela.gameObject.SetActive(false);
+        janelas.Add(janela);
         return janela;
     }
 
@@ -285,6 +286,7 @@ public partial class GameUI : MonoBehaviour
         UIFactory.Horizontal(abas, 10);
         abaChamados = UIFactory.Botao(abas, "Chamados", () => TrocarAba(0), UIFactory.Destaque, 220, 52);
         abaEquipe = UIFactory.Botao(abas, "Equipe", () => TrocarAba(1), UIFactory.CartaoClaro, 220, 52);
+        abaLoja = UIFactory.Botao(abas, "Loja e mochila", () => TrocarAba(2), UIFactory.CartaoClaro, 240, 52);
 
         // Conteúdo com rolagem
         var area = UIFactory.Vazio(tablet, "Area");
@@ -293,20 +295,6 @@ public partial class GameUI : MonoBehaviour
         var lista = UIFactory.ListaComRolagem(area, "Lista");
         UIFactory.Esticar(lista.parent.parent as RectTransform);
         tabletConteudo = lista;
-    }
-
-    void ConstruirDiagnostico(RectTransform pai)
-    {
-        diagnostico = JanelaModal(pai, "Diagnostico", new Vector2(1180, 0));
-        UIFactory.Vertical(diagnostico, 14, 32);
-        UIFactory.AjustarAoConteudo(diagnostico);
-
-        txtDiagTitulo = UIFactory.Texto(diagnostico, "Diagnóstico", 34, UIFactory.CorTexto, FontStyles.Bold);
-        txtDiagProblema = UIFactory.Texto(diagnostico, "", 21, UIFactory.CorSuave);
-        diagBotoes = UIFactory.Vazio(diagnostico, "Colunas");
-        var colunas = UIFactory.Horizontal(diagBotoes, 28, 0, TextAnchor.UpperLeft);
-        colunas.childForceExpandHeight = false;
-        UIFactory.Botao(diagnostico, "Fechar", FecharModal, UIFactory.CartaoClaro, 200, 50);
     }
 
     void ConstruirPausa(RectTransform pai)
@@ -401,7 +389,7 @@ public partial class GameUI : MonoBehaviour
         txtChCliente.text = $"{ch.nomeCliente}  <size=70%><color={ch.CorPersonalidade()}>{ch.PersonalidadeTexto().ToUpper()}</color></size>";
         txtChProblema.text = ch.DescricaoVisivel;
         txtChEquip.text = ch.EquipamentoConhecido
-            ? $"Verifique: {ch.EquipamentoTexto()}  ·  Fale com {ch.contato}"
+            ? $"Problema no(a) {ch.EquipamentoTexto()}  ·  Fale com {ch.contato}"
             : $"Converse com {ch.contato} para entender o problema";
         txtChPistas.text = ch.anotacoes.Count == 0 ? "Nenhuma pista anotada ainda"
             : $"{ch.anotacoes.Count} pista(s) anotada(s)  ·  veja no tablet (Tab)";
@@ -462,11 +450,7 @@ public partial class GameUI : MonoBehaviour
 
     void AbrirModal(Modal tipo, RectTransform janela)
     {
-        tablet.gameObject.SetActive(false);
-        diagnostico.gameObject.SetActive(false);
-        pausa.gameObject.SetActive(false);
-        if (conversa != null) conversa.gameObject.SetActive(false);
-        if (resumo != null) resumo.gameObject.SetActive(false);
+        foreach (var j in janelas) if (j != null) j.gameObject.SetActive(false);
 
         modal = tipo;
         overlay.gameObject.SetActive(true);
@@ -486,8 +470,13 @@ public partial class GameUI : MonoBehaviour
 
     public void FecharModal()
     {
+        if (rotinaSegurar != null) { StopCoroutine(rotinaSegurar); rotinaSegurar = null; }
+        segurando = false;
+        // Desistir da crimpagem volta para a janela de onde ela foi aberta
+        if (modal == Modal.Crimpagem && aoCancelarCrimpagem != null) { CancelarCrimpagem(); return; }
+        crimpAtual = null;
         modal = Modal.Nenhum;
-        equipamentoDiag = null;
+        equipamentoAtual = null;
         npcConversa = null;
         overlay.gameObject.SetActive(false);
         Cursor.lockState = CursorLockMode.Locked;
@@ -521,9 +510,10 @@ public partial class GameUI : MonoBehaviour
         if (tablet == null || !tablet.gameObject.activeSelf) return;
 
         int fase = ReputationManager.Instance != null ? ReputationManager.Instance.FaseAtual : 1;
-        if (fase < 2) abaAtiva = 0;
+        if (fase < 2 && abaAtiva == 1) abaAtiva = 0;
         abaChamados.GetComponent<Image>().color = abaAtiva == 0 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaEquipe.GetComponent<Image>().color = abaAtiva == 1 ? UIFactory.Destaque : UIFactory.CartaoClaro;
+        abaLoja.GetComponent<Image>().color = abaAtiva == 2 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaEquipe.GetComponentInChildren<TextMeshProUGUI>().text = fase >= 2 ? "Equipe" : "Equipe (Fase 2)";
 
         float saldo = GameEconomy.Instance != null ? GameEconomy.Instance.saldo : 0f;
@@ -531,7 +521,8 @@ public partial class GameUI : MonoBehaviour
 
         UIFactory.Limpar(tabletConteudo);
         if (abaAtiva == 0) MontarAbaChamados();
-        else MontarAbaEquipe();
+        else if (abaAtiva == 1) MontarAbaEquipe();
+        else MontarAbaLoja();
     }
 
     RectTransform Cartao(Color? cor = null)
@@ -566,7 +557,7 @@ public partial class GameUI : MonoBehaviour
             UIFactory.Texto(c, $"<b>{ch.nomeCliente}</b>   <size=18><color={ch.CorPersonalidade()}>{ch.PersonalidadeTexto().ToUpper()}</color></size>", 26, UIFactory.CorTexto);
             UIFactory.Texto(c, ch.DescricaoVisivel, 21, UIFactory.CorTexto);
             UIFactory.Texto(c, ch.EquipamentoConhecido
-                ? $"Converse com {ch.contato} (E) para pegar pistas, ou vá até o(a) {ch.EquipamentoTexto()} e diagnostique."
+                ? $"Converse com {ch.contato} (E) para pegar pistas e vá até o(a) {ch.EquipamentoTexto()}. Conserte e confira se funcionou (imprimir, ping...)."
                 : $"{ch.contato} não soube explicar. Converse com ele(a) (E) para descobrir o equipamento.", 19, UIFactory.CorSuave);
             foreach (var nota in ch.anotacoes)
                 UIFactory.Texto(c, "• " + nota, 18, UIFactory.CorSuave);
@@ -662,89 +653,6 @@ public partial class GameUI : MonoBehaviour
             {
                 if (fm.ContratarCandidato(candidato)) AtualizarTablet();
             }, UIFactory.Sucesso, 200, 48, 22);
-        }
-    }
-
-    // ---------- Diagnóstico ----------
-
-    public void AbrirDiagnostico(Equipamento equipamento)
-    {
-        equipamentoDiag = equipamento;
-        AbrirModal(Modal.Diagnostico, diagnostico);
-        MontarDiagnostico();
-    }
-
-    // Duas etapas: 1) testes que revelam sintomas (gastam prazo)  2) aplicar a solução
-    void MontarDiagnostico()
-    {
-        var equipamento = equipamentoDiag;
-        if (equipamento == null) return;
-        var mm = MissionManager.Instance;
-        var ch = mm != null ? mm.chamadoAtivo : null;
-
-        txtDiagTitulo.text = $"Diagnóstico: {equipamento.Nome}";
-        if (ch == null)
-            txtDiagProblema.text = "Nenhum chamado em atendimento. Aceite um chamado no tablet (Tab) primeiro.";
-        else
-            txtDiagProblema.text = $"{ch.contato} ({ch.nomeCliente}) disse:\n<color=#E8ECF2>\"{ch.DescricaoVisivel}\"</color>" +
-                (ch.anotacoes.Count > 0 ? $"\n<size=85%>Pistas anotadas: {ch.anotacoes.Count} (veja no tablet)</size>" : "") +
-                $"\n<size=85%>Prazo restante: {Tempo(mm.TempoRestante)}</size>";
-
-        UIFactory.Limpar(diagBotoes);
-
-        // Coluna 1: testes
-        var colTestes = UIFactory.Vazio(diagBotoes, "Testes");
-        UIFactory.Vertical(colTestes, 10);
-        colTestes.gameObject.AddComponent<LayoutElement>().preferredWidth = 540;
-        UIFactory.Texto(colTestes, $"1. TESTAR  <size=80%><color=#9AA6B8>(cada teste gasta {(mm != null ? mm.custoTeste : 10f):F0}s do prazo)</color></size>",
-            20, UIFactory.Destaque, FontStyles.Bold);
-
-        var testes = CatalogoProblemas.Testes(equipamento.tipoEquipamento);
-        for (int i = 0; i < testes.Length; i++)
-        {
-            int indice = i;
-            if (mm != null && mm.JaTestou(equipamento.tipoEquipamento, indice, out string resultado))
-            {
-                var cartao = UIFactory.Painel(colTestes, "Resultado", UIFactory.Cartao);
-                UIFactory.Vertical(cartao, 4, 14);
-                UIFactory.Texto(cartao, testes[indice], 18, UIFactory.CorSuave, FontStyles.Bold);
-                UIFactory.Texto(cartao, resultado, 20, UIFactory.CorTexto);
-            }
-            else
-            {
-                var b = UIFactory.Botao(colTestes, testes[indice], () =>
-                {
-                    if (MissionManager.Instance == null) return;
-                    MissionManager.Instance.ExecutarTeste(equipamento.tipoEquipamento, indice);
-                    MontarDiagnostico();
-                }, UIFactory.CartaoClaro, 540, 48, 20);
-                b.interactable = ch != null;
-            }
-        }
-
-        // Coluna 2: soluções
-        var colSolucoes = UIFactory.Vazio(diagBotoes, "Solucoes");
-        UIFactory.Vertical(colSolucoes, 10);
-        colSolucoes.gameObject.AddComponent<LayoutElement>().preferredWidth = 540;
-        UIFactory.Texto(colSolucoes, $"2. RESOLVER  <size=80%><color=#9AA6B8>(errar irrita o cliente: -{(mm != null ? mm.penalidadeAcaoErrada : 3f) * (ch?.MultErro ?? 1f):F0} reputação)</color></size>",
-            20, UIFactory.Alerta, FontStyles.Bold);
-
-        foreach (var op in equipamento.GetOpcoes())
-        {
-            var acao = op;
-            bool errou = mm != null && mm.JaErrou(equipamento.tipoEquipamento, acao);
-            Button botao = null;
-            botao = UIFactory.Botao(colSolucoes, acao, () =>
-            {
-                bool resolveu = equipamentoDiag != null && equipamentoDiag.ExecutarAcao(acao);
-                if (resolveu) FecharModal();
-                else if (botao != null)
-                {
-                    botao.interactable = false;
-                    botao.GetComponent<Image>().color = UIFactory.Perigo;
-                }
-            }, errou ? UIFactory.Perigo : UIFactory.CartaoClaro, 540, 54, 22);
-            botao.interactable = ch != null && !errou;
         }
     }
 

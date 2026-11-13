@@ -89,6 +89,7 @@ public partial class GameUI
         if (r.chamadosEquipe > 0) Linha("Chamados resolvidos pela equipe", r.chamadosEquipe.ToString(), UIFactory.CorTexto);
         if (r.erros > 0) Linha("Chamados com erro", r.erros.ToString(), UIFactory.Perigo);
         Linha("Dinheiro recebido", "+" + UIFactory.Dinheiro(r.ganhos), UIFactory.Sucesso);
+        if (r.compras > 0f) Linha("Compras (ferramentas e peças)", "-" + UIFactory.Dinheiro(r.compras), UIFactory.Perigo);
         if (r.salarios > 0f) Linha("Salários da equipe", "-" + UIFactory.Dinheiro(r.salarios), UIFactory.Perigo);
         Linha("Reputação no dia", $"{(r.deltaReputacao >= 0 ? "+" : "")}{r.deltaReputacao:F0}",
               r.deltaReputacao >= 0 ? UIFactory.Sucesso : UIFactory.Perigo);

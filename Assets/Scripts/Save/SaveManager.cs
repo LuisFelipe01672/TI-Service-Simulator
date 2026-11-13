@@ -9,7 +9,8 @@ using UnityEngine;
 [Serializable]
 public class SaveData
 {
-    public int versao = 1;
+    public int versao = 2;
+    public int dia = 1;
     public float saldo;
     public float reputacao;
     public int fase;
@@ -61,6 +62,7 @@ public class SaveManager : MonoBehaviour
     void Start()
     {
         if (CarregarAoIniciar) Carregar();
+        else DiaManager.DiaSalvo = 0;   // jogo novo começa no dia 1
     }
 
     void OnApplicationQuit() => Salvar();
@@ -74,6 +76,7 @@ public class SaveManager : MonoBehaviour
             reputacao = ReputationManager.Instance != null ? ReputationManager.Instance.GetReputacao() : 50f,
             fase = ReputationManager.Instance != null ? ReputationManager.Instance.FaseAtual : 1,
             chamadosConcluidos = chamadosConcluidos,
+            dia = DiaManager.Instance != null ? DiaManager.Instance.dia : Mathf.Max(1, DiaManager.DiaSalvo),
             equipe = FuncionarioManager.Instance != null
                      ? new List<Funcionario>(FuncionarioManager.Instance.equipe)
                      : new List<Funcionario>(),
@@ -118,6 +121,8 @@ public class SaveManager : MonoBehaviour
             foreach (var f in FuncionarioManager.Instance.equipe) f.ocupado = false;
         }
         chamadosConcluidos = data.chamadosConcluidos;
+        DiaManager.DiaSalvo = Mathf.Max(1, data.dia);
+        if (DiaManager.Instance != null) DiaManager.Instance.dia = DiaManager.DiaSalvo;
 
         Debug.Log($"[Save] Jogo carregado (salvo em {data.salvoEm}): R${data.saldo:F2}, reputação {data.reputacao:F0}, fase {data.fase}, {data.equipe?.Count ?? 0} funcionário(s)");
         return true;

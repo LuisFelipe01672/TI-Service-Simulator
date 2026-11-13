@@ -13,7 +13,7 @@ public partial class GameUI : MonoBehaviour
 {
     public static GameUI Instance;
 
-    enum Modal { Nenhum, Tablet, Diagnostico, Pausa, Conversa }
+    enum Modal { Nenhum, Tablet, Diagnostico, Pausa, Conversa, Resumo }
     Modal modal = Modal.Nenhum;
     public bool PainelAberto => modal != Modal.Nenhum;
 
@@ -119,6 +119,7 @@ public partial class GameUI : MonoBehaviour
         EventBus<ChamadoConcluidoEvent>.Register(bConcluido);
         EventBus<AcaoErradaEvent>.Register(bErro);
         EventBus<FuncionarioContratadoEvent>.Register(bContratado);
+        RegistrarEventosDia();
     }
 
     void OnDisable()
@@ -130,6 +131,7 @@ public partial class GameUI : MonoBehaviour
         EventBus<ChamadoConcluidoEvent>.Deregister(bConcluido);
         EventBus<AcaoErradaEvent>.Deregister(bErro);
         EventBus<FuncionarioContratadoEvent>.Deregister(bContratado);
+        RemoverEventosDia();
     }
 
     void Start()
@@ -148,7 +150,7 @@ public partial class GameUI : MonoBehaviour
             else if (modal == Modal.Nenhum) AbrirTablet();
         }
 
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape) && modal != Modal.Resumo)   // o resumo do dia só fecha pelo botão
         {
             if (modal != Modal.Nenhum) FecharModal();
             else AbrirPausa();
@@ -159,6 +161,7 @@ public partial class GameUI : MonoBehaviour
 
         AtualizarPrompt();
         AtualizarCardChamado();
+        AtualizarRelogio();
     }
 
     // ---------- Montagem da interface ----------
@@ -198,6 +201,7 @@ public partial class GameUI : MonoBehaviour
         ConstruirDiagnostico(overlay);
         ConstruirPausa(overlay);
         ConstruirConversa(overlay);
+        ConstruirResumo(overlay, raiz);
         overlay.gameObject.SetActive(false);
     }
 
@@ -221,6 +225,7 @@ public partial class GameUI : MonoBehaviour
         barraReputacao.offsetMin = barraReputacao.offsetMax = Vector2.zero;
 
         txtFase = UIFactory.Texto(hud, "Fase 1 · Técnico solo", 18, UIFactory.CorSuave);
+        ConstruirRelogio(hud);
     }
 
     void ConstruirCardChamado(RectTransform raiz)
@@ -461,6 +466,7 @@ public partial class GameUI : MonoBehaviour
         diagnostico.gameObject.SetActive(false);
         pausa.gameObject.SetActive(false);
         if (conversa != null) conversa.gameObject.SetActive(false);
+        if (resumo != null) resumo.gameObject.SetActive(false);
 
         modal = tipo;
         overlay.gameObject.SetActive(true);
@@ -573,6 +579,11 @@ public partial class GameUI : MonoBehaviour
             }, UIFactory.Perigo, 320, 48, 20);
         }
 
+        bool foraDoExpediente = DiaManager.Instance != null && DiaManager.Instance.ForaDoExpediente;
+        if (foraDoExpediente)
+            UIFactory.Texto(tabletConteudo, "<color=#F5B83F>Fora do expediente:</color> os clientes voltam a ligar amanhã às 8h. Saia pela porta do escritório para encerrar o dia.",
+                20, UIFactory.CorTexto);
+
         Secao("CHAMADOS ABERTOS");
         if (mm.chamadosDisponiveis.Count == 0)
         {
@@ -602,9 +613,9 @@ public partial class GameUI : MonoBehaviour
                 mm.AceitarChamado(chamado);
                 FecharModal();
             }, UIFactory.Destaque, 180, 48, 22);
-            atender.interactable = mm.chamadoAtivo == null;
+            atender.interactable = mm.chamadoAtivo == null && !foraDoExpediente;
 
-            if (equipeLivre)
+            if (equipeLivre && !foraDoExpediente)
             {
                 UIFactory.Botao(linha, "Delegar para a equipe", () =>
                 {

@@ -47,3 +47,18 @@ public struct FuncionarioContratadoEvent : IEvent
 {
     public Funcionario funcionario;
 }
+
+public struct ExpedienteEncerradoEvent : IEvent
+{
+    public int dia;
+}
+
+public struct DiaEncerradoEvent : IEvent
+{
+    public ResumoDia resumo;
+}
+
+public struct DiaIniciadoEvent : IEvent
+{
+    public int dia;
+}

@@ -1,0 +1,284 @@
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+// Resumo de um dia de trabalho (mostrado na tela de fim do dia)
+[System.Serializable]
+public class ResumoDia
+{
+    public int dia;
+    public int chamados;
+    public int chamadosEquipe;
+    public int erros;
+    public float ganhos;
+    public float salarios;
+    public float deltaReputacao;
+    public float saldoFinal;
+    public string horaSaida;
+    public bool dormiuNoEscritorio;
+}
+
+// Relógio do jogo e ciclo do dia (no estilo dos "simuladores"):
+// o dia começa às 8h, o expediente acaba às 18h, o jogador encerra o dia, vê o resumo, dorme e começa o próximo.
+// Também move o sol, que vai se pondo, e escurece o céu à noite.
+// É criado sozinho em qualquer cena que tenha um MissionManager.
+public class DiaManager : MonoBehaviour
+{
+    public static DiaManager Instance;
+
+    // Preenchido pelo SaveManager ao carregar (0 = jogo novo)
+    public static int DiaSalvo;
+
+    [Header("Relógio")]
+    [Tooltip("Minutos do jogo que passam a cada segundo real (1 = o expediente de 10h dura 10 minutos)")]
+    public float minutosPorSegundo = 1f;
+    public int horaInicio = 8;
+    public int horaFimExpediente = 18;
+    [Tooltip("Se o jogador não for embora até essa hora, o dia acaba sozinho")]
+    public int horaLimite = 23;
+
+    [Header("Estado")]
+    public int dia = 1;
+    public float minutoAtual;
+    public bool diaEncerrado;
+
+    [Header("Custos")]
+    [Tooltip("Dias úteis por mês: o salário diário é salário mensal / esse número")]
+    public float diasUteisPorMes = 22f;
+
+    // Estatísticas do dia
+    ResumoDia hoje = new ResumoDia();
+    bool avisouFim, avisouTarde;
+
+    Light sol;
+    float solYaw = 200f;
+
+    EventBinding<ChamadoConcluidoEvent> bChamado;
+    EventBinding<SaldoAlteradoEvent> bSaldo;
+    EventBinding<ReputacaoAlteradaEvent> bRep;
+
+    public float Hora => minutoAtual / 60f;
+    public bool ForaDoExpediente => Hora >= horaFimExpediente;
+    public bool EhNoite => Hora >= 18.5f || Hora < 6f;
+
+    // ---------- Criação automática ----------
+
+    static bool registrado;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void Bootstrap()
+    {
+        if (!registrado)
+        {
+            SceneManager.sceneLoaded += (_, __) => CriarSePrecisar();
+            registrado = true;
+        }
+        CriarSePrecisar();
+    }
+
+    static void CriarSePrecisar()
+    {
+        if (Instance != null) return;
+        if (FindAnyObjectByType<MissionManager>() == null) return;
+        new GameObject("DiaManager").AddComponent<DiaManager>();
+    }
+
+    // ---------- Ciclo de vida ----------
+
+    void Awake()
+    {
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+        if (DiaSalvo > 0) dia = DiaSalvo;
+        minutoAtual = horaInicio * 60f;
+        hoje.dia = dia;
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    void OnEnable()
+    {
+        bChamado = new EventBinding<ChamadoConcluidoEvent>(e =>
+        {
+            if (e.porFuncionario) hoje.chamadosEquipe++; else hoje.chamados++;
+            if (e.cometeuErro) hoje.erros++;
+        });
+        bSaldo = new EventBinding<SaldoAlteradoEvent>(e =>
+        {
+            // Ignora o saldo carregado do save no começo da cena
+            if (Time.timeSinceLevelLoad > 1f && e.delta > 0f) hoje.ganhos += e.delta;
+        });
+        bRep = new EventBinding<ReputacaoAlteradaEvent>(e =>
+        {
+            if (Time.timeSinceLevelLoad > 1f) hoje.deltaReputacao += e.delta;
+        });
+        EventBus<ChamadoConcluidoEvent>.Register(bChamado);
+        EventBus<SaldoAlteradoEvent>.Register(bSaldo);
+        EventBus<ReputacaoAlteradaEvent>.Register(bRep);
+    }
+
+    void OnDisable()
+    {
+        EventBus<ChamadoConcluidoEvent>.Deregister(bChamado);
+        EventBus<SaldoAlteradoEvent>.Deregister(bSaldo);
+        EventBus<ReputacaoAlteradaEvent>.Deregister(bRep);
+    }
+
+    void Start()
+    {
+        AcharSol();
+        CriarSaidaDoEscritorio();
+        AtualizarSol();
+    }
+
+    void Update()
+    {
+        if (diaEncerrado) return;
+
+        // Time.deltaTime já para quando o jogo está pausado (timeScale 0)
+        minutoAtual += Time.deltaTime * minutosPorSegundo;
+
+        if (!avisouFim && Hora >= horaFimExpediente)
+        {
+            avisouFim = true;
+            EventBus<ExpedienteEncerradoEvent>.Raise(new ExpedienteEncerradoEvent { dia = dia });
+        }
+        if (!avisouTarde && Hora >= horaLimite - 2)
+        {
+            avisouTarde = true;
+            GameUI.Instance?.Toast("Já está tarde... vá para casa descansar!", UIFactory.Alerta, 4f);
+        }
+        if (Hora >= horaLimite)
+        {
+            // Ficou até tarde demais: dormiu no escritório
+            hoje.dormiuNoEscritorio = true;
+            ReputationManager.Instance?.AlterarReputacao(-2f);
+            EncerrarDia();
+        }
+
+        AtualizarSol();
+    }
+
+    // ---------- Encerrar e começar o dia ----------
+
+    // Devolve false (e explica) se ainda não dá para encerrar
+    public bool EncerrarDia()
+    {
+        if (diaEncerrado) return false;
+
+        var mm = MissionManager.Instance;
+        if (mm != null && mm.chamadoAtivo != null && !hoje.dormiuNoEscritorio)
+        {
+            GameUI.Instance?.Toast("Termine ou desista do chamado em atendimento antes de ir embora.", UIFactory.Perigo, 3f);
+            return false;
+        }
+        if (mm != null && mm.chamadoAtivo != null) mm.AbandonarChamado();
+
+        diaEncerrado = true;
+
+        // Salário diário da equipe
+        float salarios = 0f;
+        if (FuncionarioManager.Instance != null)
+            foreach (var f in FuncionarioManager.Instance.equipe)
+                salarios += f.salarioMensal / Mathf.Max(1f, diasUteisPorMes);
+        salarios = Mathf.Round(salarios);
+        if (salarios > 0f && GameEconomy.Instance != null) GameEconomy.Instance.Gastar(salarios);
+
+        hoje.dia = dia;
+        hoje.salarios = salarios;
+        hoje.saldoFinal = GameEconomy.Instance != null ? GameEconomy.Instance.saldo : 0f;
+        hoje.horaSaida = HoraTexto();
+
+        Debug.Log($"[Dia] Dia {dia} encerrado às {hoje.horaSaida}: {hoje.chamados} chamado(s), +R${hoje.ganhos:F0}, salários R${salarios:F0}");
+        EventBus<DiaEncerradoEvent>.Raise(new DiaEncerradoEvent { resumo = hoje });
+        return true;
+    }
+
+    public void ComecarNovoDia()
+    {
+        dia++;
+        minutoAtual = horaInicio * 60f;
+        diaEncerrado = false;
+        avisouFim = avisouTarde = false;
+        hoje = new ResumoDia { dia = dia };
+
+        // O jogador acorda e começa de novo no escritório
+        var jogador = GameObject.FindWithTag("Player");
+        var spawn = PontoDeInicio();
+        if (jogador != null && spawn != null) Teleporte.MoverJogador(jogador.transform, spawn);
+
+        MissionManager.Instance?.GerarChamados();
+        AtualizarSol();
+
+        EventBus<DiaIniciadoEvent>.Raise(new DiaIniciadoEvent { dia = dia });
+        SaveManager.Instance?.Salvar();
+        Debug.Log($"[Dia] Começou o dia {dia}");
+    }
+
+    // Onde o jogador começa o dia: a casa (quando existir) ou o escritório
+    Transform PontoDeInicio()
+    {
+        var casa = GameObject.Find("SpawnCasa");
+        if (casa != null) return casa.transform;
+        var escritorio = GameObject.Find("SpawnEscritorio");
+        return escritorio != null ? escritorio.transform : null;
+    }
+
+    // Porta do escritório que encerra o dia (criada aqui para não precisar remontar o cenário)
+    void CriarSaidaDoEscritorio()
+    {
+        if (FindAnyObjectByType<SaidaEscritorio>() != null) return;
+        var sala = GameObject.Find("Cenario/Escritorio");
+        if (sala == null) return;
+        var porta = new GameObject("Porta_EncerrarDia");
+        porta.transform.SetParent(sala.transform, false);
+        porta.transform.localPosition = new Vector3(0f, 1f, -2.75f);
+        var saida = porta.AddComponent<SaidaEscritorio>();
+        saida.distanciaInteracao = 1.3f;
+    }
+
+    // ---------- Sol e céu ----------
+
+    void AcharSol()
+    {
+        sol = RenderSettings.sun;
+        if (sol == null)
+            foreach (var l in FindObjectsByType<Light>(FindObjectsSortMode.None))
+                if (l.type == LightType.Directional) { sol = l; break; }
+        if (sol != null) solYaw = sol.transform.eulerAngles.y;
+    }
+
+    void AtualizarSol()
+    {
+        if (sol == null) return;
+        float h = Hora;
+
+        // Altura do sol: nasce às 6h, ponto mais alto ao meio-dia, se põe às 18h
+        float altura = (h >= 6f && h <= 18f) ? 60f * Mathf.Sin(Mathf.PI * (h - 6f) / 12f) : -15f;
+        float dia01 = Mathf.Clamp01(altura / 25f);
+        float yaw = solYaw + (h - 12f) * 8f;
+
+        // À noite o sol fica abaixo do horizonte (o céu escurece sozinho)
+        sol.transform.rotation = Quaternion.Euler(altura, yaw, 0f);
+        sol.intensity = 1.25f * dia01;
+        sol.color = Color.Lerp(new Color(1f, 0.55f, 0.3f), new Color(1f, 0.95f, 0.86f), Mathf.Clamp01(altura / 35f));
+        sol.shadows = dia01 > 0.01f ? LightShadows.Soft : LightShadows.None;
+
+        RenderSettings.ambientIntensity = Mathf.Lerp(0.18f, 0.65f, Mathf.Clamp01((altura + 10f) / 40f));
+        RenderSettings.reflectionIntensity = Mathf.Lerp(0.3f, 0.8f, dia01);
+    }
+
+    // ---------- Textos ----------
+
+    static readonly string[] diasSemana = { "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom" };
+
+    public string DiaSemana => diasSemana[(Mathf.Max(1, dia) - 1) % 7];
+
+    public string HoraTexto()
+    {
+        int m = Mathf.FloorToInt(minutoAtual);
+        return $"{(m / 60) % 24:00}:{m % 60:00}";
+    }
+}

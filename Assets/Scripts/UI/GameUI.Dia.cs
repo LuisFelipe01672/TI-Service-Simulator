@@ -58,6 +58,8 @@ public partial class GameUI
         EventBus<ExpedienteEncerradoEvent>.Register(bExpediente);
         EventBus<DiaEncerradoEvent>.Register(bDiaFim);
         EventBus<DiaIniciadoEvent>.Register(bDiaInicio);
+        bFalencia = new EventBinding<FalenciaEvent>(MostrarFalencia);
+        EventBus<FalenciaEvent>.Register(bFalencia);
     }
 
     void RemoverEventosDia()
@@ -65,6 +67,7 @@ public partial class GameUI
         EventBus<ExpedienteEncerradoEvent>.Deregister(bExpediente);
         EventBus<DiaEncerradoEvent>.Deregister(bDiaFim);
         EventBus<DiaIniciadoEvent>.Deregister(bDiaInicio);
+        EventBus<FalenciaEvent>.Deregister(bFalencia);
     }
 
     void AtualizarRelogio()

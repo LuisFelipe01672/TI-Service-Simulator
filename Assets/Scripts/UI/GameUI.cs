@@ -13,7 +13,7 @@ public partial class GameUI : MonoBehaviour
 {
     public static GameUI Instance;
 
-    enum Modal { Nenhum, Tablet, Manutencao, Pausa, Conversa, Resumo, Computador, Crimpagem, Bancada }
+    enum Modal { Nenhum, Tablet, Manutencao, Pausa, Conversa, Resumo, Computador, Crimpagem, Bancada, Falencia }
     Modal modal = Modal.Nenhum;
     public bool PainelAberto => modal != Modal.Nenhum;
 
@@ -42,7 +42,7 @@ public partial class GameUI : MonoBehaviour
     RectTransform tablet, pausa;
     readonly List<RectTransform> janelas = new List<RectTransform>();   // todas as janelas modais
     RectTransform tabletConteudo;
-    Button abaChamados, abaEquipe, abaLoja, abaEmpresa, abaContratos, abaCentral;
+    Button abaChamados, abaEquipe, abaLoja, abaEmpresa, abaContratos, abaCentral, abaNegocios;
     int abaAtiva;
     TextMeshProUGUI txtTabletInfo;
 
@@ -148,7 +148,7 @@ public partial class GameUI : MonoBehaviour
             else if (modal == Modal.Nenhum) AbrirTablet();
         }
 
-        if (Input.GetKeyDown(KeyCode.Escape) && modal != Modal.Resumo)   // o resumo do dia só fecha pelo botão
+        if (Input.GetKeyDown(KeyCode.Escape) && modal != Modal.Resumo && modal != Modal.Falencia)   // resumo e falência só fecham pelo botão
         {
             if (modal != Modal.Nenhum) FecharModal();
             else AbrirPausa();
@@ -202,6 +202,7 @@ public partial class GameUI : MonoBehaviour
         ConstruirPausa(overlay);
         ConstruirConversa(overlay);
         ConstruirResumo(overlay, raiz);
+        ConstruirFalencia(overlay);
         overlay.gameObject.SetActive(false);
     }
 
@@ -284,13 +285,14 @@ public partial class GameUI : MonoBehaviour
         abas.pivot = new Vector2(0.5f, 1);
         abas.offsetMin = new Vector2(32, -152); abas.offsetMax = new Vector2(-32, -100);
         UIFactory.Horizontal(abas, 10);
-        // Ordem na tela: Chamados, Contratos, Central, Empresa, Equipe, Loja (o número da aba não muda)
-        abaChamados = UIFactory.Botao(abas, "Chamados", () => TrocarAba(0), UIFactory.Destaque, 150, 52, 20);
-        abaContratos = UIFactory.Botao(abas, "Contratos", () => TrocarAba(4), UIFactory.CartaoClaro, 150, 52, 20);
-        abaCentral = UIFactory.Botao(abas, "Central", () => TrocarAba(5), UIFactory.CartaoClaro, 130, 52, 20);
-        abaEmpresa = UIFactory.Botao(abas, "Empresa", () => TrocarAba(3), UIFactory.CartaoClaro, 140, 52, 20);
-        abaEquipe = UIFactory.Botao(abas, "Equipe", () => TrocarAba(1), UIFactory.CartaoClaro, 130, 52, 20);
-        abaLoja = UIFactory.Botao(abas, "Loja e mochila", () => TrocarAba(2), UIFactory.CartaoClaro, 190, 52, 20);
+        // Ordem na tela: Chamados, Contratos, Negócios, Central, Empresa, Equipe, Loja (o número da aba não muda)
+        abaChamados = UIFactory.Botao(abas, "Chamados", () => TrocarAba(0), UIFactory.Destaque, 130, 52, 18);
+        abaContratos = UIFactory.Botao(abas, "Contratos", () => TrocarAba(4), UIFactory.CartaoClaro, 130, 52, 18);
+        abaNegocios = UIFactory.Botao(abas, "Negócios", () => TrocarAba(6), UIFactory.CartaoClaro, 130, 52, 18);
+        abaCentral = UIFactory.Botao(abas, "Central", () => TrocarAba(5), UIFactory.CartaoClaro, 130, 52, 18);
+        abaEmpresa = UIFactory.Botao(abas, "Empresa", () => TrocarAba(3), UIFactory.CartaoClaro, 120, 52, 18);
+        abaEquipe = UIFactory.Botao(abas, "Equipe", () => TrocarAba(1), UIFactory.CartaoClaro, 130, 52, 18);
+        abaLoja = UIFactory.Botao(abas, "Loja", () => TrocarAba(2), UIFactory.CartaoClaro, 110, 52, 18);
 
         // Conteúdo com rolagem
         var area = UIFactory.Vazio(tablet, "Area");
@@ -520,6 +522,7 @@ public partial class GameUI : MonoBehaviour
         abaLoja.GetComponent<Image>().color = abaAtiva == 2 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaEmpresa.GetComponent<Image>().color = abaAtiva == 3 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaContratos.GetComponent<Image>().color = abaAtiva == 4 ? UIFactory.Destaque : UIFactory.CartaoClaro;
+        abaNegocios.GetComponent<Image>().color = abaAtiva == 6 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         int nAlertas = ServicosManager.Instance != null ? ServicosManager.Instance.alertas.Count : 0;
         abaCentral.GetComponent<Image>().color = abaAtiva == 5 ? UIFactory.Destaque : nAlertas > 0 ? UIFactory.Hex("#7A2E35") : UIFactory.CartaoClaro;
         abaCentral.GetComponentInChildren<TextMeshProUGUI>().text = nAlertas > 0 ? $"Central ({nAlertas})" : "Central";
@@ -534,6 +537,7 @@ public partial class GameUI : MonoBehaviour
         else if (abaAtiva == 2) MontarAbaLoja();
         else if (abaAtiva == 3) MontarAbaEmpresa();
         else if (abaAtiva == 4) MontarAbaContratos();
+        else if (abaAtiva == 6) MontarAbaNegocios();
         else MontarAbaCentral();
     }
 

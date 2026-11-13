@@ -17,6 +17,10 @@ public class SaveData
     public ServicosManager.Dados servicos;
     public SedeManager.Dados sede;
     public Concorrencia.Dados concorrencia;
+    public ProjetosManager.Dados projetos;
+    public BancoManager.Dados banco;
+    public Parcerias.Dados parcerias;
+    public Conquistas.Dados conquistas;
     public float saldo;
     public float reputacao;
     public int fase;
@@ -75,6 +79,7 @@ public class SaveManager : MonoBehaviour
     [Button("Salvar agora")]
     public void Salvar()
     {
+        if (BancoManager.Instance != null && BancoManager.Instance.faliu) return;   // empresa falida não salva
         var data = new SaveData
         {
             saldo = GameEconomy.Instance != null ? GameEconomy.Instance.saldo : 0f,
@@ -87,6 +92,10 @@ public class SaveManager : MonoBehaviour
             servicos = ServicosManager.Instance != null ? ServicosManager.Instance.Exportar() : null,
             sede = SedeManager.Instance != null ? SedeManager.Instance.Exportar() : null,
             concorrencia = Concorrencia.Exportar(),
+            projetos = ProjetosManager.Instance != null ? ProjetosManager.Instance.Exportar() : null,
+            banco = BancoManager.Instance != null ? BancoManager.Instance.Exportar() : null,
+            parcerias = Parcerias.Exportar(),
+            conquistas = Conquistas.Exportar(),
             dia = DiaManager.Instance != null ? DiaManager.Instance.dia : Mathf.Max(1, DiaManager.DiaSalvo),
             equipe = FuncionarioManager.Instance != null
                      ? new List<Funcionario>(FuncionarioManager.Instance.equipe)
@@ -123,6 +132,12 @@ public class SaveManager : MonoBehaviour
         SedeManager.dadosSalvos = null;
         SedeManager.Instance?.NovoJogo();
         Concorrencia.Iniciar();
+        ProjetosManager.dadosSalvos = null;
+        ProjetosManager.Instance?.NovoJogo();
+        BancoManager.dadosSalvos = null;
+        BancoManager.Instance?.NovoJogo();
+        Parcerias.Iniciar();
+        Conquistas.Iniciar();
         GameEconomy.Instance?.DefinirSaldo(saldoInicial);
         Debug.Log($"[Save] Jogo novo: R${saldoInicial:F0} para começar.");
     }
@@ -166,10 +181,30 @@ public class SaveManager : MonoBehaviour
         if (SedeManager.Instance != null) SedeManager.Instance.Carregar(data.sede);
         else SedeManager.dadosSalvos = data.sede;
         Concorrencia.Carregar(data.concorrencia);
+        if (ProjetosManager.Instance != null) ProjetosManager.Instance.Carregar(data.projetos);
+        else ProjetosManager.dadosSalvos = data.projetos;
+        if (BancoManager.Instance != null) BancoManager.Instance.Carregar(data.banco);
+        else BancoManager.dadosSalvos = data.banco;
+        Parcerias.Carregar(data.parcerias);
+        Conquistas.Carregar(data.conquistas);
+        if (data.parcerias == null || data.parcerias.estados == null || data.parcerias.estados.Count == 0) MigrarParcerias(data);
         if (DiaManager.Instance != null) DiaManager.Instance.dia = DiaManager.DiaSalvo;
 
         Debug.Log($"[Save] Jogo carregado (salvo em {data.salvoEm}): R${data.saldo:F2}, reputação {data.reputacao:F0}, fase {data.fase}, {data.equipe?.Count ?? 0} funcionário(s)");
         return true;
+    }
+
+    // Saves antigos (antes das parcerias): quem já vendia um serviço vira revenda dele
+    static void MigrarParcerias(SaveData data)
+    {
+        if (data.servicos != null)
+            foreach (var c in data.servicos.contratos)
+            {
+                var p = Parcerias.DoServico(c.tipo);
+                if (p != null) Parcerias.Estado(p.id).status = 2;
+            }
+        if (data.contratos != null && data.contratos.patrimonio != null && data.contratos.patrimonio.Count > 0)
+            Parcerias.Estado(Parcerias.Impressoras).status = 2;
     }
 
     [Button("Apagar save")]

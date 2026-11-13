@@ -126,9 +126,7 @@ public class ServicosManager : MonoBehaviour
         motivo = null;
         if (emp == null) return true;
         if (!emp.TemCnpj) { motivo = "Precisa de CNPJ (abra o MEI na aba Empresa)."; return false; }
-        if ((t == TipoServico.Backup || t == TipoServico.Bot) && emp.regime != Regime.ME)
-        { motivo = "Backup e bot exigem Microempresa (parcerias com fornecedores maiores)."; return false; }
-        return true;
+        return Parcerias.LiberaServico(t, out motivo);
     }
 
     public float Mrr
@@ -144,7 +142,7 @@ public class ServicosManager : MonoBehaviour
     void GerarLead()
     {
         var possiveis = new List<TipoServico>();
-        foreach (var s in CatalogoServicos.Servicos) if (Liberado(s.tipo, out _)) possiveis.Add(s.tipo);
+        foreach (var s in CatalogoServicos.Servicos) if (!s.soPorProjeto && Liberado(s.tipo, out _)) possiveis.Add(s.tipo);
         if (possiveis.Count == 0) return;
         var tipo = possiveis[Random.Range(0, possiveis.Count)];
         int unidades;
@@ -210,18 +208,35 @@ public class ServicosManager : MonoBehaviour
         return $"Fechado: <b>{l.empresa}</b> — {info.nome}, {UIFactory.Dinheiro(oferta)}/mês! Agora faça a implantação (aba Contratos).";
     }
 
+    // Contrato que nasce já implantado (firewall entregue por um projeto)
+    public ContratoServico CriarContratoImplantado(TipoServico t, string empresa, int unidades, int meses, float mensal)
+    {
+        var c = new ContratoServico
+        {
+            id = proximoId++, tipo = t, empresa = empresa, unidades = unidades, meses = meses, mensal = mensal,
+            diaAssinatura = Hoje, diaImplantacao = Hoje, diaFim = Hoje + meses * 30
+        };
+        contratos.Add(c);
+        return c;
+    }
+
     // ---------- Equipamentos (notebook / mini PC) ----------
 
     public string ComprarEquipamento(TipoServico t)
     {
         var info = CatalogoServicos.Info(t);
         if (!info.exigeEquipamento) return "Esse serviço não usa equipamento.";
+        if (!Liberado(t, out string motivo)) return motivo;
+        float preco = PrecoEquipamento(t);
         var eco = GameEconomy.Instance;
-        if (eco != null && eco.saldo < info.custoEquipamento) return $"Saldo insuficiente: {UIFactory.Dinheiro(info.custoEquipamento)}.";
-        eco?.Gastar(info.custoEquipamento);
+        if (eco != null && eco.saldo < preco) return $"Saldo insuficiente: {UIFactory.Dinheiro(preco)}.";
+        eco?.Gastar(preco);
         (t == TipoServico.Notebook ? chegadasNotebook : chegadasMiniPc).Add(Hoje + 1);
-        return $"{info.unidade} comprado por {UIFactory.Dinheiro(info.custoEquipamento)}. Chega amanhã; prepare na bancada antes de entregar.";
+        return $"{info.unidade} comprado por {UIFactory.Dinheiro(preco)}. Chega amanhã; prepare na bancada antes de entregar.";
     }
+
+    // Preço de compra com o desconto do nível de parceria com o distribuidor
+    public static float PrecoEquipamento(TipoServico t) => Mathf.Round(CatalogoServicos.Info(t).custoEquipamento * (1f - Parcerias.DescontoServico(t)));
 
     public int Novos(TipoServico t) => t == TipoServico.Notebook ? notebooksNovos : miniPcsNovos;
     public int Prontos(TipoServico t) => t == TipoServico.Notebook ? notebooksProntos : miniPcsProntos;
@@ -237,7 +252,7 @@ public class ServicosManager : MonoBehaviour
 
     // ---------- Implantação e alertas (gastam tempo do dia) ----------
 
-    bool GastarTempo(float minutos, out string motivo)
+    public static bool GastarTempo(float minutos, out string motivo)
     {
         motivo = null;
         var d = DiaManager.Instance;
@@ -428,6 +443,16 @@ public class ServicosManager : MonoBehaviour
                 if (c.mesUltimoTeste < mes && DiaManager.DataDoDia(dia).Day >= 20)
                     NovoAlerta(c, "Teste de restauração do mês", "Restaurar alguns arquivos para garantir que o backup funciona.", 30, acao: "teste-backup");
                 break;
+            case TipoServico.Firewall:
+                if (r < 0.05f)
+                {
+                    int q = Random.Range(0, 4);
+                    if (q == 0) NovoAlerta(c, "Ataque bloqueado", "Muitas tentativas de acesso de fora. Revisar o log e bloquear os IPs.", 20, critico: true);
+                    else if (q == 1) NovoAlerta(c, "VPN não conecta", "Funcionário em home office não consegue conectar na VPN.", 25);
+                    else if (q == 2) NovoAlerta(c, "Liberar site bloqueado", "O filtro de conteúdo bloqueou um site que o cliente usa.", 10);
+                    else NovoAlerta(c, "Atualizar firmware do firewall", "Atualização de segurança disponível. Agendar e aplicar.", 40);
+                }
+                break;
             case TipoServico.Bot:
                 if (r < 0.03f) NovoAlerta(c, "Cliente quer mudar o menu do bot", "Ajustar o fluxo de atendimento no editor.", 30);
                 break;
@@ -449,6 +474,7 @@ public class ServicosManager : MonoBehaviour
             suporte.satisfacao = Mathf.Min(100f, suporte.satisfacao + 15f);
             backup.satisfacao = Mathf.Min(100f, backup.satisfacao + 15f);
             ReputationManager.Instance?.AlterarReputacao(3f);
+            Conquistas.Desbloquear("heroi");
             Avisar($"<b>Ransomware na {suporte.empresa}!</b> Você restaurou tudo do backup testado. Herói do dia (+3 reputação, 4 h técnicas cobradas).", UIFactory.Sucesso, 6f);
         }
         else if (backup != null)
@@ -478,7 +504,7 @@ public class ServicosManager : MonoBehaviour
             int dias = System.DateTime.DaysInMonth(inicioMes.Year, inicioMes.Month);
             float fracao = Mathf.Clamp01((diaInicio + dias - Mathf.Max(c.diaImplantacao, diaInicio)) / (float)dias);
             Cobrar(c, Mathf.Round(c.mensal * fracao * 100f) / 100f, CatalogoServicos.Info(c.tipo).nome);
-            custos += CatalogoServicos.CustoMensal(c.tipo, c.unidades) * fracao;
+            custos += CatalogoServicos.CustoMensal(c.tipo, c.unidades) * fracao * (1f - Parcerias.DescontoServico(c.tipo));
             if (c.tipo == TipoServico.Bot) custos += Random.Range(0, 1500) * 0.043f;   // mensagens além das 1.000 grátis
         }
         if (custos > 0.01f)

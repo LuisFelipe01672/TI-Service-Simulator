@@ -142,7 +142,7 @@ public class ContratosManager : MonoBehaviour
     {
         var t = CatalogoLocacao.Tipo(tipoId);
         var c = CatalogoLocacao.Condicao(condicao);
-        float preco = Mathf.Round(t.custoCompra * c.multCusto);
+        float preco = PrecoCompra(tipoId, condicao);
         int guardados = patrimonio.FindAll(x => x.contratoId < 0).Count;
         var sede = SedeManager.Instance;
         if (sede != null && guardados >= sede.CapacidadeEstoque)
@@ -158,6 +158,14 @@ public class ContratosManager : MonoBehaviour
         };
         patrimonio.Add(e);
         return $"{t.nome} ({c.nome}) comprada por {UIFactory.Dinheiro(preco)}. Chega amanhã.";
+    }
+
+    // Sem a distribuidora, compra no varejo (+15%); com ela, desconto do nível de parceria
+    public static float PrecoCompra(string tipoId, int condicao)
+    {
+        var t = CatalogoLocacao.Tipo(tipoId);
+        float mult = Parcerias.Ativa(Parcerias.Impressoras) ? 1f - Parcerias.Desconto(Parcerias.Impressoras) : 1.15f;
+        return Mathf.Round(t.custoCompra * CatalogoLocacao.Condicao(condicao).multCusto * mult);
     }
 
     public List<EquipamentoPatrimonio> EmEstoque(string tipoId) =>

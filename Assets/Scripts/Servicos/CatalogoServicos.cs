@@ -3,7 +3,7 @@ using UnityEngine;
 // Serviços vendidos por mês (receita recorrente). Nomes fictícios.
 // Estrutura e preços inspirados numa tabela real de uma empresa de TI (arredondados);
 // custos são estimativas (o que a empresa paga ao fornecedor) para dar margem realista.
-public enum TipoServico { Suporte, Email, Backup, Bot, Notebook, MiniPc }
+public enum TipoServico { Suporte, Email, Backup, Bot, Notebook, MiniPc, Firewall }
 
 public class ServicoInfo
 {
@@ -13,6 +13,7 @@ public class ServicoInfo
     public float custoEquipamento;       // preço de compra de cada unidade
     public bool porPrazo;                // preço depende do prazo (12/24/36 meses)
     public string requisito;             // texto mostrado quando bloqueado
+    public bool soPorProjeto;            // firewall: nasce de um projeto (aba Negócios), não de contato
 
     public ServicoInfo(TipoServico tipo, string nome, string unidade, string descricao)
     { this.tipo = tipo; this.nome = nome; this.unidade = unidade; this.descricao = descricao; }
@@ -39,7 +40,13 @@ public static class CatalogoServicos
         new ServicoInfo(TipoServico.MiniPc, "Locação de mini PC", "mini PC",
             "Mini PC com Windows Pro preparado na bancada. Combos com antivírus e Office.")
             { exigeEquipamento = true, custoEquipamento = 1800f, porPrazo = true },
+        new ServicoInfo(TipoServico.Firewall, "Firewall gerenciado", "firewall",
+            "Firewall em comodato com licença de proteção, VPN e filtro de conteúdo. Você monitora e ajusta as regras.")
+            { soPorProjeto = true },
     };
+
+    public const float MensalFirewall = 390f;        // referência de mercado: a partir de ~R$ 260 nas operadoras
+    public const float CustoLicencaFirewall = 120f;  // licença anual do fabricante dividida por mês (aprox.)
 
     public static ServicoInfo Info(TipoServico t)
     {
@@ -68,6 +75,7 @@ public static class CatalogoServicos
         {
             case TipoServico.Backup: return PrecoBackup(unidades);
             case TipoServico.Bot: return 199f;
+            case TipoServico.Firewall: return MensalFirewall * Mathf.Max(1, unidades);
             default: return PrecoUnidade(t, unidades, meses) * unidades;
         }
     }
@@ -111,6 +119,7 @@ public static class CatalogoServicos
             case TipoServico.Email: return unidades * 27f;                                      // licença no parceiro de nuvem (aprox.)
             case TipoServico.Backup: return FaixaBackup(unidades) * 0.15f + 25f;                // armazenamento + licença do agente
             case TipoServico.Bot: return 60f;                                                   // plataforma (mensagens à parte)
+            case TipoServico.Firewall: return CustoLicencaFirewall * Mathf.Max(1, unidades);
             default: return 20f * unidades;                                                     // seguro/manutenção do equipamento
         }
     }

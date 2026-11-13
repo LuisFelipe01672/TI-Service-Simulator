@@ -85,7 +85,9 @@ public partial class GameUI
         }
         if (abertas == 0) UIFactory.Texto(tabletConteudo, "Nenhuma guia em aberto. As guias chegam quando o mês vira.", 20, UIFactory.CorSuave);
 
+        MontarBanco();
         MontarSede();
         MontarConcorrencia();
+        MontarConquistas();
     }
 }

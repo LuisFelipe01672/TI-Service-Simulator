@@ -126,7 +126,7 @@ public partial class GameUI
             {
                 int cond = i;
                 var c = CatalogoLocacao.Condicoes[i];
-                UIFactory.Botao(linha, $"{c.nome} {UIFactory.Dinheiro(Mathf.Round(t.custoCompra * c.multCusto))}", () =>
+                UIFactory.Botao(linha, $"{c.nome} {UIFactory.Dinheiro(ContratosManager.PrecoCompra(t.id, cond))}", () =>
                 {
                     Toast(cm.ComprarEquipamento(tipo.id, cond), UIFactory.Destaque, 4f);
                     AtualizarTablet();

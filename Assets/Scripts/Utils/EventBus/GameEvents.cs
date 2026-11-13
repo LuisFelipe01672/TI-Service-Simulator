@@ -62,3 +62,11 @@ public struct DiaIniciadoEvent : IEvent
 {
     public int dia;
 }
+
+// A empresa quebrou (saldo negativo por tempo demais)
+public struct FalenciaEvent : IEvent
+{
+    public int dia;
+    public float saldo;
+    public string motivo;
+}

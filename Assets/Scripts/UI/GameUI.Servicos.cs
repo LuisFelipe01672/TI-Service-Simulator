@@ -22,7 +22,7 @@ public partial class GameUI
         Secao($"SERVIÇOS MENSAIS · receita recorrente {UIFactory.Dinheiro(sm.Mrr)}/mês");
         foreach (var info in CatalogoServicos.Servicos)
         {
-            if (sm.Liberado(info.tipo, out string motivo)) continue;
+            if (info.soPorProjeto || sm.Liberado(info.tipo, out string motivo)) continue;
             UIFactory.Texto(tabletConteudo, $"<color=#9AA6B8>{info.nome}: {motivo}</color>", 17, UIFactory.CorTexto);
             break;   // um aviso basta
         }
@@ -50,7 +50,7 @@ public partial class GameUI
             string equip = "";
             if (info.exigeEquipamento)
             {
-                float compra = info.custoEquipamento * l.unidades;
+                float compra = ServicosManager.PrecoEquipamento(l.tipo) * l.unidades;
                 equip = $"   ·   Equipamentos: {UIFactory.Dinheiro(compra)} (prontos: {sm.Prontos(l.tipo)}/{l.unidades})";
             }
             UIFactory.Texto(card, $"Mensal: <b>{UIFactory.Dinheiro(oferta)}</b>   ·   Seu custo: ~{UIFactory.Dinheiro(custo)}/mês   ·   Implantação: {UIFactory.Dinheiro(CatalogoServicos.Implantacao(l.tipo, l.unidades))}{equip}", 18, UIFactory.CorTexto);
@@ -82,11 +82,11 @@ public partial class GameUI
         // Compra de notebooks e mini PCs
         foreach (var info in CatalogoServicos.Servicos)
         {
-            if (!info.exigeEquipamento) continue;
+            if (!info.exigeEquipamento || !sm.Liberado(info.tipo, out _)) continue;
             var tipo = info.tipo;
             var card = Cartao();
             UIFactory.Texto(card, $"<b>{info.nome}</b>   <size=18><color=#9AA6B8>novos (preparar na bancada): {sm.Novos(tipo)} · prontos: {sm.Prontos(tipo)}</color></size>", 20, UIFactory.CorTexto);
-            UIFactory.Botao(LinhaBotoes(card), $"Comprar 1 {info.unidade} ({UIFactory.Dinheiro(info.custoEquipamento)})",
+            UIFactory.Botao(LinhaBotoes(card), $"Comprar 1 {info.unidade} ({UIFactory.Dinheiro(ServicosManager.PrecoEquipamento(tipo))})",
                 () => { Toast(sm.ComprarEquipamento(tipo), UIFactory.Destaque, 4f); AtualizarTablet(); }, UIFactory.CartaoClaro, 360, 44, 18);
         }
     }

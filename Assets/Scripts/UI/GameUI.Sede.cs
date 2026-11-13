@@ -40,6 +40,44 @@ public partial class GameUI
         }
     }
 
+    void MontarBanco()
+    {
+        var b = BancoManager.Instance;
+        if (b == null) return;
+        Secao("BANCO");
+        var c = Cartao();
+        float saldo = GameEconomy.Instance != null ? GameEconomy.Instance.saldo : 0f;
+        UIFactory.Texto(c, $"Juros: <b>{b.JurosMes * 100:0.#}% ao mês</b> ({(EmpresaManager.Instance != null && EmpresaManager.Instance.TemCnpj ? "capital de giro" : "crédito pessoal")})   ·   " +
+            $"Pode pegar: <b>{UIFactory.Dinheiro(b.Limite)}</b>   ·   Devendo: {UIFactory.Dinheiro(b.SaldoDevedor)}", 19, UIFactory.CorTexto);
+        if (saldo < 0f)
+            UIFactory.Texto(c, $"<color=#F2545B>Conta no vermelho há {b.diasNoVermelho} dia(s). Com {BancoManager.DiasParaFalencia} a empresa quebra.</color>", 19, UIFactory.CorTexto);
+        foreach (var e in b.emprestimos)
+            UIFactory.Texto(c, $"• {UIFactory.Dinheiro(e.valor)} em {e.totalParcelas}x de {UIFactory.Dinheiro(e.parcela)} — faltam {e.Restantes} parcela(s)", 18, UIFactory.CorSuave);
+
+        var linha = LinhaBotoes(c);
+        foreach (float v in new[] { 1000f, 3000f, 10000f })
+        {
+            if (v > b.Limite) continue;
+            foreach (int n in BancoManager.OpcoesParcelas)
+            {
+                float valor = v; int parcelas = n;
+                UIFactory.Botao(linha, $"{UIFactory.Dinheiro(v)} em {n}x", () => { Toast(b.Tomar(valor, parcelas), UIFactory.Alerta, 6f); AtualizarTablet(); },
+                    UIFactory.CartaoClaro, 200, 42, 16);
+            }
+        }
+        if (b.Limite < 1000f) UIFactory.Texto(linha, "Sem crédito disponível agora.", 18, UIFactory.CorSuave);
+    }
+
+    void MontarConquistas()
+    {
+        Secao($"CONQUISTAS · {Conquistas.desbloqueadas.Count}/{Conquistas.Lista.Length}");
+        foreach (var q in Conquistas.Lista)
+        {
+            bool tem = Conquistas.Tem(q.id);
+            UIFactory.Texto(tabletConteudo, tem ? $"<color=#C9A227><b>{q.nome}</b></color> — {q.descricao}" : $"<color=#5A6578>{q.nome} — {q.descricao} (bloqueada)</color>", 17, UIFactory.CorTexto);
+        }
+    }
+
     void MontarConcorrencia()
     {
         Secao("MERCADO E CONCORRENTES");

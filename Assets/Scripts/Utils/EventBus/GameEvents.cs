@@ -34,6 +34,7 @@ public struct ChamadoConcluidoEvent : IEvent
     public float tempoGasto;
     public bool cometeuErro;
     public bool porFuncionario;
+    public bool diagnosticoCerteiro;   // investigou e acertou de primeira
 }
 
 public struct AcaoErradaEvent : IEvent

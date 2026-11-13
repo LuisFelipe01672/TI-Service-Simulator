@@ -1,5 +1,5 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class MissionManager : MonoBehaviour
 {
@@ -15,37 +15,16 @@ public class MissionManager : MonoBehaviour
     [Tooltip("Reputação perdida a cada ação de diagnóstico errada")]
     public float penalidadeAcaoErrada = 3f;
 
+    [Header("Investigação")]
+    [Tooltip("Segundos do prazo gastos em cada pergunta ao cliente")]
+    public float custoPergunta = 5f;
+    [Tooltip("Segundos do prazo gastos em cada teste no equipamento")]
+    public float custoTeste = 10f;
+    [Tooltip("Perguntas que um cliente apressado aguenta antes de se irritar")]
+    public int pacienciaApressado = 2;
+
     [Header("Locais")]
     public Transform[] locaisClientes;
-
-    // Catálogo de problemas: cada um diz qual equipamento olhar e qual ação resolve.
-    // As ações precisam bater com as opções de Equipamento.GetOpcoes().
-    struct Problema
-    {
-        public string descricao;
-        public TipoEquipamento equipamento;
-        public string solucao;
-        public Problema(string d, TipoEquipamento e, string s) { descricao = d; equipamento = e; solucao = s; }
-    }
-
-    static readonly Problema[] problemasFaceis = {
-        new Problema("Não consigo imprimir nada.",                      TipoEquipamento.Impressora, "Reiniciar spooler"),
-        new Problema("Impressora aparece offline no sistema.",          TipoEquipamento.Impressora, "Verificar cabo"),
-        new Problema("Um documento travou e nada mais imprime.",        TipoEquipamento.Impressora, "Verificar fila de impressão"),
-        new Problema("A impressão está saindo clara e falhada.",        TipoEquipamento.Impressora, "Trocar toner"),
-    };
-    static readonly Problema[] problemasMedios = {
-        new Problema("Computador sem acesso à rede.",                   TipoEquipamento.Computador, "Verificar cabo de rede"),
-        new Problema("Aparece \"conflito de IP\" e a rede não conecta.", TipoEquipamento.Computador, "Verificar IP"),
-        new Problema("A placa de rede sumiu depois de uma atualização.", TipoEquipamento.Computador, "Reinstalar driver"),
-        new Problema("O computador está travando e lento.",             TipoEquipamento.Computador, "Reiniciar equipamento"),
-    };
-    static readonly Problema[] problemasDificeis = {
-        new Problema("Roteador desconfigurado, ninguém acessa a internet.", TipoEquipamento.Roteador, "Resetar para padrão"),
-        new Problema("A internet cai para todo mundo a cada 10 minutos.",   TipoEquipamento.Roteador, "Reiniciar roteador"),
-        new Problema("A rede Wi-Fi sumiu depois de mexerem no roteador.",   TipoEquipamento.Roteador, "Verificar configurações"),
-        new Problema("Os computadores pegam IP errado e não navegam.",      TipoEquipamento.Roteador, "Verificar IP"),
-    };
 
     static readonly string[] clientesFase1 = { "Contabilidade Alfa", "Escritório Beta", "Clínica Gama" };
     static readonly string[] clientesFase2 = { "Indústria Delta", "Construtora Épsilon", "Farmácia Zeta" };
@@ -89,9 +68,8 @@ public class MissionManager : MonoBehaviour
         else if (fase == 2) dif = Random.value < 0.5f ? DificuldadeChamado.Facil : DificuldadeChamado.Medio;
         else                dif = Random.value < 0.4f ? DificuldadeChamado.Medio : DificuldadeChamado.Dificil;
 
-        Problema[] pool = dif == DificuldadeChamado.Facil ? problemasFaceis :
-                          dif == DificuldadeChamado.Medio ? problemasMedios : problemasDificeis;
-        Problema p = pool[Random.Range(0, pool.Length)];
+        Problema p = CatalogoProblemas.Sortear(dif);
+        Personalidade jeito = CatalogoProblemas.SortearPersonalidade(fase);
 
         string[] clientes = fase == 1 ? clientesFase1 : fase == 2 ? clientesFase2 : clientesFase3;
 
@@ -100,10 +78,15 @@ public class MissionManager : MonoBehaviour
 
         float tempoLimite = dif == DificuldadeChamado.Facil ? 300f : dif == DificuldadeChamado.Medio ? 200f : 120f;
         float recompensa  = dif == DificuldadeChamado.Facil ? 150f : dif == DificuldadeChamado.Medio ? 300f : 500f;
+        tempoLimite = Mathf.Round(tempoLimite * Chamado.MultPrazo(jeito) / 5f) * 5f;
+        recompensa  = Mathf.Round(recompensa * Chamado.MultPagamento(jeito) / 5f) * 5f;
 
         var chamado = new Chamado(clientes[Random.Range(0, clientes.Length)], p.descricao, tipo, dif, recompensa, tempoLimite);
         chamado.equipamento = p.equipamento;
         chamado.solucao = p.solucao;
+        chamado.problema = p;
+        chamado.personalidade = jeito;
+        chamado.contato = CatalogoProblemas.SortearContato();
         return chamado;
     }
 
@@ -130,11 +113,74 @@ public class MissionManager : MonoBehaviour
         }
         else
         {
+            float penalidade = penalidadeAcaoErrada * chamadoAtivo.MultErro;
             chamadoAtivo.tentativasErradas++;
-            ReputationManager.Instance?.AlterarReputacao(-penalidadeAcaoErrada);
-            EventBus<AcaoErradaEvent>.Raise(new AcaoErradaEvent { acao = acao, penalidade = penalidadeAcaoErrada });
+            chamadoAtivo.acoesErradas.Add(equipamento + ":" + acao);
+            ReputationManager.Instance?.AlterarReputacao(-penalidade);
+            EventBus<AcaoErradaEvent>.Raise(new AcaoErradaEvent { acao = acao, penalidade = penalidade });
         }
         return acertou;
+    }
+
+    // ---------- Investigação: conversa com o cliente e testes ----------
+
+    // Gasta parte do prazo (perguntar e testar levam tempo)
+    public void ConsumirTempo(float segundos)
+    {
+        if (chamadoAtivo != null) tempoInicioAtendimento -= segundos;
+    }
+
+    // Faz uma pergunta ao cliente do chamado ativo e devolve a fala dele
+    public string Perguntar(Pergunta pergunta)
+    {
+        var ch = chamadoAtivo;
+        if (ch == null || ch.problema == null) return "...";
+        if (ch.perguntasFeitas.Contains(pergunta)) return ch.problema.Resposta(pergunta, ch.Mente);
+
+        ConsumirTempo(custoPergunta);
+        ch.conversou = true;
+        ch.perguntasFeitas.Add(pergunta);
+
+        string resposta = ch.problema.Resposta(pergunta, ch.Mente);
+        ch.anotacoes.Add($"<b>{ch.contato}</b> ({CatalogoProblemas.RotuloPergunta(pergunta)}): {resposta}");
+
+        if (ch.personalidade == Personalidade.Apressado && ch.perguntasFeitas.Count > pacienciaApressado)
+        {
+            ReputationManager.Instance?.AlterarReputacao(-1f);
+            resposta += $"\n<color=#F5B83F>{CatalogoProblemas.Impaciencia()}</color>  <size=80%>(-1 reputação)</size>";
+        }
+        return resposta;
+    }
+
+    public bool JaTestou(TipoEquipamento equipamento, int indice, out string resultado)
+    {
+        resultado = null;
+        if (chamadoAtivo == null) return false;
+        int i = chamadoAtivo.testesFeitos.IndexOf(equipamento + ":" + indice);
+        if (i < 0) return false;
+        resultado = chamadoAtivo.resultadosTestes[i];
+        return true;
+    }
+
+    public bool JaErrou(TipoEquipamento equipamento, string acao) =>
+        chamadoAtivo != null && chamadoAtivo.acoesErradas.Contains(equipamento + ":" + acao);
+
+    // Roda um teste no equipamento e devolve o que o técnico vê
+    public string ExecutarTeste(TipoEquipamento equipamento, int indice)
+    {
+        var ch = chamadoAtivo;
+        if (ch == null) return "Nenhum chamado em atendimento.";
+        if (JaTestou(equipamento, indice, out string visto)) return visto;
+
+        ConsumirTempo(custoTeste);
+        bool aqui = ch.problema != null && ch.equipamento == equipamento;
+        string resultado = aqui ? ch.problema.testes[indice] : CatalogoProblemas.ResultadoNormal(equipamento, indice);
+
+        ch.testesFeitos.Add(equipamento + ":" + indice);
+        ch.resultadosTestes.Add(resultado);
+        string nomeTeste = CatalogoProblemas.Testes(equipamento)[indice];
+        ch.anotacoes.Add($"<b>{equipamento}</b> ({nomeTeste}): {resultado}");
+        return resultado;
     }
 
     public void ConcluirChamado(bool cometeuErro = false)
@@ -142,14 +188,20 @@ public class MissionManager : MonoBehaviour
         if (chamadoAtivo == null) return;
 
         float tempoGasto = TempoDecorrido;
+        var ch = chamadoAtivo;
 
-        ReputationManager.Instance?.AvaliarChamado(tempoGasto, chamadoAtivo.tempoLimite, cometeuErro);
-        GameEconomy.Instance?.ReceberPagamento(cometeuErro ? chamadoAtivo.recompensa * 0.3f : chamadoAtivo.recompensa);
+        ReputationManager.Instance?.AvaliarChamado(tempoGasto, ch.tempoLimite, cometeuErro, ch.MultReputacao);
+        GameEconomy.Instance?.ReceberPagamento(cometeuErro ? ch.recompensa * 0.3f : ch.recompensa);
+
+        // Bônus: investigou (conversou ou testou) e acertou de primeira, dentro do prazo
+        bool certeiro = !cometeuErro && ch.tentativasErradas == 0 && tempoGasto <= ch.tempoLimite &&
+                        (ch.perguntasFeitas.Count > 0 || ch.testesFeitos.Count > 0);
+        if (certeiro) ReputationManager.Instance?.AlterarReputacao(1f);
 
         Debug.Log($"[MissionManager] Concluído em {tempoGasto:F1}s (limite: {chamadoAtivo.tempoLimite}s) | Erro: {cometeuErro}");
 
         chamadoAtivo.concluido = true;
-        EventBus<ChamadoConcluidoEvent>.Raise(new ChamadoConcluidoEvent { chamado = chamadoAtivo, tempoGasto = tempoGasto, cometeuErro = cometeuErro, porFuncionario = false });
+        EventBus<ChamadoConcluidoEvent>.Raise(new ChamadoConcluidoEvent { chamado = chamadoAtivo, tempoGasto = tempoGasto, cometeuErro = cometeuErro, porFuncionario = false, diagnosticoCerteiro = certeiro });
         chamadoAtivo = null;
 
         if (chamadosDisponiveis.Count < 2)

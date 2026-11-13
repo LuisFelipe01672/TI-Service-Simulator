@@ -37,7 +37,8 @@ public class ReputationManager : MonoBehaviour
         FaseAtual = CalcularFase(reputacao); // fase coerente com a reputação inicial, sem disparar aviso
     }
 
-    public void AvaliarChamado(float tempoGasto, float tempoLimite, bool cometeuErro)
+    // multiplicador: clientes VIP valem mais (ganho e perda)
+    public void AvaliarChamado(float tempoGasto, float tempoLimite, bool cometeuErro, float multiplicador = 1f)
     {
         float delta = 0f;
 
@@ -58,7 +59,7 @@ public class ReputationManager : MonoBehaviour
             Debug.Log($"[Reputação] Chamado ok. Razão tempo: {razao:F2} → {delta:+0;-0}");
         }
 
-        AlterarReputacao(delta);
+        AlterarReputacao(delta * multiplicador);
     }
 
     public void AlterarReputacao(float delta)

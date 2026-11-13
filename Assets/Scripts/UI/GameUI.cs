@@ -42,7 +42,7 @@ public partial class GameUI : MonoBehaviour
     RectTransform tablet, pausa;
     readonly List<RectTransform> janelas = new List<RectTransform>();   // todas as janelas modais
     RectTransform tabletConteudo;
-    Button abaChamados, abaEquipe, abaLoja, abaEmpresa, abaContratos;
+    Button abaChamados, abaEquipe, abaLoja, abaEmpresa, abaContratos, abaCentral;
     int abaAtiva;
     TextMeshProUGUI txtTabletInfo;
 
@@ -284,11 +284,13 @@ public partial class GameUI : MonoBehaviour
         abas.pivot = new Vector2(0.5f, 1);
         abas.offsetMin = new Vector2(32, -152); abas.offsetMax = new Vector2(-32, -100);
         UIFactory.Horizontal(abas, 10);
-        abaChamados = UIFactory.Botao(abas, "Chamados", () => TrocarAba(0), UIFactory.Destaque, 170, 52, 22);
-        abaEquipe = UIFactory.Botao(abas, "Equipe", () => TrocarAba(1), UIFactory.CartaoClaro, 150, 52, 22);
-        abaLoja = UIFactory.Botao(abas, "Loja e mochila", () => TrocarAba(2), UIFactory.CartaoClaro, 210, 52, 22);
-        abaEmpresa = UIFactory.Botao(abas, "Empresa", () => TrocarAba(3), UIFactory.CartaoClaro, 160, 52, 22);
-        abaContratos = UIFactory.Botao(abas, "Contratos", () => TrocarAba(4), UIFactory.CartaoClaro, 180, 52, 22);
+        // Ordem na tela: Chamados, Contratos, Central, Empresa, Equipe, Loja (o número da aba não muda)
+        abaChamados = UIFactory.Botao(abas, "Chamados", () => TrocarAba(0), UIFactory.Destaque, 150, 52, 20);
+        abaContratos = UIFactory.Botao(abas, "Contratos", () => TrocarAba(4), UIFactory.CartaoClaro, 150, 52, 20);
+        abaCentral = UIFactory.Botao(abas, "Central", () => TrocarAba(5), UIFactory.CartaoClaro, 130, 52, 20);
+        abaEmpresa = UIFactory.Botao(abas, "Empresa", () => TrocarAba(3), UIFactory.CartaoClaro, 140, 52, 20);
+        abaEquipe = UIFactory.Botao(abas, "Equipe", () => TrocarAba(1), UIFactory.CartaoClaro, 130, 52, 20);
+        abaLoja = UIFactory.Botao(abas, "Loja e mochila", () => TrocarAba(2), UIFactory.CartaoClaro, 190, 52, 20);
 
         // Conteúdo com rolagem
         var area = UIFactory.Vazio(tablet, "Area");
@@ -518,6 +520,9 @@ public partial class GameUI : MonoBehaviour
         abaLoja.GetComponent<Image>().color = abaAtiva == 2 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaEmpresa.GetComponent<Image>().color = abaAtiva == 3 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaContratos.GetComponent<Image>().color = abaAtiva == 4 ? UIFactory.Destaque : UIFactory.CartaoClaro;
+        int nAlertas = ServicosManager.Instance != null ? ServicosManager.Instance.alertas.Count : 0;
+        abaCentral.GetComponent<Image>().color = abaAtiva == 5 ? UIFactory.Destaque : nAlertas > 0 ? UIFactory.Hex("#7A2E35") : UIFactory.CartaoClaro;
+        abaCentral.GetComponentInChildren<TextMeshProUGUI>().text = nAlertas > 0 ? $"Central ({nAlertas})" : "Central";
         abaEquipe.GetComponentInChildren<TextMeshProUGUI>().text = fase >= 2 ? "Equipe" : "Equipe (Fase 2)";
 
         float saldo = GameEconomy.Instance != null ? GameEconomy.Instance.saldo : 0f;
@@ -528,7 +533,8 @@ public partial class GameUI : MonoBehaviour
         else if (abaAtiva == 1) MontarAbaEquipe();
         else if (abaAtiva == 2) MontarAbaLoja();
         else if (abaAtiva == 3) MontarAbaEmpresa();
-        else MontarAbaContratos();
+        else if (abaAtiva == 4) MontarAbaContratos();
+        else MontarAbaCentral();
     }
 
     RectTransform Cartao(Color? cor = null)

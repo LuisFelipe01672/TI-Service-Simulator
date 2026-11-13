@@ -14,6 +14,7 @@ public class SaveData
     public Mochila.Dados mochila;
     public EmpresaManager.Dados empresa;
     public ContratosManager.Dados contratos;
+    public ServicosManager.Dados servicos;
     public float saldo;
     public float reputacao;
     public int fase;
@@ -81,6 +82,7 @@ public class SaveManager : MonoBehaviour
             mochila = Mochila.Instance != null ? Mochila.Instance.Exportar() : null,
             empresa = EmpresaManager.Instance != null ? EmpresaManager.Instance.Exportar() : null,
             contratos = ContratosManager.Instance != null ? ContratosManager.Instance.Exportar() : null,
+            servicos = ServicosManager.Instance != null ? ServicosManager.Instance.Exportar() : null,
             dia = DiaManager.Instance != null ? DiaManager.Instance.dia : Mathf.Max(1, DiaManager.DiaSalvo),
             equipe = FuncionarioManager.Instance != null
                      ? new List<Funcionario>(FuncionarioManager.Instance.equipe)
@@ -112,6 +114,8 @@ public class SaveManager : MonoBehaviour
         EmpresaManager.Instance?.NovoJogo();
         ContratosManager.dadosSalvos = null;
         ContratosManager.Instance?.NovoJogo();
+        ServicosManager.dadosSalvos = null;
+        ServicosManager.Instance?.NovoJogo();
         GameEconomy.Instance?.DefinirSaldo(saldoInicial);
         Debug.Log($"[Save] Jogo novo: R${saldoInicial:F0} para começar.");
     }
@@ -150,6 +154,8 @@ public class SaveManager : MonoBehaviour
         else EmpresaManager.dadosSalvos = data.empresa;
         if (ContratosManager.Instance != null) ContratosManager.Instance.Carregar(data.contratos);
         else ContratosManager.dadosSalvos = data.contratos;
+        if (ServicosManager.Instance != null) ServicosManager.Instance.Carregar(data.servicos);
+        else ServicosManager.dadosSalvos = data.servicos;
         if (DiaManager.Instance != null) DiaManager.Instance.dia = DiaManager.DiaSalvo;
 
         Debug.Log($"[Save] Jogo carregado (salvo em {data.salvoEm}): R${data.saldo:F2}, reputação {data.reputacao:F0}, fase {data.fase}, {data.equipe?.Count ?? 0} funcionário(s)");

@@ -370,6 +370,7 @@ public partial class GameUI
 
         UIFactory.Texto(bancadaConteudo, $"Caixa de cabo: <b>{m.MetrosNaCaixa} m</b> restantes  ·  Conectores RJ45: <b>{m.Quantidade(Item.ConectorRJ45)}</b>", 21, UIFactory.CorTexto);
         UIFactory.Texto(bancadaConteudo, $"Cabos prontos na mochila: {m.ListaCabos()}", 19, UIFactory.CorSuave);
+        MontarPreparacaoNaBancada();
 
         string falta = !m.Tem(Item.AlicateCrimpagem) ? "Você precisa de um alicate de crimpagem." :
                        m.MetrosNaCaixa <= 0 ? "Você não tem caixa de cabo (compre no tablet)." :

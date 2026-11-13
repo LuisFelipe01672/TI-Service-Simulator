@@ -80,7 +80,9 @@ public class MissionManager : MonoBehaviour
                            p.equipamento == TipoEquipamento.Roteador   ? TipoChamado.Rede : TipoChamado.Notebook;
 
         float tempoLimite = dif == DificuldadeChamado.Facil ? 300f : dif == DificuldadeChamado.Medio ? 200f : 120f;
-        float recompensa  = dif == DificuldadeChamado.Facil ? 150f : dif == DificuldadeChamado.Medio ? 300f : 500f;
+        // Chamado avulso: horas técnicas estimadas × R$ 125 + deslocamento
+        float horas = dif == DificuldadeChamado.Facil ? 1f : dif == DificuldadeChamado.Medio ? 2f : 3f;
+        float recompensa  = horas * CatalogoServicos.HoraTecnica + CatalogoServicos.Deslocamento;
         tempoLimite = Mathf.Round(tempoLimite * Chamado.MultPrazo(jeito) / 5f) * 5f;
         recompensa  = Mathf.Round(recompensa * Chamado.MultPagamento(jeito) / 5f) * 5f;
 
@@ -96,10 +98,11 @@ public class MissionManager : MonoBehaviour
     }
 
     // Defeito num equipamento alugado: vira um chamado incluso no contrato (não paga, mas o cliente espera rapidez)
-    public void AdicionarChamadoDeContrato(int contratoId, string empresa)
+    // dif Fácil = problemas de impressora; Médio = problemas de computador
+    public void AdicionarChamadoDeContrato(int contratoId, string empresa, DificuldadeChamado dif = DificuldadeChamado.Facil)
     {
-        var p = CatalogoProblemas.Sortear(DificuldadeChamado.Facil);
-        var ch = new Chamado(empresa, p.descricao, TipoChamado.Impressora, DificuldadeChamado.Facil, 0f, 240f)
+        var p = CatalogoProblemas.Sortear(dif);
+        var ch = new Chamado(empresa, p.descricao, p.equipamento == TipoEquipamento.Impressora ? TipoChamado.Impressora : TipoChamado.Notebook, dif, 0f, 240f)
         {
             equipamento = p.equipamento, solucao = p.solucao, problema = p, contratoId = contratoId,
             personalidade = Personalidade.Tranquilo, contato = CatalogoProblemas.SortearContato()
@@ -217,6 +220,7 @@ public class MissionManager : MonoBehaviour
         {
             // Incluso no contrato: não cobra o serviço; peças podem ser cobradas
             ContratosManager.Instance?.ChamadoContratoEncerrado(ch.contratoId, true, tempoGasto <= ch.tempoLimite);
+            ServicosManager.Instance?.ChamadoContratoEncerrado(ch.contratoId, true, tempoGasto <= ch.tempoLimite);
             if (ch.pecasCobradas > 0f && EmpresaManager.Instance != null) EmpresaManager.Instance.RegistrarServico(ch, ch.pecasCobradas, false);
         }
         else if (EmpresaManager.Instance != null)
@@ -252,7 +256,11 @@ public class MissionManager : MonoBehaviour
         if (chamadoAtivo == null) return;
         Debug.Log($"[MissionManager] Chamado abandonado: {chamadoAtivo.nomeCliente}");
         chamadoAtivo.falhou = true;
-        if (chamadoAtivo.contratoId > 0) ContratosManager.Instance?.ChamadoContratoEncerrado(chamadoAtivo.contratoId, false, false);
+        if (chamadoAtivo.contratoId > 0)
+        {
+            ContratosManager.Instance?.ChamadoContratoEncerrado(chamadoAtivo.contratoId, false, false);
+            ServicosManager.Instance?.ChamadoContratoEncerrado(chamadoAtivo.contratoId, false, false);
+        }
         ReputationManager.Instance?.AlterarReputacao(-ReputationManager.Instance.punicaoErro);
         chamadoAtivo = null;
         if (chamadosDisponiveis.Count < 2)

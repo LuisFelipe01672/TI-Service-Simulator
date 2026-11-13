@@ -61,6 +61,7 @@ public partial class GameUI
         }
 
         MontarCompras(cm);
+        MontarServicosNaAbaContratos();
     }
 
     void MontarLead(ContratosManager cm, Lead l)

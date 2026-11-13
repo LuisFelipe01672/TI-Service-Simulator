@@ -187,7 +187,7 @@ public class ProjetosManager : MonoBehaviour
             projetos.Remove(p);
             return $"<b>{p.empresa}</b> achou o orçamento caro ({UIFactory.Dinheiro(total)}) e fechou com a {rival.nome}.";
         }
-        if (total > oferta * Concorrencia.VantagemJogador(rep))
+        if (total > oferta * (Concorrencia.VantagemJogador(rep) + FocoEmpresa.Vantagem(AreaNegocio.Infraestrutura)))
         {
             Concorrencia.Registrar(rival, false);
             projetos.Remove(p);
@@ -198,7 +198,7 @@ public class ProjetosManager : MonoBehaviour
         p.etapa = 2;
         p.tamanhoOrcado = tam;
         p.valorMaterial = material; p.valorMaoDeObra = mao; p.valorTotal = total;
-        p.horasTotais = Horas(p.tipo, tam);
+        p.horasTotais = Horas(p.tipo, tam) * FocoEmpresa.MultHorasProjeto;
         p.prazoDia = Hoje + Mathf.CeilToInt(p.horasTotais / 6f) + 5;
         Cobrar(p, Mathf.Round(total * 0.5f), "Entrada (50%)");
         return $"Aprovado! <b>{p.empresa}</b> — {p.Info.nome}, {UIFactory.Dinheiro(total)}. Entrada de 50% faturada. " +
@@ -219,7 +219,7 @@ public class ProjetosManager : MonoBehaviour
 
         // Sem levantamento, a medição real aparece agora: o que faltar sai do seu bolso
         string surpresa = "";
-        p.horasTotais = Horas(p.tipo, p.tamanhoReal);
+        p.horasTotais = Horas(p.tipo, p.tamanhoReal) * FocoEmpresa.MultHorasProjeto;
         if (p.tamanhoReal > p.tamanhoOrcado)
             surpresa = $" <color=#F5B83F>Medindo no local: são {p.tamanhoReal}, não {p.tamanhoOrcado}. Material e horas a mais por sua conta!</color>";
         return $"Material comprado ({UIFactory.Dinheiro(custo)}). Chega em {DiaManager.DataDoDia(p.diaMaterial):dd/MM}." + surpresa;
@@ -315,13 +315,14 @@ public class ProjetosManager : MonoBehaviour
     void NovoDia(int dia)
     {
         Parcerias.NovoDia(dia);
+        ProdutosProprios.NovoDia(dia);
 
         projetos.RemoveAll(p => p.etapa == 0 && p.expiraNoDia < dia);
         projetos.RemoveAll(p => p.etapa == 5 && dia - p.prazoDia > 15);
 
         var emp = EmpresaManager.Instance;
         int abertos = projetos.FindAll(p => p.etapa == 0).Count;
-        if ((emp == null || emp.TemCnpj) && abertos < 3 && Random.value < chanceContatoPorDia) NovoContato();
+        if ((emp == null || emp.TemCnpj) && abertos < 3 && Random.value < chanceContatoPorDia * FocoEmpresa.MultLeads(AreaNegocio.Infraestrutura)) NovoContato();
 
         var data = DiaManager.DataDoDia(dia);
         bool util = data.DayOfWeek != System.DayOfWeek.Saturday && data.DayOfWeek != System.DayOfWeek.Sunday;

@@ -55,9 +55,12 @@ public partial class GameUI
             }
             int mes = EmpresaManager.MesDoDia(DiaManager.Instance != null ? DiaManager.Instance.dia : 1);
             string sup = c.suprimento <= 0f ? "<color=#F2545B>SEM TINTA</color>" : c.suprimento < 0.15f ? $"<color=#F5B83F>{c.suprimento * 100:F0}%</color>" : $"{c.suprimento * 100:F0}%";
-            UIFactory.Texto(card, $"Tinta/toner: {sup}  ·  Páginas este mês: {c.paginasNoMes}  ·  Contador lido este mês: {(c.mesLeitura == mes ? "sim" : "<color=#F5B83F>não</color>")}" +
+            UIFactory.Texto(card, $"Tinta/toner: {sup}  ·  Páginas este mês: {c.paginasNoMes}  ·  Contador lido este mês: {(c.bilhetagem ? "automático" : c.mesLeitura == mes ? "sim" : "<color=#F5B83F>não</color>")}" +
                 (c.chamadoAberto ? "  ·  <color=#F2545B>chamado aberto</color>" : ""), 18, UIFactory.CorTexto);
-            UIFactory.Botao(LinhaBotoes(card), "Visitar: ler contador e repor tinta (1 h 30)", () => { Toast(cm.Visitar(contrato), UIFactory.Destaque, 4f); AtualizarTablet(); }, UIFactory.CartaoClaro, 480, 46, 19);
+            var linhaC = LinhaBotoes(card);
+            UIFactory.Botao(linhaC, "Visitar: ler contador e repor tinta (1 h 30)", () => { Toast(cm.Visitar(contrato), UIFactory.Destaque, 4f); AtualizarTablet(); }, UIFactory.CartaoClaro, 480, 46, 19);
+            if (!c.bilhetagem && Parcerias.Ativa(Parcerias.ControleImpressao))
+                UIFactory.Botao(linhaC, $"Controle de impressão (+{UIFactory.Dinheiro(ContratosManager.MensalBilhetagem)}/mês, 1 h)", () => { Toast(cm.InstalarBilhetagem(contrato), UIFactory.Destaque, 5f); AtualizarTablet(); }, UIFactory.Destaque, 420, 46, 18);
         }
 
         MontarCompras(cm);

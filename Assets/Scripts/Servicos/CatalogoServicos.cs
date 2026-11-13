@@ -3,7 +3,7 @@ using UnityEngine;
 // Serviços vendidos por mês (receita recorrente). Nomes fictícios.
 // Estrutura e preços inspirados numa tabela real de uma empresa de TI (arredondados);
 // custos são estimativas (o que a empresa paga ao fornecedor) para dar margem realista.
-public enum TipoServico { Suporte, Email, Backup, Bot, Notebook, MiniPc, Firewall }
+public enum TipoServico { Suporte, Email, Backup, Bot, Notebook, MiniPc, Firewall, Erp }
 
 public class ServicoInfo
 {
@@ -43,7 +43,13 @@ public static class CatalogoServicos
         new ServicoInfo(TipoServico.Firewall, "Firewall gerenciado", "firewall",
             "Firewall em comodato com licença de proteção, VPN e filtro de conteúdo. Você monitora e ajusta as regras.")
             { soPorProjeto = true },
+        new ServicoInfo(TipoServico.Erp, "ERP próprio", "usuário",
+            "Seu sistema de gestão: financeiro, estoque e notas fiscais. Implantação com migração de dados e treinamento."),
     };
+
+    public const float PrecoErpUsuario = 89f;        // ERPs básicos para pequenas empresas: ~R$ 50 a 150 por usuário
+    public const float ImplantacaoErp = 2500f;
+    public const float CustoErpUsuario = 8f;         // servidor e banco de dados por usuário
 
     public const float MensalFirewall = 390f;        // referência de mercado: a partir de ~R$ 260 nas operadoras
     public const float CustoLicencaFirewall = 120f;  // licença anual do fabricante dividida por mês (aprox.)
@@ -64,6 +70,7 @@ public static class CatalogoServicos
             case TipoServico.Email: return unidades <= 5 ? 36f : unidades <= 20 ? 32f : 28f;
             case TipoServico.Notebook: return meses >= 36 ? 160f : meses >= 24 ? 170f : 280f;
             case TipoServico.MiniPc: return meses >= 36 ? 175f : meses >= 24 ? 195f : 215f;   // combo com antivírus
+            case TipoServico.Erp: return PrecoErpUsuario;
             default: return 0f;
         }
     }
@@ -89,6 +96,7 @@ public static class CatalogoServicos
             case TipoServico.Email: return (unidades <= 5 ? 190f : unidades <= 20 ? 170f : 150f) * unidades;
             case TipoServico.Backup: return HoraTecnica * 2f;
             case TipoServico.Bot: return 800f;
+            case TipoServico.Erp: return ImplantacaoErp;
             default: return 150f;
         }
     }
@@ -118,7 +126,8 @@ public static class CatalogoServicos
             case TipoServico.Suporte: return unidades * 39.20f / CatalogoLocacao.MarkupPecas;   // licenças compradas do fornecedor
             case TipoServico.Email: return unidades * 27f;                                      // licença no parceiro de nuvem (aprox.)
             case TipoServico.Backup: return FaixaBackup(unidades) * 0.15f + 25f;                // armazenamento + licença do agente
-            case TipoServico.Bot: return 60f;                                                   // plataforma (mensagens à parte)
+            case TipoServico.Bot: return ProdutosProprios.Lancado(ProdutosProprios.Bot) ? 15f : 60f;   // plataforma (mensagens à parte)
+            case TipoServico.Erp: return CustoErpUsuario * unidades;
             case TipoServico.Firewall: return CustoLicencaFirewall * Mathf.Max(1, unidades);
             default: return 20f * unidades;                                                     // seguro/manutenção do equipamento
         }

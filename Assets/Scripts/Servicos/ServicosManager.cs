@@ -153,6 +153,7 @@ public class ServicosManager : MonoBehaviour
             case TipoServico.Backup: unidades = new[] { 50, 100, 200, 300, 500, 700 }[Random.Range(0, 6)]; break;
             case TipoServico.Bot: unidades = 1; break;
             case TipoServico.Notebook: unidades = Random.Range(1, 9); break;
+            case TipoServico.Erp: unidades = Random.Range(3, 21); break;
             default: unidades = Random.Range(1, 11); break;
         }
         var l = new LeadServico
@@ -191,7 +192,7 @@ public class ServicosManager : MonoBehaviour
             Concorrencia.Registrar(rival, false);
             return $"<b>{l.empresa}</b> achou caro ({UIFactory.Dinheiro(oferta)}/mês) e fechou com a {rival.nome}.";
         }
-        if (oferta > concorrente * Concorrencia.VantagemJogador(rep))
+        if (oferta > concorrente * (Concorrencia.VantagemJogador(rep) + FocoEmpresa.Vantagem(FocoEmpresa.AreaDoServico(l.tipo))))
         {
             Concorrencia.Registrar(rival, false);
             return $"<b>{l.empresa}</b> fechou com a {rival.nome} por {UIFactory.Dinheiro(concorrente)}/mês (a sua saiu {UIFactory.Dinheiro(oferta)}).";
@@ -272,6 +273,7 @@ public class ServicosManager : MonoBehaviour
             case TipoServico.Email: return 20 + 15 * c.unidades;
             case TipoServico.Backup: return 120;
             case TipoServico.Bot: return 180;
+            case TipoServico.Erp: return 240;
             default: return 60;   // entrega
         }
     }
@@ -296,7 +298,7 @@ public class ServicosManager : MonoBehaviour
         var c = Contrato(a.contratoId);
         if (a.acao == "troca-equipamento" && c != null && Prontos(c.tipo) <= 0)
             return $"Você não tem {CatalogoServicos.Info(c.tipo).unidade} pronto para trocar. Prepare um na bancada.";
-        if (!GastarTempo(a.minutos, out string motivo)) return motivo;
+        if (!GastarTempo(Mathf.Round(a.minutos * FocoEmpresa.MultMinutosAlerta), out string motivo)) return motivo;
         alertas.Remove(a);
         if (c == null) return "Resolvido.";
 
@@ -340,7 +342,8 @@ public class ServicosManager : MonoBehaviour
         Chegadas(chegadasMiniPc, ref miniPcsNovos, "mini PC");
 
         leads.RemoveAll(l => l.expiraNoDia < dia);
-        if (Random.value < chanceLeadPorDia && leads.Count < 4)
+        float multFoco = Mathf.Max(FocoEmpresa.MultLeads(AreaNegocio.Gerenciados), FocoEmpresa.MultLeads(AreaNegocio.Software));
+        if (Random.value < chanceLeadPorDia * multFoco && leads.Count < 4)
         {
             var emp = EmpresaManager.Instance;
             if (emp == null || emp.TemCnpj) GerarLead();
@@ -451,6 +454,15 @@ public class ServicosManager : MonoBehaviour
                     else if (q == 1) NovoAlerta(c, "VPN não conecta", "Funcionário em home office não consegue conectar na VPN.", 25);
                     else if (q == 2) NovoAlerta(c, "Liberar site bloqueado", "O filtro de conteúdo bloqueou um site que o cliente usa.", 10);
                     else NovoAlerta(c, "Atualizar firmware do firewall", "Atualização de segurança disponível. Agendar e aplicar.", 40);
+                }
+                break;
+            case TipoServico.Erp:
+                if (r < ProdutosProprios.ChanceBug(ProdutosProprios.Erp))
+                {
+                    int q = Random.Range(0, 3);
+                    if (q == 0) NovoAlerta(c, "Bug no sistema", "Erro ao emitir nota fiscal no ERP. Corrigir e avisar o cliente.", 45, critico: true);
+                    else if (q == 1) NovoAlerta(c, "Cliente pediu relatório novo", "Montar um relatório de vendas por vendedor.", 40);
+                    else NovoAlerta(c, "Treinar usuário novo", "Funcionário novo do cliente precisa aprender o sistema.", 30);
                 }
                 break;
             case TipoServico.Bot:

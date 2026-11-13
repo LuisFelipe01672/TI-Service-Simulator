@@ -11,7 +11,7 @@ public class ParceriaInfo
     public float adesao;            // taxa de adesão / treinamento / certificação
     public int diasAnalise;         // cadastro e análise de crédito
     public TipoServico[] libera = new TipoServico[0];
-    public bool liberaFirewall, liberaInfra, liberaImpressoras;
+    public bool liberaFirewall, liberaInfra, liberaImpressoras, liberaBilhetagem;
     public string semParceria;      // o que acontece sem ela
 }
 
@@ -30,7 +30,7 @@ public class EstadoParceria
 // O nível (Registrado → Prata → Ouro) sobe com o volume vendido e dá desconto no custo.
 public static class Parcerias
 {
-    public const int Nuvem = 0, Antivirus = 1, Backup = 2, Bot = 3, Hardware = 4, Firewall = 5, Infra = 6, Impressoras = 7;
+    public const int Nuvem = 0, Antivirus = 1, Backup = 2, Bot = 3, Hardware = 4, Firewall = 5, Infra = 6, Impressoras = 7, ControleImpressao = 8;
 
     public static readonly ParceriaInfo[] Lista =
     {
@@ -58,6 +58,9 @@ public static class Parcerias
         new ParceriaInfo { id = Impressoras, nome = "ImpressBR Distribuidora", area = "Impressoras para locação",
             descricao = "Compra direta de multifuncionais para outsourcing de impressão.", regimeMinimo = Regime.MEI, reputacaoMinima = 25f, adesao = 500f, diasAnalise = 4,
             liberaImpressoras = true, semParceria = "Você compra impressoras no varejo, sem desconto de nível." },
+        new ParceriaInfo { id = ControleImpressao, nome = "PrintControl Software", area = "Controle de impressão (bilhetagem)",
+            descricao = "Software que conta quem imprime o quê, cria cotas e lê o contador sozinho.", regimeMinimo = Regime.MEI, reputacaoMinima = 30f, adesao = 800f, diasAnalise = 3,
+            liberaBilhetagem = true, semParceria = "Não dá para oferecer controle de impressão." },
     };
 
     public static List<EstadoParceria> estados = new List<EstadoParceria>();
@@ -109,6 +112,12 @@ public static class Parcerias
     public static bool LiberaServico(TipoServico t, out string motivo)
     {
         motivo = null;
+        if (t == TipoServico.Erp)
+        {
+            if (ProdutosProprios.Lancado(ProdutosProprios.Erp)) return true;
+            motivo = "O ERP é produto próprio: desenvolva primeiro (aba Negócios)."; return false;
+        }
+        if (t == TipoServico.Bot && ProdutosProprios.Lancado(ProdutosProprios.Bot)) return true;
         if (t == TipoServico.Firewall)
         {
             if (Ativa(Firewall)) return true;
@@ -194,6 +203,7 @@ public static class Parcerias
                 if (p.liberaFirewall && c.tipo == TipoServico.Firewall) v++;
             }
         if (p.liberaImpressoras && ContratosManager.Instance != null) v += ContratosManager.Instance.patrimonio.Count;
+        if (p.liberaBilhetagem && ContratosManager.Instance != null) v += ContratosManager.Instance.contratos.FindAll(c => c.ativo && c.bilhetagem).Count;
         if (p.liberaInfra && ProjetosManager.Instance != null) v += ProjetosManager.Instance.concluidos;
         return v;
     }

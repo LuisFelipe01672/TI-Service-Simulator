@@ -60,6 +60,8 @@ public class ContratoLocacao
     public int paginasLidas;            // páginas do mês registradas na leitura
     public bool chamadoAberto;
 
+    public bool bilhetagem;             // controle de impressão instalado (lê o contador sozinho)
+
     public bool Instalado => diaInstalacao > 0;
 }
 
@@ -240,7 +242,7 @@ public class ContratosManager : MonoBehaviour
             Concorrencia.Registrar(rival, false);
             return $"<b>{l.empresa}</b> achou caro ({UIFactory.Dinheiro(conta)}/mês) e fechou com a {rival.nome} por {UIFactory.Dinheiro(concorrente)}/mês.";
         }
-        if (conta > concorrente * Concorrencia.VantagemJogador(rep))
+        if (conta > concorrente * (Concorrencia.VantagemJogador(rep) + FocoEmpresa.Vantagem(AreaNegocio.Impressao)))
         {
             Concorrencia.Registrar(rival, false);
             return $"<b>{l.empresa}</b> fechou com a {rival.nome}: a proposta deles saiu {UIFactory.Dinheiro(concorrente)}/mês contra {UIFactory.Dinheiro(conta)} sua.";
@@ -300,7 +302,7 @@ public class ContratosManager : MonoBehaviour
         c.paginasLidas = c.paginasNoMes;
 
         float faltando = 1f - c.suprimento;
-        float custo = Mathf.Round(faltando * t.rendimentoRefil * CatalogoLocacao.CustoPorPagina(t, c.fracCor, CatalogoLocacao.Fornecedor(c.fornecedorSuprimento)) * 100f) / 100f;
+        float custo = Mathf.Round(faltando * t.rendimentoRefil * CatalogoLocacao.CustoPorPagina(t, c.fracCor, CatalogoLocacao.Fornecedor(c.fornecedorSuprimento)) * FocoEmpresa.MultSuprimento * 100f) / 100f;
         if (custo > 0f) GameEconomy.Instance?.Gastar(custo);
         c.suprimento = 1f;
         c.diasSemSuprimento = 0;
@@ -318,7 +320,7 @@ public class ContratosManager : MonoBehaviour
             if (e.diaChegada == dia) Avisar($"Chegou do fornecedor: {e.Tipo.nome} ({CatalogoLocacao.Condicao(e.condicao).nome}).", UIFactory.Sucesso);
 
         leads.RemoveAll(l => l.expiraNoDia < dia);
-        if (Liberado && Random.value < chanceLeadPorDia && leads.Count < 4) GerarLead();
+        if (Liberado && Random.value < chanceLeadPorDia * FocoEmpresa.MultLeads(AreaNegocio.Impressao) && leads.Count < 4) GerarLead();
 
         foreach (var c in contratos)
         {
@@ -355,7 +357,7 @@ public class ContratosManager : MonoBehaviour
         // Páginas do dia (dias úteis), com variação
         var data = DiaManager.DataDoDia(Hoje);
         bool util = data.DayOfWeek != System.DayOfWeek.Saturday && data.DayOfWeek != System.DayOfWeek.Sunday;
-        int paginas = util ? Mathf.RoundToInt(c.paginasMes / 22f * Random.Range(0.6f, 1.4f)) : 0;
+        int paginas = util ? Mathf.RoundToInt(c.paginasMes / 22f * Random.Range(0.6f, 1.4f) * (c.bilhetagem ? 0.9f : 1f)) : 0;   // com cotas, imprime-se menos
 
         if (c.suprimento <= 0f) paginas = 0;   // sem tinta não imprime
         c.paginasNoMes += paginas;
@@ -404,6 +406,7 @@ public class ContratosManager : MonoBehaviour
 
     void Faturar(int mes)
     {
+        float custoBilhetagem = 0f;
         foreach (var c in contratos)
         {
             if (!c.ativo || !c.Instalado) continue;
@@ -417,13 +420,36 @@ public class ContratosManager : MonoBehaviour
             // Excedente só entra se o contador foi lido no mês
             int excedentes = Mathf.Max(0, c.paginasNoMes - c.franquia);
             float excedenteValor = excedentes * ((1f - c.fracCor) * c.excedentePB + c.fracCor * c.excedenteCor);
-            if (c.mesLeitura == mes) valor += excedenteValor;
+            if (c.mesLeitura == mes || c.bilhetagem) valor += excedenteValor;
             else if (excedenteValor > 1f)
                 Avisar($"Você não leu o contador da <b>{c.empresa}</b>: perdeu {UIFactory.Dinheiro(excedenteValor)} de excedente.", UIFactory.Perigo, 4.5f);
 
+            if (c.bilhetagem)
+            {
+                valor += MensalBilhetagem * fracao;
+                custoBilhetagem += CustoBilhetagem * fracao * (1f - Parcerias.Desconto(Parcerias.ControleImpressao));
+            }
             CobrarCliente(c, Mathf.Round(valor * 100f) / 100f, "Locação de impressora");
             c.paginasNoMes = 0;
         }
+        if (custoBilhetagem > 0.01f) GameEconomy.Instance?.Gastar(Mathf.Round(custoBilhetagem * 100f) / 100f);
+    }
+
+    // ---------- Controle de impressão (bilhetagem) ----------
+
+    public const float MensalBilhetagem = 49f;     // por impressora, para o cliente
+    public const float CustoBilhetagem = 20f;      // licença paga ao fornecedor (aprox.)
+
+    public string InstalarBilhetagem(ContratoLocacao c)
+    {
+        if (c.bilhetagem) return "Já tem controle de impressão.";
+        if (!c.Instalado) return "Instale a impressora primeiro.";
+        if (!Parcerias.Ativa(Parcerias.ControleImpressao)) return $"Precisa da parceria com a {Parcerias.Lista[Parcerias.ControleImpressao].nome} (aba Negócios).";
+        if (!GastarTempo(60f, out string motivo)) return motivo;
+        c.bilhetagem = true;
+        c.satisfacao = Mathf.Min(100f, c.satisfacao + 5f);
+        return $"Controle de impressão instalado na <b>{c.empresa}</b> (+{UIFactory.Dinheiro(MensalBilhetagem)}/mês). " +
+               "O contador agora é lido sozinho e o cliente imprime ~10% menos com as cotas.";
     }
 
     void CobrarCliente(ContratoLocacao c, float valor, string servico)

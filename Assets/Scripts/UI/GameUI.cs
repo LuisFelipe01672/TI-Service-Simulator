@@ -160,6 +160,7 @@ public partial class GameUI : MonoBehaviour
         AtualizarPrompt();
         AtualizarCardChamado();
         AtualizarRelogio();
+        AtualizarObjetivos();
         AtualizarComputador();
     }
 
@@ -227,6 +228,7 @@ public partial class GameUI : MonoBehaviour
 
         txtFase = UIFactory.Texto(hud, "Fase 1 · Técnico solo", 18, UIFactory.CorSuave);
         ConstruirRelogio(hud);
+        ConstruirObjetivos(raiz);
     }
 
     void ConstruirCardChamado(RectTransform raiz)

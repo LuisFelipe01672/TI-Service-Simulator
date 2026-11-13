@@ -144,6 +144,7 @@ public class SaveManager : MonoBehaviour
         Conquistas.Iniciar();
         FocoEmpresa.Iniciar();
         ProdutosProprios.Iniciar();
+        Objetivos.Iniciar();
         GameEconomy.Instance?.DefinirSaldo(saldoInicial);
         Debug.Log($"[Save] Jogo novo: R${saldoInicial:F0} para começar.");
     }

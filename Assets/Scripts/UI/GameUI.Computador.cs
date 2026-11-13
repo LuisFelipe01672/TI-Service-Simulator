@@ -110,7 +110,7 @@ public partial class GameUI
         var e = mm?.Estado;
         if (e == null) { FecharModal(); return; }
         txtPcTitulo.text = $"Computador de {mm.chamadoAtivo.contato}  ·  {AppNome(appAtual)}" +
-                           (e.PcNaInternet ? "   <color=#7CFFB0>● Internet</color>" : e.PcNaRede ? "   <color=#FFD54A>● Sem internet</color>" : "   <color=#FF8A8A>● Sem rede</color>");
+                           (e.PcNaInternet ? "   <color=#7CFFB0>• Internet</color>" : e.PcNaRede ? "   <color=#FFD54A>• Sem internet</color>" : "   <color=#FF8A8A>• Sem rede</color>");
 
         UIFactory.Limpar(pcConteudo);
         if (pcReiniciando) { TextoPc("Reiniciando...", 40, true); return; }
@@ -300,11 +300,11 @@ public partial class GameUI
     void MontarDispositivos(EstadoEquipamentos e)
     {
         TextoPc("Gerenciador de Dispositivos", 28, true);
-        TextoPc("▸ Adaptadores de rede", 22, true);
+        TextoPc("» Adaptadores de rede", 22, true);
         if (!e.driverInstalado) TextoPc("     (nenhum adaptador de rede encontrado)", 20);
-        else if (!e.driverOk) TextoPc("     <color=#C77700>⚠</color> Placa de rede Ethernet — <color=#B23A48>Este dispositivo não pode ser iniciado. (Código 10)</color>", 20);
+        else if (!e.driverOk) TextoPc("     <color=#C77700>(!)</color> Placa de rede Ethernet — <color=#B23A48>Este dispositivo não pode ser iniciado. (Código 10)</color>", 20);
         else TextoPc("     Placa de rede Ethernet — Este dispositivo está funcionando corretamente.", 20);
-        TextoPc("▸ Processadores · Teclados · Monitores · Unidades de disco — sem problemas", 19);
+        TextoPc("» Processadores · Teclados · Monitores · Unidades de disco — sem problemas", 19);
 
         var l = LinhaPc();
         if (e.driverInstalado)

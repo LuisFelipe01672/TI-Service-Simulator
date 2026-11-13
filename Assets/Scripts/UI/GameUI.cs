@@ -497,6 +497,7 @@ public partial class GameUI : MonoBehaviour
         foreach (var j in janelas) if (j != null) j.gameObject.SetActive(false);
 
         modal = tipo;
+        if (cenaCrimp != null) cenaCrimp.Mostrar(tipo == Modal.Crimpagem);   // a câmera do close só roda com a janela aberta
         overlay.gameObject.SetActive(true);
         janela.gameObject.SetActive(true);
         Cursor.lockState = CursorLockMode.None;
@@ -519,6 +520,7 @@ public partial class GameUI : MonoBehaviour
         // Desistir da crimpagem volta para a janela de onde ela foi aberta
         if (modal == Modal.Crimpagem && aoCancelarCrimpagem != null) { CancelarCrimpagem(); return; }
         crimpAtual = null;
+        if (cenaCrimp != null) cenaCrimp.Mostrar(false);
         modal = Modal.Nenhum;
         equipamentoAtual = null;
         npcConversa = null;

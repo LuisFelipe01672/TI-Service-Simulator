@@ -22,6 +22,8 @@ public partial class GameUI
     Button botaoCrimpAvancar;
     TextMeshProUGUI txtCrimpAvancar;
     Crimpagem crimpAtual;
+    RawImage imgCrimp;
+    CenaCrimpagem cenaCrimp;
     System.Action<bool> aoTerminarCrimpagem;
     System.Action aoCancelarCrimpagem;
     Vector3 origemSujeira;
@@ -115,7 +117,7 @@ public partial class GameUI
         if (logManutencao.Count == 0)
             UIFactory.Texto(manLog, "Comece olhando o equipamento: visor, luzes, cabos...", 19, UIFactory.CorSuave);
         for (int i = 0; i < logManutencao.Count; i++)
-            UIFactory.Texto(manLog, (i == 0 ? "▶ " : "• ") + logManutencao[i], i == 0 ? 20 : 18, i == 0 ? UIFactory.CorTexto : UIFactory.CorSuave);
+            UIFactory.Texto(manLog, (i == 0 ? "» " : "• ") + logManutencao[i], i == 0 ? 20 : 18, i == 0 ? UIFactory.CorTexto : UIFactory.CorSuave);
 
         MontarMochilaResumo();
     }
@@ -176,6 +178,14 @@ public partial class GameUI
         UIFactory.AjustarAoConteudo(crimpagem);
         txtCrimpTitulo = UIFactory.Texto(crimpagem, "Crimpar conector RJ45", 32, UIFactory.CorTexto, FontStyles.Bold);
 
+        // Close 3D do cabo, das ferramentas e do conector (CenaCrimpagem desenha nesta imagem)
+        var imgGo = new GameObject("Close3D", typeof(RectTransform), typeof(RawImage));
+        imgGo.transform.SetParent(crimpagem, false);
+        imgCrimp = imgGo.GetComponent<RawImage>();
+        imgCrimp.raycastTarget = false;
+        var le = imgGo.AddComponent<LayoutElement>();
+        le.preferredHeight = 300; le.minHeight = 300;
+
         UIFactory.Texto(crimpagem, "PADRÃO T568B (pino 1 → 8, trava do conector para baixo)", 16, UIFactory.CorSuave, FontStyles.Bold);
         crimpRef = UIFactory.Vazio(crimpagem, "Referencia");
         UIFactory.Horizontal(crimpRef, 6);
@@ -213,7 +223,11 @@ public partial class GameUI
         aoCancelarCrimpagem = aoCancelar;
         origemSujeira = sujeiraEm;
         txtCrimpTitulo.text = titulo;
+        if (cenaCrimp == null) cenaCrimp = CenaCrimpagem.Obter();
+        cenaCrimp.Reiniciar();
+        imgCrimp.texture = cenaCrimp.Textura;
         AbrirModal(Modal.Crimpagem, crimpagem);
+        cenaCrimp.Mostrar(true);
         MontarCrimpagem();
     }
 
@@ -230,6 +244,7 @@ public partial class GameUI
     {
         var c = crimpAtual;
         if (c == null) return;
+        if (cenaCrimp != null) cenaCrimp.Sincronizar(c);
         UIFactory.Limpar(crimpSlots);
         UIFactory.Limpar(crimpFios);
 
@@ -302,6 +317,12 @@ public partial class GameUI
         string msg = c.Avancar();
         if (c.etapa != etapa && Crimpagem.FazSujeira(etapa))
             Sujeira.Espalhar(origemSujeira, etapa == Crimpagem.Etapa.Aparar ? 6 : 3, etapa == Crimpagem.Etapa.Cortar ? "conector" : etapa == Crimpagem.Etapa.Aparar ? "fios" : "capa");
+        if (c.etapa != etapa)
+        {
+            cenaCrimp?.AnimarEtapa(etapa, c);
+            SomManager.Tocar(etapa == Crimpagem.Etapa.Crimpar ? "porta" : "mexer", etapa == Crimpagem.Etapa.Crimpar ? 0.5f : 0.8f,
+                etapa == Crimpagem.Etapa.Crimpar ? 1.8f : 1f);
+        }
 
         if (c.etapa == Crimpagem.Etapa.Pronto)
         {
@@ -311,11 +332,19 @@ public partial class GameUI
             aoTerminarCrimpagem = null;
             aoCancelarCrimpagem = null;
             Toast(msg, UIFactory.Destaque, 2f);
-            fim?.Invoke(ok);
+            botaoCrimpAvancar.interactable = false;
+            // Deixa ver o alicate apertando antes de seguir
+            StartCoroutine(DepoisDe(1.1f, () => fim?.Invoke(ok)));
             return;
         }
         if (c.etapa == etapa) Toast(msg, UIFactory.Alerta, 2f);   // não avançou (faltou algo)
         MontarCrimpagem();
+    }
+
+    IEnumerator DepoisDe(float segundos, System.Action acao)
+    {
+        yield return new WaitForSecondsRealtime(segundos);
+        acao?.Invoke();
     }
 
     // Refazer a ponta do cabo do equipamento do cliente (uma ponta).

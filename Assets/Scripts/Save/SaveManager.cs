@@ -42,7 +42,8 @@ public class SaveManager : MonoBehaviour
     // O menu principal define isso: true = "Continuar", false = "Novo jogo"
     public static bool CarregarAoIniciar = true;
 
-    public static string CaminhoSave => Path.Combine(Application.persistentDataPath, "save.json");
+    // O editor usa outro arquivo: testar na Unity não mexe no save de quem joga pelo executável
+    public static string CaminhoSave => Path.Combine(Application.persistentDataPath, Application.isEditor ? "save_editor.json" : "save.json");
     public static bool ExisteSave => File.Exists(CaminhoSave);
 
     [ShowNonSerializedField] private int chamadosConcluidos;

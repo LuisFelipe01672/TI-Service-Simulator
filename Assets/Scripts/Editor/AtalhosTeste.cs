@@ -109,6 +109,23 @@ public static class AtalhosTeste
         typeof(ContratosManager).GetMethod("GerarLead", Privado)?.Invoke(ContratosManager.Instance, null);
     }
 
+    [MenuItem(Menu + "Encher a mochila (ferramentas e peças)", false, 183)]
+    static void EncherMochila()
+    {
+        if (Jogador() == null || Mochila.Instance == null) return;
+        foreach (Item item in System.Enum.GetValues(typeof(Item)))
+            Mochila.Instance.Adicionar(item, item == Item.CaixaCabo ? 305 : 10);
+        Debug.Log("[Teste] Mochila cheia.");
+    }
+
+    [MenuItem(Menu + "Escritório: bancada (fazer cabo)", false, 105)]
+    static void Bancada()
+    {
+        var b = Object.FindAnyObjectByType<Bancada>();
+        if (b == null) return;
+        Ir(b.transform.position + b.transform.forward * 1.1f + Vector3.up * 1.1f, b.transform.position + Vector3.up * 0.9f);
+    }
+
     [MenuItem(Menu + "Pular 1 dia", false, 160)]
     static void Pular1() => PularDias(1);
 

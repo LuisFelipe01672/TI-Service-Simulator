@@ -296,6 +296,14 @@ public class DiaManager : MonoBehaviour
         sol.shadows = dia01 > 0.01f ? LightShadows.Soft : LightShadows.None;
 
         RenderSettings.ambientIntensity = Mathf.Lerp(0.18f, 0.65f, Mathf.Clamp01((altura + 10f) / 40f));
+
+        // Luz ambiente em 3 cores (céu, horizonte, chão): o lado das paredes sem sol não fica preto.
+        // (O ambiente vindo do skybox depende de iluminação pré-calculada, que o cenário montado por código não tem.)
+        float claro = Mathf.Clamp01((altura + 10f) / 40f);
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+        RenderSettings.ambientSkyColor = Color.Lerp(new Color(0.05f, 0.06f, 0.10f), new Color(0.60f, 0.68f, 0.82f), claro);
+        RenderSettings.ambientEquatorColor = Color.Lerp(new Color(0.04f, 0.04f, 0.06f), new Color(0.50f, 0.50f, 0.48f), claro);
+        RenderSettings.ambientGroundColor = Color.Lerp(new Color(0.02f, 0.02f, 0.02f), new Color(0.30f, 0.28f, 0.24f), claro);
         RenderSettings.reflectionIntensity = Mathf.Lerp(0.3f, 0.8f, dia01);
     }
 

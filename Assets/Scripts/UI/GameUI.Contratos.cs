@@ -97,7 +97,9 @@ public partial class GameUI
         float margem = conta - custo;
         UIFactory.Texto(card, $"Conta do cliente: <b>{UIFactory.Dinheiro(conta)}/mês</b>   ·   Seu custo de tinta: ~{UIFactory.Dinheiro(custo)}/mês   ·   " +
             $"Sobra: <color={(margem >= 0 ? "#3CCB7F" : "#F2545B")}>{UIFactory.Dinheiro(margem)}/mês</color>   ·   Em estoque: {emEstoque}", 18, UIFactory.CorTexto);
-        UIFactory.Texto(card, $"Equipamento custa {UIFactory.Dinheiro(t.custoCompra)} novo; volta em ~{(margem > 0 ? Mathf.CeilToInt(t.custoCompra / margem) : 999)} meses.", 17, UIFactory.CorSuave);
+        // Mesmo preço do botão de compra (varejo +15% sem a distribuidora, desconto com ela)
+        float precoNovo = ContratosManager.PrecoCompra(t.id, 0);
+        UIFactory.Texto(card, $"Equipamento custa {UIFactory.Dinheiro(precoNovo)} novo; volta em ~{(margem > 0 ? Mathf.CeilToInt(precoNovo / margem) : 999)} meses.", 17, UIFactory.CorSuave);
         if (aviso != null) UIFactory.Texto(card, $"<color=#F5B83F>{aviso}</color>", 18, UIFactory.CorTexto);
 
         var linha3 = LinhaBotoes(card);

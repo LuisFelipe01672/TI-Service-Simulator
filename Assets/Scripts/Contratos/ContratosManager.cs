@@ -233,7 +233,7 @@ public class ContratosManager : MonoBehaviour
         // O cliente topa até o preço justo × disposição (reputação ajuda um pouco);
         // o concorrente oferece algo perto do preço justo e o cliente escolhe o melhor custo-benefício.
         float limite = justo * l.disposicao * (1f + (rep - 50f) / 500f);
-        var rival = Concorrencia.Sortear();
+        var rival = Concorrencia.Sortear(AreaNegocio.Impressao);
         float concorrente = Concorrencia.Oferta(rival, justo);
         leads.Remove(l);
 

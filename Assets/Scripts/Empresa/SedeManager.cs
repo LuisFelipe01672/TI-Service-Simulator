@@ -148,7 +148,7 @@ public class SedeManager : MonoBehaviour
         eco?.Gastar(info.preco, LivroCaixa.Moveis);
         while (moveis.Count <= (int)m) moveis.Add(0);
         moveis[(int)m]++;
-        return $"{info.nome} comprado ({UIFactory.Dinheiro(info.preco)}). Chega em caixas na porta da sede.";
+        return $"Compra feita: {info.nome} ({UIFactory.Dinheiro(info.preco)}). Chega em caixas na porta da sede.";
     }
 
     // ---------- Contas do mês ----------

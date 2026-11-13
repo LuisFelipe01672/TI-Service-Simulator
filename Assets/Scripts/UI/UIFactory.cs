@@ -145,7 +145,7 @@ public static class UIFactory
         var scroll = raiz.gameObject.AddComponent<ScrollRect>();
         scroll.horizontal = false;
         scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = 40f;
+        scroll.scrollSensitivity = 60f;
 
         var viewport = Painel(raiz, "Viewport", new Color(0, 0, 0, 0.01f));
         Esticar(viewport);

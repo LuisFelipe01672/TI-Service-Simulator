@@ -155,7 +155,7 @@ public static class Licitacoes
         float melhor = l.valorEstimado * (1f - Random.Range(0.06f, 0.26f));
         bool rivalPequeno = Random.value < 0.4f;
         float meu = l.valorEstimado * (1f - l.desconto);
-        var rival = Concorrencia.Sortear();
+        var rival = Concorrencia.Sortear(AreaNegocio.Infraestrutura);
         bool souPequeno = EmpresaManager.Instance == null || EmpresaManager.Instance.regime != Regime.Autonomo;   // MEI e ME são ME/EPP
 
         if (meu > melhor)

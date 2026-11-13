@@ -28,6 +28,9 @@ public partial class GameUI
         if (Time.unscaledTime < proximaChecagemObj) return;
         proximaChecagemObj = Time.unscaledTime + 1f;
 
+        // Conquistas de estado (abriu MEI, alugou sala...) aparecem na hora, não só na virada do dia
+        Conquistas.Verificar();
+
         string concluido = Objetivos.Atualizar();
         if (concluido != null) Toast($"<b>Objetivo concluído:</b> {concluido}", UIFactory.Sucesso, 4f);
 

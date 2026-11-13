@@ -32,6 +32,7 @@ public partial class GameUI
             $"Chamados resolvidos: <b>{Conquistas.chamados}</b>   ·   Faturamento total: <b>{UIFactory.Dinheiro(faturado)}</b>\n" +
             $"Conquistas: <b>{Conquistas.desbloqueadas.Count}/{Conquistas.Lista.Length}</b>\n\n" +
             "<size=18>Dica: guarde reserva para os custos fixos, cobre quem deve e use o empréstimo antes de o buraco ficar fundo.</size>";
+        UIFactory.Limpar(areaToasts);   // as notificações ficam por cima das janelas: aqui elas tapariam o título
         AbrirModal(Modal.Falencia, falencia);
     }
 

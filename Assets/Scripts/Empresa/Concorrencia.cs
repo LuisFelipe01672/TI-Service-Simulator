@@ -38,15 +38,32 @@ public static class Concorrencia
 
     static void Garantir() { if (lista == null || lista.Count == 0) Iniciar(); }
 
-    // Sorteia quem disputa a proposta, pelo tamanho de cada um
-    public static Concorrente Sortear()
+    // Sorteia quem disputa a proposta, pelo tamanho de cada um e pela especialidade:
+    // o especialista na área aparece mais, e quase não aparece fora dela
+    public static Concorrente Sortear(AreaNegocio area = AreaNegocio.Nenhuma)
     {
         Garantir();
         float total = 0f;
-        foreach (var c in lista) total += c.fatia;
+        foreach (var c in lista) total += Peso(c, area);
         float r = Random.value * total;
-        foreach (var c in lista) { r -= c.fatia; if (r <= 0f) return c; }
+        foreach (var c in lista) { r -= Peso(c, area); if (r <= 0f) return c; }
         return lista[lista.Count - 1];
+    }
+
+    static float Peso(Concorrente c, AreaNegocio area)
+    {
+        var esp = Especialidade(c);
+        if (area == AreaNegocio.Nenhuma || esp == AreaNegocio.Nenhuma) return c.fatia;
+        return c.fatia * (esp == area ? 2f : 0.25f);
+    }
+
+    // Pela descrição do perfil (assim saves antigos continuam funcionando)
+    static AreaNegocio Especialidade(Concorrente c)
+    {
+        string p = (c.perfil ?? "").ToLowerInvariant();
+        if (p.Contains("impressora")) return AreaNegocio.Impressao;
+        if (p.Contains("redes")) return AreaNegocio.Infraestrutura;
+        return AreaNegocio.Nenhuma;
     }
 
     // Preço que o concorrente oferece para um "preço justo"

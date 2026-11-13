@@ -208,6 +208,10 @@ public partial class GameUI : MonoBehaviour
         ConstruirResumo(overlay, raiz);
         ConstruirFalencia(overlay);
         overlay.gameObject.SetActive(false);
+
+        // Notificações por cima das janelas (tablet etc.), mas abaixo da tela preta da troca de dia
+        // (a área vem antes do overlay: ao sair da lista, o índice do overlay é a posição logo depois dele)
+        areaToasts.SetSiblingIndex(overlay.GetSiblingIndex());
     }
 
     void ConstruirHud(RectTransform raiz)
@@ -424,6 +428,14 @@ public partial class GameUI : MonoBehaviour
 
     public void Toast(string texto, Color cor, float duracao = 2.5f)
     {
+        // No máximo 5 na tela: com mais, a coluna espreme os cartões e os textos se sobrepõem
+        while (areaToasts.childCount >= 5)
+        {
+            var antigo = areaToasts.GetChild(0);
+            antigo.SetParent(null);
+            Destroy(antigo.gameObject);
+        }
+
         var card = UIFactory.Painel(areaToasts, "Toast", UIFactory.Fundo);
         UIFactory.Horizontal(card, 0, 0);
         card.GetComponent<HorizontalLayoutGroup>().padding = new RectOffset(22, 22, 14, 14);
@@ -512,6 +524,7 @@ public partial class GameUI : MonoBehaviour
             Toast("A aba Equipe abre na <b>Fase 2</b> (30 de reputação).", UIFactory.Alerta);
             return;
         }
+        if (aba != abaAtiva) tabletConteudo.anchoredPosition = Vector2.zero;   // aba nova começa do topo
         abaAtiva = aba;
         AtualizarTablet();
     }

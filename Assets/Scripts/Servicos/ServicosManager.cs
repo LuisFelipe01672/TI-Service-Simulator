@@ -183,7 +183,7 @@ public class ServicosManager : MonoBehaviour
         float oferta = Mathf.Round(tabela * (1f - Mathf.Clamp(desconto, 0f, 0.3f)) * 100f) / 100f;
         float rep = ReputationManager.Instance != null ? ReputationManager.Instance.GetReputacao() : 30f;
         float limite = tabela * l.disposicao * (1f + (rep - 50f) / 500f);
-        var rival = Concorrencia.Sortear();
+        var rival = Concorrencia.Sortear(FocoEmpresa.AreaDoServico(l.tipo));
         float concorrente = Concorrencia.Oferta(rival, tabela);
         leads.Remove(l);
 

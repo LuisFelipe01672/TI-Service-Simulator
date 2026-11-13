@@ -179,7 +179,7 @@ public class ProjetosManager : MonoBehaviour
         float justo = PrecoJusto(p.tipo, p.tamanhoReal);
         float rep = ReputationManager.Instance != null ? ReputationManager.Instance.GetReputacao() : 30f;
         float limite = justo * p.disposicao * (1f + (rep - 50f) / 500f);
-        var rival = Concorrencia.Sortear();
+        var rival = Concorrencia.Sortear(AreaNegocio.Infraestrutura);
         float oferta = Concorrencia.Oferta(rival, justo);
 
         if (total > limite)

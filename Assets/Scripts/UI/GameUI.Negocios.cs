@@ -31,7 +31,7 @@ public partial class GameUI
             if (i == (int)atual) continue;
             var area = (AreaNegocio)i;
             UIFactory.Botao(linha, FocoEmpresa.Nomes[i].Replace("Outsourcing de impressão", "Impressão").Replace("Infraestrutura e redes", "Infraestrutura").Replace("Serviços gerenciados", "Gerenciados"),
-                () => { Toast(FocoEmpresa.Escolher(area), UIFactory.Destaque, 6f); AtualizarTablet(); }, UIFactory.CartaoClaro, 210, 42, 17);
+                () => { Toast(FocoEmpresa.Escolher(area), UIFactory.Destaque, 6f); AtualizarTablet(); }, UIFactory.Cartao, 210, 42, 17);
         }
     }
 

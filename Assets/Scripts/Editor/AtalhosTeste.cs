@@ -64,6 +64,29 @@ public static class AtalhosTeste
 
     static int indicePeca = -1;
 
+    [MenuItem(Menu + "Pular 1 dia", false, 160)]
+    static void Pular1() => PularDias(1);
+
+    [MenuItem(Menu + "Pular 10 dias", false, 161)]
+    static void Pular10() => PularDias(10);
+
+    // Encerra e começa dias seguidos (como dormir), rodando a virada de cada manager
+    static void PularDias(int n)
+    {
+        if (Jogador() == null || DiaManager.Instance == null) return;
+        var mm = MissionManager.Instance;
+        bool faliu = false;
+        for (int i = 0; i < n && !faliu; i++)
+        {
+            if (mm != null && mm.chamadoAtivo != null) mm.AbandonarChamado();
+            DiaManager.Instance.EncerrarDia(true);
+            DiaManager.Instance.ComecarNovoDia();
+            faliu = BancoManager.Instance != null && BancoManager.Instance.faliu;
+        }
+        if (!faliu) GameUI.Instance?.FecharModal();   // na falência, deixa a tela de game over aberta
+        Debug.Log($"[Teste] Pulou {n} dia(s): agora é o dia {DiaManager.Instance.dia}");
+    }
+
     static void IrAoEquipamento(TipoEquipamento tipo)
     {
         foreach (var e in Object.FindObjectsByType<Equipamento>())

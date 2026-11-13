@@ -209,7 +209,7 @@ public class Mochila : MonoBehaviour
         if (d == null)
         {
             Adicionar(item, info.quantidadePorCompra);
-            return $"{info.nome} comprado!";
+            return $"Compra feita: {info.nome}!";
         }
         if (expressa)
         {
@@ -224,7 +224,7 @@ public class Mochila : MonoBehaviour
         entregas.Add(entrega);
         return expressa
             ? $"{info.nome} a caminho por motoboy: chega em {MinutosEntregaExpressa:F0} minutos."
-            : $"{info.nome} comprado: chega amanhã às {d.horaInicio}h.";
+            : $"Compra feita: {info.nome}. Chega amanhã às {d.horaInicio}h.";
     }
 
     void VerificarEntregas()

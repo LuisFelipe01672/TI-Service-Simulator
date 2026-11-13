@@ -49,8 +49,23 @@ Atalhos no Play: **TI Service → Teste (Play)** (aperte Esc antes, para o menu 
 - [x] Impressora e roteador com a frente virada para a sala
 - [x] Peças da impressora: tampa abre de verdade, segurar E retira o cartucho, LED fica laranja sem toner
 - [x] Parte de trás alcançável mirando por cima (equipamento encostado na parede)
-- [ ] Postes acendem às 17h30 (conferir à noite)
-- [ ] Roteador e computador: mirar em todas as peças e resolver um chamado inteiro só pelas peças
+- [x] Postes acendem às 17h30 (conferido às 20h30)
+- [x] Roteador e monitor do cliente com a frente para a sala; peças respondem à mira
+- [ ] Resolver um chamado inteiro só pelas peças (roteador e computador)
+
+## 8. Testado em 13/11 (tarde) — sistemas
+- [x] Empresa: MEI, ordem das seções, empréstimo, sala 20 m², estações 1/3
+- [x] Negócios: foco (recusa por 30 dias), parcerias (negociar/solicitar/aprovada), projeto inteiro (levantamento → orçamento → material → 8 h → entregue → NFS-e → boleto pago)
+- [x] Licitação: proposta enviada, resultado na sessão (inabilitado por falta de parceria)
+- [x] Contrato de impressora: compra, proposta, instalação, controle de impressão (com PrintControl)
+- [x] Falência (avisos 10/20 dias, tela no 30º, recomeçar) e salvar/carregar
+- [ ] Vencer uma licitação (precisa de 2 atestados); alertas de firewall/ERP na Central (precisa desses contratos)
+
+## Jogar fora da Unity
+**TI Service → 4. Gerar executável (Windows)** cria `Builds/Windows/TI Service Simulator.exe` (a pasta inteira é o jogo; não vai para o Git).
+
+## Atalhos de teste (TI Service → Teste (Play))
+Ir para porta/rua/casa/cama/equipamentos, mirar peça por peça, pular 1 ou 10 dias, gerar pedido de projeto, edital ou contato de locação.
 
 ## O que anotar
 - Textos cortados ou que vazam do cartão (os botões mais largos: "Controle de impressão", "Entregar N impressoras")

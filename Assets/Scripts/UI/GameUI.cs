@@ -217,7 +217,7 @@ public partial class GameUI : MonoBehaviour
     void ConstruirHud(RectTransform raiz)
     {
         hud = UIFactory.Painel(raiz, "HUD", UIFactory.Fundo);
-        UIFactory.Ancorar(hud, new Vector2(0, 1), new Vector2(24, -24), new Vector2(400, 0));
+        UIFactory.Ancorar(hud, new Vector2(0, 1), new Vector2(24, -24), new Vector2(460, 0));   // cabe "hh:mm fora do expediente" numa linha
         UIFactory.Vertical(hud, 6, 20);
         UIFactory.AjustarAoConteudo(hud);
 

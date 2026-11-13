@@ -59,10 +59,46 @@ public static class AtalhosTeste
         if (p.id == "traseira" || p.id == "fonte" || p.id == "reset") alvo.y = bc.bounds.max.y - 0.03f;   // por cima
         jogador.OlharPara(alvo);
         FocarJogo();
-        Debug.Log($"[Teste] Mirando: {p.nome} ({p.id}) do(a) {eq.Nome}");
+
+        // Diagnóstico: o que o raio da mira atinge até a peça
+        var cam = jogador.GetComponentInChildren<Camera>().transform;
+        var hits = Physics.RaycastAll(cam.position, cam.forward, 3f, ~0, QueryTriggerInteraction.Collide);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        var nomes = new System.Text.StringBuilder();
+        foreach (var h in hits) nomes.Append($"{h.collider.name}[{h.collider.GetType().Name},{h.collider.tag}]({h.distance:0.00}{(h.collider.isTrigger ? ",gatilho" : "")}) ");
+        var m = PecaEquipamento.Mirada();
+        nomes.Append($" → Mirada(): {(m != null ? m.id : "null")}");
+        Debug.Log($"[Teste] Mirando: {p.nome} ({p.id}) do(a) {eq.Nome} · centro {alvo} · olho {cam.position} · raio: {nomes}");
     }
 
     static int indicePeca = -1;
+
+    // ---------- Forçar eventos raros (por reflexão: não abre a API do jogo só para teste) ----------
+
+    const System.Reflection.BindingFlags Privado =
+        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public |
+        System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+
+    [MenuItem(Menu + "Gerar pedido de projeto", false, 180)]
+    static void GerarProjeto()
+    {
+        if (Jogador() == null || ProjetosManager.Instance == null) return;
+        typeof(ProjetosManager).GetMethod("NovoContato", Privado)?.Invoke(ProjetosManager.Instance, null);
+    }
+
+    [MenuItem(Menu + "Gerar edital de licitação", false, 181)]
+    static void GerarEdital()
+    {
+        if (Jogador() == null) return;
+        typeof(Licitacoes).GetMethod("NovoEdital", Privado)?.Invoke(null, null);
+    }
+
+    [MenuItem(Menu + "Gerar contato de locação de impressora", false, 182)]
+    static void GerarLeadImpressora()
+    {
+        if (Jogador() == null || ContratosManager.Instance == null) return;
+        typeof(ContratosManager).GetMethod("GerarLead", Privado)?.Invoke(ContratosManager.Instance, null);
+    }
 
     [MenuItem(Menu + "Pular 1 dia", false, 160)]
     static void Pular1() => PularDias(1);

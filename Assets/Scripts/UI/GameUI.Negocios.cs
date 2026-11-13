@@ -133,7 +133,7 @@ public partial class GameUI
                     break;
                 }
                 case 5:
-                    UIFactory.Texto(card, $"<color=#3CCB7F>Entregue.</color> Recebido {UIFactory.Dinheiro(p.valorTotal)}, material {UIFactory.Dinheiro(p.custoMaterial)}.", 18, UIFactory.CorSuave);
+                    UIFactory.Texto(card, $"<color=#3CCB7F>Entregue.</color> Valor {UIFactory.Dinheiro(p.valorTotal)}, material {UIFactory.Dinheiro(p.custoMaterial)}.", 18, UIFactory.CorSuave);
                     break;
             }
         }

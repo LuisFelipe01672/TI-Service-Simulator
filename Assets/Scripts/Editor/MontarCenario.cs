@@ -161,7 +161,8 @@ public static partial class MontarCenario
         var mesa1 = Modelo("desk", sala, new Vector3(-2.8f, 0, 3.35f), 180);
         float h = Altura(mesa1);
         Modelo("chairDesk", sala, new Vector3(-2.8f, 0, 2.45f), 180);
-        PosicionarEquipamento("Computador", sala, new Vector3(-2.8f, h, 3.45f), 180,
+        // O monitor da Kenney tem a tela em -z: rotação 0 deixa a tela virada para a cadeira
+        PosicionarEquipamento("Computador", sala, new Vector3(-2.8f, h, 3.45f), 0,
             v => Modelo("computerScreen", v, Vector3.zero, 0, Colisao.Nenhuma));
         Modelo("computerKeyboard", sala, new Vector3(-2.8f, h, 3.05f), 180, Colisao.Nenhuma);
         Modelo("computerMouse", sala, new Vector3(-2.35f, h, 3.05f), 180, Colisao.Nenhuma);
@@ -169,7 +170,7 @@ public static partial class MontarCenario
         // Estação 2: só decoração
         var mesa2 = Modelo("desk", sala, new Vector3(1.2f, 0, 3.35f), 180);
         Modelo("chairDesk", sala, new Vector3(1.2f, 0, 2.45f), 200);
-        Modelo("computerScreen", sala, new Vector3(1.2f, Altura(mesa2), 3.45f), 180, Colisao.Nenhuma);
+        Modelo("computerScreen", sala, new Vector3(1.2f, Altura(mesa2), 3.45f), 0, Colisao.Nenhuma);
         Modelo("computerKeyboard", sala, new Vector3(1.2f, Altura(mesa2), 3.05f), 180, Colisao.Nenhuma);
 
         // Impressora em cima de um armário, na parede leste

@@ -166,10 +166,11 @@ public class EquipamentoPecas : MonoBehaviour
 
         if (eq.tipoEquipamento == TipoEquipamento.Computador)
         {
-            PecaEquipamento.Criar(transform, eq, "tela", "Tela", new Vector3(c.x, c.y + s.y * 0.1f, zFrente), new Vector3(s.x * 0.85f, s.y * 0.7f, 0.06f));
-            var pos = new Vector3(c.x + s.x * 0.4f, c.y - s.y / 2f + 0.04f, zFrente + frente * 0.01f);
-            botaoLiga = Cubo(transform, "BotaoLiga", pos, new Vector3(0.025f, 0.025f, 0.01f), mVerde).GetComponent<Renderer>();
-            PecaEquipamento.Criar(transform, eq, "energia", "Botão liga/desliga", pos, new Vector3(0.08f, 0.08f, 0.06f));
+            // O colisor inclui o pé do monitor, que avança além da tela: por isso não há LED visível aqui
+            // (ficaria flutuando). A tela fica na parte de cima; o botão, logo abaixo dela, à direita.
+            PecaEquipamento.Criar(transform, eq, "tela", "Tela", new Vector3(c.x, c.y + s.y * 0.2f, zFrente), new Vector3(s.x * 0.85f, s.y * 0.6f, 0.06f));
+            PecaEquipamento.Criar(transform, eq, "energia", "Botão liga/desliga",
+                new Vector3(c.x + s.x * 0.35f, c.y - s.y * 0.22f, c.z), new Vector3(0.16f, 0.12f, s.z));
             // Sobe 25 cm acima do monitor: mira-se por cima dele (a mesa fica encostada na parede)
             PecaEquipamento.Criar(transform, eq, "traseira", "Parte de trás (cabo de rede)",
                 new Vector3(c.x, c.y + 0.125f, zTras), new Vector3(s.x, s.y + 0.25f, 0.1f));

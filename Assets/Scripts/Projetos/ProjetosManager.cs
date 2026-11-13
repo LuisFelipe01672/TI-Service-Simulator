@@ -286,7 +286,7 @@ public class ProjetosManager : MonoBehaviour
 
         float lucro = p.valorTotal - p.custoMaterial;
         return $"<b>Projeto entregue na {p.empresa}!</b> {(noPrazo ? "No prazo (+2 reputação)." : "Atrasado (-1 reputação).")} " +
-               $"Recebido no total {UIFactory.Dinheiro(p.valorTotal)}, material {UIFactory.Dinheiro(p.custoMaterial)} → sobra {UIFactory.Dinheiro(lucro)} pela mão de obra.{extra}";
+               $"Valor total {UIFactory.Dinheiro(p.valorTotal)} (cobrança na aba Empresa), material {UIFactory.Dinheiro(p.custoMaterial)} → sobra {UIFactory.Dinheiro(lucro)} pela mão de obra.{extra}";
     }
 
     void Cobrar(Projeto p, float valor, string parcela)

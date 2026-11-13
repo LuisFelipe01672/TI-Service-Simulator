@@ -15,18 +15,20 @@ public class GameEconomy : MonoBehaviour
             Destroy(gameObject);
     }
 
-    public void ReceberPagamento(float valor)
+    public void ReceberPagamento(float valor, string categoria = null)
     {
         saldo += valor;
+        LivroCaixa.Registrar(valor, categoria ?? LivroCaixa.Servicos);
         EventBus<SaldoAlteradoEvent>.Raise(new SaldoAlteradoEvent { saldo = saldo, delta = valor });
         Debug.Log($"[Economy] Pagamento recebido: R${valor} | Saldo: R${saldo}");
     }
 
     // Pagar uma despesa (salários, aluguel...). O saldo pode ficar negativo: é dívida.
-    public void Gastar(float valor)
+    public void Gastar(float valor, string categoria = null)
     {
         if (valor <= 0f) return;
         saldo -= valor;
+        LivroCaixa.Registrar(-valor, categoria);
         EventBus<SaldoAlteradoEvent>.Raise(new SaldoAlteradoEvent { saldo = saldo, delta = -valor });
         Debug.Log($"[Economy] Despesa: R${valor} | Saldo: R${saldo}");
     }

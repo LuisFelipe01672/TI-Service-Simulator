@@ -166,7 +166,7 @@ public static class Parcerias
         float taxa = Adesao(p);
         var eco = GameEconomy.Instance;
         if (taxa > 0f && eco != null && eco.saldo < taxa) return $"Saldo insuficiente para a adesão: {UIFactory.Dinheiro(taxa)}.";
-        if (taxa > 0f) eco?.Gastar(taxa);
+        if (taxa > 0f) eco?.Gastar(taxa, LivroCaixa.Taxas);
         e.status = 1;
         e.ativaNoDia = Hoje + p.diasAnalise;
         return $"Cadastro enviado para a {p.nome}" + (taxa > 0f ? $" (adesão {UIFactory.Dinheiro(taxa)})" : "") +

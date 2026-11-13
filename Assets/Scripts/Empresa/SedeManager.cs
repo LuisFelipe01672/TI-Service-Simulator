@@ -131,7 +131,7 @@ public class SedeManager : MonoBehaviour
         var eco = GameEconomy.Instance;
         float precisa = caucaoNova + mudanca - devolvida;
         if (eco != null && precisa > 0 && eco.saldo < precisa) return $"Precisa de {UIFactory.Dinheiro(precisa)} (caução de {CaucaoMeses} aluguéis + mudança).";
-        if (precisa > 0) eco?.Gastar(precisa); else if (precisa < 0) eco?.ReceberPagamento(-precisa);
+        if (precisa > 0) eco?.Gastar(precisa, LivroCaixa.Garantias); else if (precisa < 0) eco?.ReceberPagamento(-precisa, LivroCaixa.Devolucao);
         caucaoPaga = caucaoNova;
         imovel = indice;
         return indice == 0
@@ -145,7 +145,7 @@ public class SedeManager : MonoBehaviour
         var info = Moveis[(int)m];
         var eco = GameEconomy.Instance;
         if (eco != null && eco.saldo < info.preco) return $"Saldo insuficiente: {UIFactory.Dinheiro(info.preco)}.";
-        eco?.Gastar(info.preco);
+        eco?.Gastar(info.preco, LivroCaixa.Moveis);
         while (moveis.Count <= (int)m) moveis.Add(0);
         moveis[(int)m]++;
         return $"{info.nome} comprado ({UIFactory.Dinheiro(info.preco)}). Chega em caixas na porta da sede.";

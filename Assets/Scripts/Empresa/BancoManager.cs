@@ -123,7 +123,7 @@ public class BancoManager : MonoBehaviour
         if (ultimoMesCobrado < 0) ultimoMesCobrado = EmpresaManager.MesDoDia(Hoje);
         var e = new Emprestimo { valor = valor, parcela = Parcela(valor, juros, parcelas), totalParcelas = parcelas, diaContratado = Hoje, jurosMes = juros };
         emprestimos.Add(e);
-        GameEconomy.Instance?.ReceberPagamento(valor);
+        GameEconomy.Instance?.ReceberPagamento(valor, LivroCaixa.EmprestimoRecebido);
         return $"Empréstimo aprovado: {UIFactory.Dinheiro(valor)} na conta. {parcelas}x de {UIFactory.Dinheiro(e.parcela)} " +
                $"({juros * 100:0.#}% ao mês; total {UIFactory.Dinheiro(e.parcela * parcelas)}). As parcelas chegam como guias todo mês.";
     }
@@ -146,7 +146,7 @@ public class BancoManager : MonoBehaviour
                 string nome = $"Parcela do empréstimo ({e.parcelasGeradas}/{e.totalParcelas})";
                 if (EmpresaManager.Instance != null)
                     EmpresaManager.Instance.AdicionarGuia(nome, e.parcela, EmpresaManager.DiaDaData(inicio.AddDays(9)), ultimoMesCobrado - 1);
-                else GameEconomy.Instance?.Gastar(e.parcela);
+                else GameEconomy.Instance?.Gastar(e.parcela, LivroCaixa.Parcelas);
             }
         }
         // Empréstimo com todas as parcelas pagas
@@ -161,6 +161,7 @@ public class BancoManager : MonoBehaviour
         }
 
         Conquistas.Verificar();
+        EventosAleatorios.NovoDia(dia);
         VerificarFalencia(dia);
     }
 

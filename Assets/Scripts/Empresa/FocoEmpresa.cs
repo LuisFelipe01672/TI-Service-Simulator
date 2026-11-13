@@ -37,7 +37,7 @@ public static class FocoEmpresa
         {
             var eco = GameEconomy.Instance;
             if (eco != null && eco.saldo < CustoTroca) return $"Mudar de foco custa {UIFactory.Dinheiro(CustoTroca)} (site, material, divulgação).";
-            eco?.Gastar(CustoTroca);
+            eco?.Gastar(CustoTroca, LivroCaixa.Marketing);
         }
         atual = area; diaEscolha = Hoje;
         return $"Foco da empresa: <b>{Nomes[(int)area]}</b>. {Efeitos[(int)area]}";

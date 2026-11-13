@@ -151,7 +151,7 @@ public class ContratosManager : MonoBehaviour
             return $"Sem espaço no estoque ({guardados}/{sede.CapacidadeEstoque}). Compre uma estante para a sede.";
         var eco = GameEconomy.Instance;
         if (eco != null && eco.saldo < preco) return $"Saldo insuficiente: {UIFactory.Dinheiro(preco)}.";
-        eco?.Gastar(preco);
+        eco?.Gastar(preco, LivroCaixa.Equipamentos);
         var e = new EquipamentoPatrimonio
         {
             id = proximoId++, tipoId = tipoId, condicao = condicao, custoPago = preco,
@@ -167,7 +167,7 @@ public class ContratosManager : MonoBehaviour
     {
         var t = CatalogoLocacao.Tipo(tipoId);
         float mult = Parcerias.Ativa(Parcerias.Impressoras) ? 1f - Parcerias.Desconto(Parcerias.Impressoras) : 1.15f;
-        return Mathf.Round(t.custoCompra * CatalogoLocacao.Condicao(condicao).multCusto * mult);
+        return Mathf.Round(t.custoCompra * CatalogoLocacao.Condicao(condicao).multCusto * mult * EventosAleatorios.MultEquipamento);
     }
 
     public List<EquipamentoPatrimonio> EmEstoque(string tipoId) =>
@@ -303,7 +303,7 @@ public class ContratosManager : MonoBehaviour
 
         float faltando = 1f - c.suprimento;
         float custo = Mathf.Round(faltando * t.rendimentoRefil * CatalogoLocacao.CustoPorPagina(t, c.fracCor, CatalogoLocacao.Fornecedor(c.fornecedorSuprimento)) * FocoEmpresa.MultSuprimento * 100f) / 100f;
-        if (custo > 0f) GameEconomy.Instance?.Gastar(custo);
+        if (custo > 0f) GameEconomy.Instance?.Gastar(custo, LivroCaixa.Suprimentos);
         c.suprimento = 1f;
         c.diasSemSuprimento = 0;
         c.satisfacao = Mathf.Min(100f, c.satisfacao + 3f);
@@ -427,12 +427,12 @@ public class ContratosManager : MonoBehaviour
             if (c.bilhetagem)
             {
                 valor += MensalBilhetagem * fracao;
-                custoBilhetagem += CustoBilhetagem * fracao * (1f - Parcerias.Desconto(Parcerias.ControleImpressao));
+                custoBilhetagem += CustoBilhetagem * fracao * (1f - Parcerias.Desconto(Parcerias.ControleImpressao)) * EventosAleatorios.MultLicencas;
             }
             CobrarCliente(c, Mathf.Round(valor * 100f) / 100f, "Locação de impressora");
             c.paginasNoMes = 0;
         }
-        if (custoBilhetagem > 0.01f) GameEconomy.Instance?.Gastar(Mathf.Round(custoBilhetagem * 100f) / 100f);
+        if (custoBilhetagem > 0.01f) GameEconomy.Instance?.Gastar(Mathf.Round(custoBilhetagem * 100f) / 100f, LivroCaixa.Licencas);
     }
 
     // Contrato fechado fora da proposta comercial (licitação): usa uma impressora do estoque

@@ -202,7 +202,7 @@ public class Mochila : MonoBehaviour
         float total = info.preco + (expressa ? TaxaExpressa : 0f);
         var eco = GameEconomy.Instance;
         if (eco != null && eco.saldo < total) return $"Saldo insuficiente: {info.nome} custa {UIFactory.Dinheiro(total)}.";
-        eco?.Gastar(total);
+        eco?.Gastar(total, LivroCaixa.Ferramentas);
 
         var d = DiaManager.Instance;
         var entrega = new Entrega { item = item, quantidade = info.quantidadePorCompra };

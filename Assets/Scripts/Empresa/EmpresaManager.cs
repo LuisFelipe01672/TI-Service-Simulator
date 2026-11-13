@@ -236,7 +236,7 @@ public class EmpresaManager : MonoBehaviour
         if (meProntaNoDia > 0) return "A abertura da sua ME já está em andamento.";
         var eco = GameEconomy.Instance;
         if (eco != null && eco.saldo < CustoAberturaMe) return $"Precisa de {UIFactory.Dinheiro(CustoAberturaMe)} (Junta Comercial, alvará e certificado digital).";
-        eco?.Gastar(CustoAberturaMe);
+        eco?.Gastar(CustoAberturaMe, LivroCaixa.Taxas);
         meProntaNoDia = DiaAtual + DiasAberturaMe;
         return $"Contador contratado e papelada enviada. Sua ME fica pronta em {DiasAberturaMe} dias.";
     }
@@ -281,7 +281,7 @@ public class EmpresaManager : MonoBehaviour
         float valor = ValorAtual(g);
         var eco = GameEconomy.Instance;
         if (eco != null && eco.saldo < valor) return "Saldo insuficiente.";
-        eco?.Gastar(valor);
+        eco?.Gastar(valor, LivroCaixa.CategoriaDaGuia(g.nome));
         g.paga = true;
         return $"{g.nome} ({g.competencia}) paga: {UIFactory.Dinheiro(valor)}.";
     }

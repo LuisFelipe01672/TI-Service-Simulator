@@ -243,13 +243,13 @@ public class ServicosManager : MonoBehaviour
         float preco = PrecoEquipamento(t);
         var eco = GameEconomy.Instance;
         if (eco != null && eco.saldo < preco) return $"Saldo insuficiente: {UIFactory.Dinheiro(preco)}.";
-        eco?.Gastar(preco);
+        eco?.Gastar(preco, LivroCaixa.Equipamentos);
         (t == TipoServico.Notebook ? chegadasNotebook : chegadasMiniPc).Add(Hoje + 1);
         return $"{info.unidade} comprado por {UIFactory.Dinheiro(preco)}. Chega amanhã; prepare na bancada antes de entregar.";
     }
 
     // Preço de compra com o desconto do nível de parceria com o distribuidor
-    public static float PrecoEquipamento(TipoServico t) => Mathf.Round(CatalogoServicos.Info(t).custoEquipamento * (1f - Parcerias.DescontoServico(t)));
+    public static float PrecoEquipamento(TipoServico t) => Mathf.Round(CatalogoServicos.Info(t).custoEquipamento * (1f - Parcerias.DescontoServico(t)) * EventosAleatorios.MultEquipamento);
 
     public int Novos(TipoServico t) => t == TipoServico.Notebook ? notebooksNovos : miniPcsNovos;
     public int Prontos(TipoServico t) => t == TipoServico.Notebook ? notebooksProntos : miniPcsProntos;
@@ -321,7 +321,7 @@ public class ServicosManager : MonoBehaviour
             case "nova-conta": c.unidades++; c.mensal += CatalogoServicos.PrecoUnidade(c.tipo, c.unidades, c.meses); break;
             case "troca-equipamento":
                 if (c.tipo == TipoServico.Notebook) { notebooksProntos--; notebooksNovos++; } else { miniPcsProntos--; miniPcsNovos++; }
-                GameEconomy.Instance?.Gastar(200f);   // conserto do equipamento que voltou
+                GameEconomy.Instance?.Gastar(200f, LivroCaixa.Consertos);   // conserto do equipamento que voltou
                 break;
         }
         c.satisfacao = Mathf.Min(100f, c.satisfacao + (Hoje == a.criadoNoDia ? 4f : 2f));
@@ -335,6 +335,8 @@ public class ServicosManager : MonoBehaviour
         if (c == null) return;
         c.satisfacao = resolvido ? Mathf.Min(100f, c.satisfacao + (rapido ? 8f : 3f)) : Mathf.Max(0f, c.satisfacao - 10f);
     }
+
+    public void AdicionarAlerta(ContratoServico c, string titulo, string detalhe, int minutos, bool critico = false) => NovoAlerta(c, titulo, detalhe, minutos, critico: critico);
 
     void NovoAlerta(ContratoServico c, string titulo, string detalhe, int minutos, bool visita = false, bool critico = false, string acao = null)
     {
@@ -528,12 +530,12 @@ public class ServicosManager : MonoBehaviour
             int dias = System.DateTime.DaysInMonth(inicioMes.Year, inicioMes.Month);
             float fracao = Mathf.Clamp01((diaInicio + dias - Mathf.Max(c.diaImplantacao, diaInicio)) / (float)dias);
             Cobrar(c, Mathf.Round(c.mensal * fracao * 100f) / 100f, CatalogoServicos.Info(c.tipo).nome);
-            custos += CatalogoServicos.CustoMensal(c.tipo, c.unidades) * fracao * (1f - Parcerias.DescontoServico(c.tipo));
+            custos += CatalogoServicos.CustoMensal(c.tipo, c.unidades) * fracao * (1f - Parcerias.DescontoServico(c.tipo)) * EventosAleatorios.MultLicencas;
             if (c.tipo == TipoServico.Bot) custos += Random.Range(0, 1500) * 0.043f;   // mensagens além das 1.000 grátis
         }
         if (custos > 0.01f)
         {
-            GameEconomy.Instance?.Gastar(Mathf.Round(custos * 100f) / 100f);
+            GameEconomy.Instance?.Gastar(Mathf.Round(custos * 100f) / 100f, LivroCaixa.Licencas);
             Avisar($"Fornecedores de licenças e nuvem cobrados: {UIFactory.Dinheiro(custos)}.", UIFactory.Alerta);
         }
     }

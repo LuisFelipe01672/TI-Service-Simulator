@@ -11,6 +11,22 @@ public partial class GameUI
         int hoje = DiaManager.Instance != null ? DiaManager.Instance.dia : 1;
         int mes = EmpresaManager.MesDoDia(hoje);
 
+        // ---------- Decisões ----------
+        if (EventosAleatorios.decisoes.Count > 0)
+        {
+            Secao("DECISÕES PENDENTES");
+            foreach (var d in new System.Collections.Generic.List<Decisao>(EventosAleatorios.decisoes))
+            {
+                var dec = d;
+                var card = Cartao(UIFactory.Hex("#3A2F1F"));
+                UIFactory.Texto(card, $"<b>{d.titulo}</b>   <size=17><color=#9AA6B8>responda até {DiaManager.DataDoDia(d.expiraNoDia):dd/MM}</color></size>", 21, UIFactory.CorTexto);
+                UIFactory.Texto(card, d.texto, 18, UIFactory.CorSuave);
+                var linha = LinhaBotoes(card);
+                UIFactory.Botao(linha, d.opcaoA, () => { Toast(EventosAleatorios.Decidir(dec, true), UIFactory.Destaque, 4f); AtualizarTablet(); }, UIFactory.Destaque, 300, 44, 18);
+                UIFactory.Botao(linha, d.opcaoB, () => { Toast(EventosAleatorios.Decidir(dec, false), UIFactory.Alerta, 4f); AtualizarTablet(); }, UIFactory.CartaoClaro, 200, 44, 18);
+            }
+        }
+
         // ---------- Situação ----------
         Secao("SUA SITUAÇÃO");
         var c = Cartao(UIFactory.CartaoClaro);
@@ -85,6 +101,7 @@ public partial class GameUI
         }
         if (abertas == 0) UIFactory.Texto(tabletConteudo, "Nenhuma guia em aberto. As guias chegam quando o mês vira.", 20, UIFactory.CorSuave);
 
+        MontarContabilidade();
         MontarBanco();
         MontarSede();
         MontarConcorrencia();

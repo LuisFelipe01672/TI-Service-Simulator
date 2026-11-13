@@ -135,7 +135,7 @@ public static class ProdutosProprios
     static void Cobrar(string nome, float valor, int vencimento, int competencia)
     {
         if (EmpresaManager.Instance != null) EmpresaManager.Instance.AdicionarGuia(nome, valor, vencimento, competencia);
-        else GameEconomy.Instance?.Gastar(valor);
+        else GameEconomy.Instance?.Gastar(valor, LivroCaixa.CategoriaDaGuia(nome));
     }
 
     [System.Serializable]

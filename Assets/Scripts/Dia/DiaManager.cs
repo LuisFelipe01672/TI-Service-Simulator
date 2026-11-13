@@ -186,7 +186,7 @@ public class DiaManager : MonoBehaviour
         {
             foreach (var f in FuncionarioManager.Instance.equipe) salarios += f.salarioMensal / Mathf.Max(1f, diasUteisPorMes);
             salarios = Mathf.Round(salarios);
-            if (salarios > 0f && GameEconomy.Instance != null) GameEconomy.Instance.Gastar(salarios);
+            if (salarios > 0f && GameEconomy.Instance != null) GameEconomy.Instance.Gastar(salarios, LivroCaixa.Folha);
         }
 
         hoje.dia = dia;

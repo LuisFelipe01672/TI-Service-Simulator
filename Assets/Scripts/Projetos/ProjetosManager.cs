@@ -212,7 +212,7 @@ public class ProjetosManager : MonoBehaviour
         float custo = CustoMaterialReal(p.tipo, p.tamanhoReal);
         var eco = GameEconomy.Instance;
         if (eco != null && eco.saldo < custo) return $"Saldo insuficiente: o material custa {UIFactory.Dinheiro(custo)}.";
-        eco?.Gastar(custo);
+        eco?.Gastar(custo, LivroCaixa.Material);
         p.custoMaterial = custo;
         int dias = p.tipo == TipoProjeto.Firewall ? 3 : Parcerias.Ativa(Parcerias.Infra) ? 1 : 2;
         p.diaMaterial = Hoje + dias;

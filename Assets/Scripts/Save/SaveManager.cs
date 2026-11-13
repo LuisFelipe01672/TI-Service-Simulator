@@ -24,6 +24,8 @@ public class SaveData
     public FocoEmpresa.Dados foco;
     public ProdutosProprios.Dados produtos;
     public Licitacoes.Dados licitacoes;
+    public LivroCaixa.Dados caixa;
+    public EventosAleatorios.Dados eventos;
     public float saldo;
     public float reputacao;
     public int fase;
@@ -102,6 +104,8 @@ public class SaveManager : MonoBehaviour
             foco = FocoEmpresa.Exportar(),
             produtos = ProdutosProprios.Exportar(),
             licitacoes = Licitacoes.Exportar(),
+            caixa = LivroCaixa.Exportar(),
+            eventos = EventosAleatorios.Exportar(),
             dia = DiaManager.Instance != null ? DiaManager.Instance.dia : Mathf.Max(1, DiaManager.DiaSalvo),
             equipe = FuncionarioManager.Instance != null
                      ? new List<Funcionario>(FuncionarioManager.Instance.equipe)
@@ -148,6 +152,8 @@ public class SaveManager : MonoBehaviour
         ProdutosProprios.Iniciar();
         Objetivos.Iniciar();
         Licitacoes.Iniciar();
+        LivroCaixa.Iniciar();
+        EventosAleatorios.Iniciar();
         GameEconomy.Instance?.DefinirSaldo(saldoInicial);
         Debug.Log($"[Save] Jogo novo: R${saldoInicial:F0} para começar.");
     }
@@ -200,6 +206,8 @@ public class SaveManager : MonoBehaviour
         FocoEmpresa.Carregar(data.foco);
         ProdutosProprios.Carregar(data.produtos);
         Licitacoes.Carregar(data.licitacoes);
+        LivroCaixa.Carregar(data.caixa);
+        EventosAleatorios.Carregar(data.eventos);
         if (data.parcerias == null || data.parcerias.estados == null || data.parcerias.estados.Count == 0) MigrarParcerias(data);
         if (DiaManager.Instance != null) DiaManager.Instance.dia = DiaManager.DiaSalvo;
 

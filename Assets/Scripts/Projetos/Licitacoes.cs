@@ -184,7 +184,7 @@ public static class Licitacoes
         ganhas++;
         l.valorContratado = Mathf.Round(valor * 100f) / 100f;
         l.garantia = Mathf.Round(l.ValorTotal(l.valorContratado) * Garantia);
-        GameEconomy.Instance?.Gastar(l.garantia);
+        GameEconomy.Instance?.Gastar(l.garantia, LivroCaixa.Garantias);
         l.diaFim = l.Recorrente ? Hoje + l.meses * 30 : int.MaxValue;
         string extra;
 
@@ -262,7 +262,7 @@ public static class Licitacoes
             if (l.status == 2 && dia >= l.diaFim)
             {
                 l.status = 5;
-                GameEconomy.Instance?.ReceberPagamento(l.garantia);
+                GameEconomy.Instance?.ReceberPagamento(l.garantia, LivroCaixa.Devolucao);
                 Avisar($"Contrato com a {l.orgao} encerrado. Garantia de {UIFactory.Dinheiro(l.garantia)} devolvida.", UIFactory.Sucesso);
             }
         }

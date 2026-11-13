@@ -14,6 +14,12 @@ public static class Configuracoes
 
     public const float SensMin = 0.3f, SensMax = 6f;
 
+    // Limite de FPS: -1 = V-Sync (acompanha o monitor), 0 = sem limite, outro = FPS máximo
+    public static readonly int[] OpcoesFps = { -1, 30, 60, 90, 120, 144, 165, 240, 0 };
+    public static int LimiteFps { get; private set; } = -1;
+    public static string TextoFps(int v) => v < 0 ? "V-Sync" : v == 0 ? "Sem limite" : v + " FPS";
+    public static void DefinirLimiteFps(int v) { LimiteFps = v; Salvar(); }
+
     public static event Action Mudou;
 
     static bool carregado;
@@ -37,6 +43,7 @@ public static class Configuracoes
         InverterY = PlayerPrefs.GetInt("cfg_invy", 0) == 1;
         TelaCheia = PlayerPrefs.GetInt("cfg_telacheia", Screen.fullScreen ? 1 : 0) == 1;
         Debug = PlayerPrefs.GetInt("cfg_debug", 1) == 1;
+        LimiteFps = PlayerPrefs.GetInt("cfg_fps", LimiteFps);
     }
 
     public static void DefinirVolumeGeral(float v) { VolumeGeral = Mathf.Clamp01(v); Salvar(); }
@@ -56,6 +63,7 @@ public static class Configuracoes
         PlayerPrefs.SetInt("cfg_invy", InverterY ? 1 : 0);
         PlayerPrefs.SetInt("cfg_telacheia", TelaCheia ? 1 : 0);
         PlayerPrefs.SetInt("cfg_debug", Debug ? 1 : 0);
+        PlayerPrefs.SetInt("cfg_fps", LimiteFps);
         PlayerPrefs.Save();
         Aplicar();
     }
@@ -63,6 +71,10 @@ public static class Configuracoes
     public static void Aplicar()
     {
         AudioListener.volume = VolumeGeral;
+
+        // FPS: com V-Sync ligado o targetFrameRate é ignorado, então um exclui o outro
+        if (LimiteFps < 0) { QualitySettings.vSyncCount = 1; Application.targetFrameRate = -1; }
+        else { QualitySettings.vSyncCount = 0; Application.targetFrameRate = LimiteFps == 0 ? -1 : LimiteFps; }
         // No editor a "tela cheia" não se aplica (a aba Game controla o tamanho)
         if (!Application.isEditor && Screen.fullScreen != TelaCheia)
         {

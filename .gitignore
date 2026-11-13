@@ -105,3 +105,8 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Personagens e animações do Mixamo: os termos da Adobe permitem usar no jogo, mas não redistribuir
+# os arquivos. Ficam só no PC (baixe em mixamo.com e rode TI Service/5. Configurar personagens).
+/[Aa]ssets/Models/Mixamo/
+/[Aa]ssets/Models/Mixamo.meta

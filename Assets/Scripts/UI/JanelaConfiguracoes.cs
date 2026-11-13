@@ -23,6 +23,7 @@ public static class JanelaConfiguracoes
 
         Secao(janela, "TELA");
         LinhaLiga(janela, "Tela cheia", () => Configuracoes.TelaCheia, Configuracoes.DefinirTelaCheia);
+        LinhaFps(janela);
         LinhaLiga(janela, "Contador de FPS e console de debug", () => Configuracoes.Debug, Configuracoes.DefinirDebug);
 
         var espaco = UIFactory.Vazio(janela, "Espaco");
@@ -50,6 +51,26 @@ public static class JanelaConfiguracoes
         UIFactory.Barra(linha, min, max, valor, v => { definir(v); if (txt != null) txt.text = formato(v); }, 320);
         txt = UIFactory.Texto(linha, formato(valor), 20, UIFactory.CorSuave, FontStyles.Bold, TextAlignmentOptions.Right);
         txt.gameObject.AddComponent<LayoutElement>().preferredWidth = 70;
+    }
+
+    // Limite de FPS: setas para trocar entre as opções (V-Sync, 30, 60... sem limite)
+    static void LinhaFps(RectTransform pai)
+    {
+        var linha = Linha(pai, "Limite de FPS");
+        TextMeshProUGUI txt = null;
+        void Mudar(int passo)
+        {
+            var ops = Configuracoes.OpcoesFps;
+            int i = System.Array.IndexOf(ops, Configuracoes.LimiteFps);
+            if (i < 0) i = 0;
+            i = (i + passo + ops.Length) % ops.Length;
+            Configuracoes.DefinirLimiteFps(ops[i]);
+            txt.text = Configuracoes.TextoFps(ops[i]);
+        }
+        UIFactory.Botao(linha, "<", () => Mudar(-1), UIFactory.CartaoClaro, 44, 44, 22);
+        txt = UIFactory.Texto(linha, Configuracoes.TextoFps(Configuracoes.LimiteFps), 20, UIFactory.CorTexto, FontStyles.Bold, TextAlignmentOptions.Center);
+        txt.gameObject.AddComponent<LayoutElement>().preferredWidth = 140;
+        UIFactory.Botao(linha, ">", () => Mudar(1), UIFactory.CartaoClaro, 44, 44, 22);
     }
 
     static void LinhaLiga(RectTransform pai, string rotulo, Func<bool> ler, Action<bool> definir)

@@ -36,6 +36,15 @@ public static class AtalhosTeste
     [MenuItem(Menu + "Cliente: computador", false, 122)]
     static void Computador() => IrAoEquipamento(TipoEquipamento.Computador);
 
+    [MenuItem(Menu + "Cliente: olhar o cliente (aceite um chamado antes)", false, 123)]
+    static void OlharCliente()
+    {
+        var npc = Object.FindAnyObjectByType<ClienteNPC>();
+        if (npc == null) { Debug.LogWarning("[Teste] Nenhum cliente na cena: aceite um chamado."); return; }
+        var t = npc.transform;
+        Ir(t.position + t.forward * 1.8f + Vector3.up * 1.1f, t.position + Vector3.up * 1.2f);
+    }
+
     [MenuItem(Menu + "Mirar: próxima peça do equipamento", false, 140)]
     static void ProximaPeca()
     {

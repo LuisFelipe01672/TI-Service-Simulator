@@ -55,7 +55,36 @@ public class ClienteNPC : Interactable
         return npc;
     }
 
+    Animator animador;
+    string estadoAtual;
+
     void Montar()
+    {
+        // Personagem 3D do Mixamo, quando configurado (o VIP usa o de roupa formal, o primeiro da lista)
+        int indice = chamado.personalidade == Personalidade.VIP ? 0 : 1 + Random.Range(0, 2);
+        animador = BancoPersonagens.Instanciar(transform, indice);
+        if (animador != null)
+        {
+            Tocar(BancoPersonagens.Parado);
+            var col = gameObject.AddComponent<CapsuleCollider>();
+            col.center = new Vector3(0f, 0.9f, 0f);
+            col.height = 1.8f;
+            col.radius = 0.3f;
+            return;
+        }
+
+        MontarSimples();
+    }
+
+    void Tocar(string estado)
+    {
+        if (animador == null || estadoAtual == estado) return;
+        estadoAtual = estado;
+        animador.CrossFadeInFixedTime(estado, 0.35f);
+    }
+
+    // Boneco de formas simples (quando não há modelos do Mixamo no projeto)
+    void MontarSimples()
     {
         // Cores variam com o tipo de cliente, para dar para reconhecer de longe
         Color camisa, calca = new Color(0.16f, 0.18f, 0.24f);
@@ -164,6 +193,9 @@ public class ClienteNPC : Interactable
             dir.y = 0f;
             if (dir.sqrMagnitude > 0.04f && dir.sqrMagnitude < 36f)
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 3f);
+
+            // Com o técnico por perto, explica o problema gesticulando; senão, fica esperando
+            Tocar(dir.sqrMagnitude < 3.5f * 3.5f ? BancoPersonagens.ConversandoEmPe : BancoPersonagens.Parado);
         }
     }
 

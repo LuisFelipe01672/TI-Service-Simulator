@@ -24,7 +24,7 @@ public enum Pergunta
 public class Problema
 {
     public TipoEquipamento equipamento;
-    public string solucao;          // precisa bater com Equipamento.GetOpcoes()
+    public string solucao;          // identifica o defeito (ver CatalogoProblemas.Quebrar)
     public string descricao;        // como um cliente normal descreve
     public string descricaoVaga;    // como um cliente confuso descreve
     public string[] respostas;      // uma por Pergunta (mesma ordem do enum)

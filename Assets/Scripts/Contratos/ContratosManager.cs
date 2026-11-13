@@ -79,7 +79,7 @@ public class ContratosManager : MonoBehaviour
     public int ultimoMesFaturado = -1;
 
     [Header("Ajustes")]
-    public float chanceLeadPorDia = 0.45f;
+    public float chanceLeadPorDia = 0.25f;
     public float minutosVisita = 90f;
     public float minutosInstalacao = 120f;
     public float chanceDefeitoBase = 0.004f;   // por dia, por equipamento
@@ -320,7 +320,7 @@ public class ContratosManager : MonoBehaviour
             if (e.diaChegada == dia) Avisar($"Chegou do fornecedor: {e.Tipo.nome} ({CatalogoLocacao.Condicao(e.condicao).nome}).", UIFactory.Sucesso);
 
         leads.RemoveAll(l => l.expiraNoDia < dia);
-        if (Liberado && Random.value < chanceLeadPorDia * FocoEmpresa.MultLeads(AreaNegocio.Impressao) && leads.Count < 4) GerarLead();
+        if (Liberado && Random.value < chanceLeadPorDia * Concorrencia.FatorDemanda() * FocoEmpresa.MultLeads(AreaNegocio.Impressao) && leads.Count < 4) GerarLead();
 
         foreach (var c in contratos)
         {

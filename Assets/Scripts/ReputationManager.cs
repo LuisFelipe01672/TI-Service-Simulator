@@ -16,6 +16,10 @@ public class ReputationManager : MonoBehaviour
     [Tooltip("Resolveu usando até 75% do prazo")] public float ganhoNormal = 4f;
     [Tooltip("Resolveu perto do fim do prazo")] public float ganhoNoLimite = 2f;
 
+    [Header("Escala (reputação cresce devagar: é a carreira inteira)")]
+    [Tooltip("Multiplica os ganhos por chamado acima")] public float escalaGanho = 0.2f;
+    [Tooltip("Multiplica as punições de erro e atraso")] public float escalaPunicao = 0.4f;
+
     [Header("Fases (reputação mínima)")]
     public float reputacaoFase2 = 30f;
     public float reputacaoFase3 = 60f;
@@ -59,7 +63,7 @@ public class ReputationManager : MonoBehaviour
             Debug.Log($"[Reputação] Chamado ok. Razão tempo: {razao:F2} → {delta:+0;-0}");
         }
 
-        AlterarReputacao(delta * multiplicador);
+        AlterarReputacao(delta * multiplicador * (delta >= 0f ? escalaGanho : escalaPunicao));
     }
 
     public void AlterarReputacao(float delta)

@@ -70,7 +70,7 @@ public class ProjetosManager : MonoBehaviour
     public int concluidos;
 
     [Header("Ajustes")]
-    public float chanceContatoPorDia = 0.25f;
+    public float chanceContatoPorDia = 0.15f;
 
     EventBinding<DiaIniciadoEvent> bDia;
 
@@ -322,7 +322,7 @@ public class ProjetosManager : MonoBehaviour
 
         var emp = EmpresaManager.Instance;
         int abertos = projetos.FindAll(p => p.etapa == 0).Count;
-        if ((emp == null || emp.TemCnpj) && abertos < 3 && Random.value < chanceContatoPorDia * FocoEmpresa.MultLeads(AreaNegocio.Infraestrutura)) NovoContato();
+        if ((emp == null || emp.TemCnpj) && abertos < 3 && Random.value < chanceContatoPorDia * Concorrencia.FatorDemanda() * FocoEmpresa.MultLeads(AreaNegocio.Infraestrutura)) NovoContato();
 
         var data = DiaManager.DataDoDia(dia);
         bool util = data.DayOfWeek != System.DayOfWeek.Saturday && data.DayOfWeek != System.DayOfWeek.Sunday;

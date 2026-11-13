@@ -71,7 +71,7 @@ public class ServicosManager : MonoBehaviour
     public List<int> chegadasMiniPc = new List<int>();
 
     [Header("Ajustes")]
-    public float chanceLeadPorDia = 0.4f;
+    public float chanceLeadPorDia = 0.25f;
     public float chanceRansomwarePorDia = 0.004f;   // por cliente com suporte
 
     EventBinding<DiaIniciadoEvent> bDia;
@@ -343,7 +343,7 @@ public class ServicosManager : MonoBehaviour
 
         leads.RemoveAll(l => l.expiraNoDia < dia);
         float multFoco = Mathf.Max(FocoEmpresa.MultLeads(AreaNegocio.Gerenciados), FocoEmpresa.MultLeads(AreaNegocio.Software));
-        if (Random.value < chanceLeadPorDia * multFoco && leads.Count < 4)
+        if (Random.value < chanceLeadPorDia * Concorrencia.FatorDemanda() * multFoco && leads.Count < 4)
         {
             var emp = EmpresaManager.Instance;
             if (emp == null || emp.TemCnpj) GerarLead();

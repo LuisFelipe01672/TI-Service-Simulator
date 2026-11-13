@@ -82,7 +82,7 @@ public class MissionManager : MonoBehaviour
         float tempoLimite = dif == DificuldadeChamado.Facil ? 300f : dif == DificuldadeChamado.Medio ? 200f : 120f;
         // Chamado avulso: horas técnicas estimadas × R$ 125 + deslocamento
         float horas = dif == DificuldadeChamado.Facil ? 1f : dif == DificuldadeChamado.Medio ? 2f : 3f;
-        float recompensa  = horas * CatalogoServicos.HoraTecnica + CatalogoServicos.Deslocamento;
+        float recompensa  = (horas * CatalogoServicos.HoraTecnica + CatalogoServicos.Deslocamento) * EmpresaManager.MultPrecoRegime;
         tempoLimite = Mathf.Round(tempoLimite * Chamado.MultPrazo(jeito) / 5f) * 5f;
         recompensa  = Mathf.Round(recompensa * Chamado.MultPagamento(jeito) / 5f) * 5f;
 

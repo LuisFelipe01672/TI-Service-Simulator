@@ -118,6 +118,9 @@ public class EmpresaManager : MonoBehaviour
 
     public bool TemCnpj => regime != Regime.Autonomo;
 
+    // Quanto o cliente aceita pagar por hora: técnico autônomo cobra menos que empresa formal
+    public static float MultPrecoRegime => Instance == null ? 1f : Instance.regime == Regime.Autonomo ? 0.65f : Instance.regime == Regime.MEI ? 0.85f : 1f;
+
     public float FaturamentoNoMes(int mes) => mes >= 0 && mes < faturamentoMes.Count ? faturamentoMes[mes] : 0f;
 
     // Faturamento do ano-calendário atual

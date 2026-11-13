@@ -56,7 +56,15 @@ public static class Concorrencia
     public static float VantagemJogador(float reputacao)
     {
         float imagem = SedeManager.Instance != null ? SedeManager.Instance.BonusImagem : 0f;
-        return 1f + (reputacao - 50f) / 200f + imagem;
+        return 1f + (reputacao - 50f) / 400f + imagem;
+    }
+
+    // Quantos clientes procuram você: cresce com a reputação e com a imagem da sede (fachada, recepção)
+    public static float FatorDemanda()
+    {
+        float rep = ReputationManager.Instance != null ? ReputationManager.Instance.GetReputacao() : 50f;
+        float imagem = SedeManager.Instance != null ? SedeManager.Instance.BonusImagem : 0f;
+        return (0.4f + 0.8f * rep / 100f) * (1f + imagem * 2.5f);
     }
 
     public static void Registrar(Concorrente c, bool jogadorGanhou)

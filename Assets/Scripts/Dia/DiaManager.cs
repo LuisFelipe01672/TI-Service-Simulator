@@ -180,14 +180,14 @@ public class DiaManager : MonoBehaviour
 
         diaEncerrado = true;
 
-        // Salário diário da equipe
+        // Salários agora saem na folha mensal (aba Empresa); sem EmpresaManager, desconta por dia como antes
         float salarios = 0f;
-        if (FuncionarioManager.Instance != null)
-            foreach (var f in FuncionarioManager.Instance.equipe)
-                salarios += f.salarioMensal / Mathf.Max(1f, diasUteisPorMes) *
-                            (EmpresaManager.Instance != null ? EmpresaManager.Instance.MultEncargos : 1f);
-        salarios = Mathf.Round(salarios);
-        if (salarios > 0f && GameEconomy.Instance != null) GameEconomy.Instance.Gastar(salarios);
+        if (EmpresaManager.Instance == null && FuncionarioManager.Instance != null)
+        {
+            foreach (var f in FuncionarioManager.Instance.equipe) salarios += f.salarioMensal / Mathf.Max(1f, diasUteisPorMes);
+            salarios = Mathf.Round(salarios);
+            if (salarios > 0f && GameEconomy.Instance != null) GameEconomy.Instance.Gastar(salarios);
+        }
 
         hoje.dia = dia;
         hoje.salarios = salarios;

@@ -256,7 +256,7 @@ public class EmpresaManager : MonoBehaviour
 
     // ---------- Impostos ----------
 
-    void AdicionarGuia(string nome, float valor, int vencimento, int mes)
+    public void AdicionarGuia(string nome, float valor, int vencimento, int mes)
     {
         if (valor < 0.01f) return;
         guias.Add(new Guia { nome = nome, valor = Mathf.Round(valor * 100f) / 100f, vencimento = vencimento, competencia = PrimeiroDiaDoMes(mes).ToString("MM/yyyy") });
@@ -349,6 +349,20 @@ public class EmpresaManager : MonoBehaviour
                 break;
         }
 
+        // Folha de pagamento: salários + encargos, no 5º dia útil (aprox. dia 7) do mês seguinte
+        var fm = FuncionarioManager.Instance;
+        if (fm != null && fm.equipe.Count > 0)
+        {
+            float salarios = 0f;
+            foreach (var f in fm.equipe) salarios += f.salarioMensal;
+            AdicionarGuia("Folha de pagamento (salários)", salarios, DiaDaData(proximo.AddDays(6)), mes);
+            AdicionarGuia("FGTS (8%)", salarios * 0.08f, DiaDaData(proximo.AddDays(19)), mes);
+            if (regime == Regime.MEI) AdicionarGuia("INSS patronal do MEI (3%)", salarios * 0.03f, dia20, mes);
+            // 13º salário: em dezembro (gerado no fechamento de novembro)
+            if (PrimeiroDiaDoMes(mes).Month == 11)
+                AdicionarGuia("13º salário", salarios, DiaDaData(proximo.AddDays(19)), mes);
+        }
+
         // Virada do ano: MEI que passou do limite vira ME
         if (proximo.Month == 1 && regime == Regime.MEI)
         {
@@ -370,7 +384,9 @@ public class EmpresaManager : MonoBehaviour
         {
             ultimoMesFechado++;
             FecharMes(ultimoMesFechado);
-            GameUI.Instance?.Toast("Novo mês: as guias de impostos chegaram (aba Empresa do tablet).", UIFactory.Alerta, 4f);
+            GameUI.Instance?.Toast("Novo mês: chegaram as guias de impostos, folha e contas (aba Empresa do tablet).", UIFactory.Alerta, 4f);
+            string noticia = Concorrencia.AtualizarMes(ultimoMesFechado);
+            if (noticia != null) GameUI.Instance?.Toast(noticia, UIFactory.Destaque, 5f);
         }
 
         if (meProntaNoDia > 0 && dia >= meProntaNoDia)

@@ -143,6 +143,10 @@ public class ContratosManager : MonoBehaviour
         var t = CatalogoLocacao.Tipo(tipoId);
         var c = CatalogoLocacao.Condicao(condicao);
         float preco = Mathf.Round(t.custoCompra * c.multCusto);
+        int guardados = patrimonio.FindAll(x => x.contratoId < 0).Count;
+        var sede = SedeManager.Instance;
+        if (sede != null && guardados >= sede.CapacidadeEstoque)
+            return $"Sem espaço no estoque ({guardados}/{sede.CapacidadeEstoque}). Compre uma estante para a sede.";
         var eco = GameEconomy.Instance;
         if (eco != null && eco.saldo < preco) return $"Saldo insuficiente: {UIFactory.Dinheiro(preco)}.";
         eco?.Gastar(preco);
@@ -219,14 +223,21 @@ public class ContratosManager : MonoBehaviour
         // O cliente topa até o preço justo × disposição (reputação ajuda um pouco);
         // o concorrente oferece algo perto do preço justo e o cliente escolhe o melhor custo-benefício.
         float limite = justo * l.disposicao * (1f + (rep - 50f) / 500f);
-        float concorrente = justo * Random.Range(0.92f, 1.2f);
-        string nomeConc = CatalogoLocacao.SortearConcorrente();
+        var rival = Concorrencia.Sortear();
+        float concorrente = Concorrencia.Oferta(rival, justo);
         leads.Remove(l);
 
         if (conta > limite)
-            return $"<b>{l.empresa}</b> achou caro ({UIFactory.Dinheiro(conta)}/mês) e fechou com a {nomeConc} por {UIFactory.Dinheiro(concorrente)}/mês.";
-        if (conta > concorrente * (1f + (rep - 50f) / 200f))
-            return $"<b>{l.empresa}</b> fechou com a {nomeConc}: a proposta deles saiu {UIFactory.Dinheiro(concorrente)}/mês contra {UIFactory.Dinheiro(conta)} sua.";
+        {
+            Concorrencia.Registrar(rival, false);
+            return $"<b>{l.empresa}</b> achou caro ({UIFactory.Dinheiro(conta)}/mês) e fechou com a {rival.nome} por {UIFactory.Dinheiro(concorrente)}/mês.";
+        }
+        if (conta > concorrente * Concorrencia.VantagemJogador(rep))
+        {
+            Concorrencia.Registrar(rival, false);
+            return $"<b>{l.empresa}</b> fechou com a {rival.nome}: a proposta deles saiu {UIFactory.Dinheiro(concorrente)}/mês contra {UIFactory.Dinheiro(conta)} sua.";
+        }
+        Concorrencia.Registrar(rival, true);
 
         var e = estoque[0];
         var c = new ContratoLocacao

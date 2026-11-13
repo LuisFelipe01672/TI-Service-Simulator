@@ -31,6 +31,16 @@ public class FuncionarioManager : MonoBehaviour
             return false;
         }
 
+        // Cada funcionário precisa de uma estação de trabalho (mesa + cadeira + PC) na sede
+        var sede = SedeManager.Instance;
+        if (sede != null && equipe.Count >= sede.Estacoes)
+        {
+            GameUI.Instance?.Toast(sede.imovel == 0
+                ? "Não cabe funcionário na sua casa: alugue uma sala e monte as estações (aba Empresa)."
+                : $"Sem estação livre: compre mesa, cadeira e computador (estações: {sede.Estacoes}/{sede.Imovel.maxEstacoes}).", UIFactory.Alerta, 4f);
+            return false;
+        }
+
         // Registrar funcionário exige CNPJ; o MEI só pode ter 1
         var empresa = EmpresaManager.Instance;
         if (empresa != null && equipe.Count >= empresa.LimiteFuncionarios)

@@ -133,6 +133,4 @@ public static class CatalogoLocacao
 
     public static string SortearEmpresa() => nomesEmpresas[Random.Range(0, nomesEmpresas.Length)];
 
-    static readonly string[] concorrentes = { "TechMais Soluções", "Infinity TI", "PrintFácil Locações", "Rede Já Informática" };
-    public static string SortearConcorrente() => concorrentes[Random.Range(0, concorrentes.Length)];
 }

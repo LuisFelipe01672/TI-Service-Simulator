@@ -184,14 +184,21 @@ public class ServicosManager : MonoBehaviour
         float oferta = Mathf.Round(tabela * (1f - Mathf.Clamp(desconto, 0f, 0.3f)) * 100f) / 100f;
         float rep = ReputationManager.Instance != null ? ReputationManager.Instance.GetReputacao() : 30f;
         float limite = tabela * l.disposicao * (1f + (rep - 50f) / 500f);
-        float concorrente = tabela * Random.Range(0.85f, 1.1f);
-        string nomeConc = CatalogoLocacao.SortearConcorrente();
+        var rival = Concorrencia.Sortear();
+        float concorrente = Concorrencia.Oferta(rival, tabela);
         leads.Remove(l);
 
         if (oferta > limite)
-            return $"<b>{l.empresa}</b> achou caro ({UIFactory.Dinheiro(oferta)}/mês) e fechou com a {nomeConc}.";
-        if (oferta > concorrente * (1f + (rep - 50f) / 200f))
-            return $"<b>{l.empresa}</b> fechou com a {nomeConc} por {UIFactory.Dinheiro(concorrente)}/mês (a sua saiu {UIFactory.Dinheiro(oferta)}).";
+        {
+            Concorrencia.Registrar(rival, false);
+            return $"<b>{l.empresa}</b> achou caro ({UIFactory.Dinheiro(oferta)}/mês) e fechou com a {rival.nome}.";
+        }
+        if (oferta > concorrente * Concorrencia.VantagemJogador(rep))
+        {
+            Concorrencia.Registrar(rival, false);
+            return $"<b>{l.empresa}</b> fechou com a {rival.nome} por {UIFactory.Dinheiro(concorrente)}/mês (a sua saiu {UIFactory.Dinheiro(oferta)}).";
+        }
+        Concorrencia.Registrar(rival, true);
 
         var c = new ContratoServico
         {

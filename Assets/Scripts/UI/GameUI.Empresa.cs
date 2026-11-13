@@ -84,5 +84,8 @@ public partial class GameUI
             UIFactory.Botao(LinhaBotoes(card), "Pagar", () => { Toast(emp.PagarGuia(guia), UIFactory.Sucesso, 3f); AtualizarTablet(); }, UIFactory.Sucesso, 160, 46, 20);
         }
         if (abertas == 0) UIFactory.Texto(tabletConteudo, "Nenhuma guia em aberto. As guias chegam quando o mês vira.", 20, UIFactory.CorSuave);
+
+        MontarSede();
+        MontarConcorrencia();
     }
 }

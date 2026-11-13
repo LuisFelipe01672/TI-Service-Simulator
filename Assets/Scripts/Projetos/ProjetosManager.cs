@@ -31,6 +31,7 @@ public class Projeto
     public float horasTotais, horasFeitas;
     public int diaMaterial, prazoDia;
     public bool avisouAtraso;
+    public bool semEntrada;         // órgão público: paga tudo na entrega
 
     public InfoProjeto Info => ProjetosManager.Info(tipo);
 }
@@ -238,13 +239,28 @@ public class ProjetosManager : MonoBehaviour
         return $"Mais 2 h na <b>{p.empresa}</b>: {Progresso(p) * 100:0}% pronto.";
     }
 
+    // Projeto já contratado (licitação): pula o orçamento, vai direto para a compra do material
+    public Projeto CriarProjetoContratado(TipoProjeto t, string empresa, int tamanho, float valor)
+    {
+        var p = new Projeto
+        {
+            id = proximoId++, tipo = t, empresa = empresa, tamanhoEstimado = tamanho, tamanhoReal = tamanho, tamanhoOrcado = tamanho,
+            levantado = true, etapa = 2, valorTotal = valor, semEntrada = true,
+            horasTotais = Horas(t, tamanho) * FocoEmpresa.MultHorasProjeto
+        };
+        p.prazoDia = Hoje + Mathf.CeilToInt(p.horasTotais / 6f) + 10;
+        projetos.Add(p);
+        return p;
+    }
+
     public static float Progresso(Projeto p) => p.horasTotais <= 0f ? 0f : Mathf.Clamp01(p.horasFeitas / p.horasTotais);
 
     string Concluir(Projeto p)
     {
         p.etapa = 5;
         concluidos++;
-        Cobrar(p, p.valorTotal - Mathf.Round(p.valorTotal * 0.5f), "Entrega (50%)");
+        if (p.semEntrada) Cobrar(p, p.valorTotal, "Entrega e medição final");
+        else Cobrar(p, p.valorTotal - Mathf.Round(p.valorTotal * 0.5f), "Entrega (50%)");
         bool noPrazo = Hoje <= p.prazoDia;
         ReputationManager.Instance?.AlterarReputacao(noPrazo ? 2f : -1f);
         Conquistas.Desbloquear("projeto");
@@ -316,6 +332,7 @@ public class ProjetosManager : MonoBehaviour
     {
         Parcerias.NovoDia(dia);
         ProdutosProprios.NovoDia(dia);
+        Licitacoes.NovoDia(dia);
 
         projetos.RemoveAll(p => p.etapa == 0 && p.expiraNoDia < dia);
         projetos.RemoveAll(p => p.etapa == 5 && dia - p.prazoDia > 15);

@@ -209,6 +209,18 @@ public class ServicosManager : MonoBehaviour
         return $"Fechado: <b>{l.empresa}</b> — {info.nome}, {UIFactory.Dinheiro(oferta)}/mês! Agora faça a implantação (aba Contratos).";
     }
 
+    // Contrato fechado fora do fluxo de proposta (licitação): ainda precisa ser implantado
+    public ContratoServico CriarContrato(TipoServico t, string empresa, int unidades, int meses, float mensal, float implantacao)
+    {
+        var c = new ContratoServico
+        {
+            id = proximoId++, tipo = t, empresa = empresa, unidades = unidades, meses = meses, mensal = mensal,
+            implantacao = implantacao, diaAssinatura = Hoje, diaFim = Hoje + meses * 30
+        };
+        contratos.Add(c);
+        return c;
+    }
+
     // Contrato que nasce já implantado (firewall entregue por um projeto)
     public ContratoServico CriarContratoImplantado(TipoServico t, string empresa, int unidades, int meses, float mensal)
     {

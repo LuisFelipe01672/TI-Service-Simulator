@@ -11,6 +11,7 @@ public partial class GameUI
     {
         MontarFoco();
         MontarProjetos();
+        MontarLicitacoes();
         MontarParcerias();
         MontarProdutosProprios();
     }
@@ -134,6 +135,50 @@ public partial class GameUI
                 case 5:
                     UIFactory.Texto(card, $"<color=#3CCB7F>Entregue.</color> Recebido {UIFactory.Dinheiro(p.valorTotal)}, material {UIFactory.Dinheiro(p.custoMaterial)}.", 18, UIFactory.CorSuave);
                     break;
+            }
+        }
+    }
+
+    readonly Dictionary<int, int> descontoLicitacao = new Dictionary<int, int>();
+
+    void MontarLicitacoes()
+    {
+        Secao($"LICITAÇÕES PÚBLICAS · {Licitacoes.ganhas} vencida(s)");
+        UIFactory.Texto(tabletConteudo, "Pregão eletrônico: ganha o menor preço. Precisa de certidões em dia (sem impostos atrasados) e atestado de serviços parecidos. " +
+            "ME/EPP até 5% acima do vencedor pode cobrir o lance. Garantia de 5% devolvida no fim do contrato.", 17, UIFactory.CorSuave);
+        if (Licitacoes.Impedido)
+            UIFactory.Texto(tabletConteudo, $"<color=#F2545B>Impedido de licitar até {DiaManager.DataDoDia(Licitacoes.impedidoAteDia):dd/MM/yyyy}.</color>", 19, UIFactory.CorTexto);
+        if (Licitacoes.lista.Count == 0) UIFactory.Texto(tabletConteudo, "Nenhum edital aberto agora.", 19, UIFactory.CorSuave);
+
+        foreach (var l in new List<Licitacao>(Licitacoes.lista))
+        {
+            var lic = l;
+            var card = Cartao(l.status == 2 ? UIFactory.Hex("#1F3A2C") : (l.status >= 3 && l.status != 5) ? UIFactory.Hex("#3A1F22") : (Color?)null);
+            string sufixo = l.Recorrente ? "/mês" : "";
+            UIFactory.Texto(card, $"<b>{l.orgao}</b>   <size=18><color=#9AA6B8>{Licitacoes.Descrever(l)}</color></size>", 20, UIFactory.CorTexto);
+            UIFactory.Texto(card, $"Valor estimado: {UIFactory.Dinheiro(l.valorEstimado)}{sufixo}   ·   Atestado: {l.atestadoMinimo} serviço(s) parecido(s) (você tem {Licitacoes.Atestados(l.objeto)})   ·   " +
+                $"Sessão: {DiaManager.DataDoDia(l.diaSessao):dd/MM}", 17, UIFactory.CorTexto);
+
+            if (l.status == 0)
+            {
+                if (!descontoLicitacao.TryGetValue(l.id, out int di)) { di = 2; descontoLicitacao[l.id] = di; }
+                float desc = Licitacoes.Descontos[di];
+                bool hab = Licitacoes.Habilitado(l, out string motivo);
+                if (!hab) UIFactory.Texto(card, $"<color=#F5B83F>Hoje você seria inabilitado: {motivo}</color>", 17, UIFactory.CorTexto);
+                var linha = LinhaBotoes(card);
+                UIFactory.Botao(linha, $"Desconto: {desc * 100:0}% ({UIFactory.Dinheiro(l.valorEstimado * (1f - desc))}{sufixo})",
+                    () => { descontoLicitacao[lic.id] = (di + 1) % Licitacoes.Descontos.Length; AtualizarTablet(); }, UIFactory.CartaoClaro, 380, 44, 17);
+                UIFactory.Botao(linha, "Enviar proposta", () => { Toast(Licitacoes.EnviarProposta(lic, desc), UIFactory.Destaque, 5f); descontoLicitacao.Remove(lic.id); AtualizarTablet(); },
+                    UIFactory.Destaque, 230, 44, 18);
+            }
+            else if (l.status == 1)
+                UIFactory.Texto(card, $"Proposta enviada: {UIFactory.Dinheiro(l.valorEstimado * (1f - l.desconto))}{sufixo}. Aguardando a sessão.", 18, UIFactory.CorSuave);
+            else
+            {
+                UIFactory.Texto(card, l.resultado ?? "", 18, UIFactory.CorTexto);
+                if (l.status == 2 && l.objeto == ObjetoLicitacao.Impressao && l.prazoEntrega > 0)
+                    UIFactory.Botao(LinhaBotoes(card), $"Entregar {l.quantidade} impressoras (prazo {DiaManager.DataDoDia(l.prazoEntrega):dd/MM})",
+                        () => { Toast(Licitacoes.EntregarImpressoras(lic), UIFactory.Destaque, 5f); AtualizarTablet(); }, UIFactory.Destaque, 420, 44, 18);
             }
         }
     }

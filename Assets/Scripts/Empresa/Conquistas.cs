@@ -30,6 +30,7 @@ public static class Conquistas
         new InfoConquista("firewall", "Muralha", "Instalou o primeiro firewall."),
         new InfoConquista("heroi", "Herói do ransomware", "Salvou um cliente de um ataque com o backup testado."),
         new InfoConquista("faturou-100k", "Seis dígitos", "R$ 100 mil faturados no total."),
+        new InfoConquista("licitacao", "Fornecedor do governo", "Venceu uma licitação pública."),
         new InfoConquista("produto-proprio", "Fábrica de software", "Lançou um produto próprio."),
         new InfoConquista("emprestimo-quitado", "Nome limpo", "Pagou um empréstimo até a última parcela."),
     };

@@ -435,6 +435,25 @@ public class ContratosManager : MonoBehaviour
         if (custoBilhetagem > 0.01f) GameEconomy.Instance?.Gastar(Mathf.Round(custoBilhetagem * 100f) / 100f);
     }
 
+    // Contrato fechado fora da proposta comercial (licitação): usa uma impressora do estoque
+    public ContratoLocacao CriarContratoDireto(string empresa, string tipoId, int plano, int meses, float mensal, int paginasMes, float fracCor)
+    {
+        var estoque = EmEstoque(tipoId);
+        if (estoque.Count == 0) return null;
+        var t = CatalogoLocacao.Tipo(tipoId);
+        var p = t.planos[Mathf.Clamp(plano, 0, t.planos.Length - 1)];
+        var e = estoque[0];
+        var c = new ContratoLocacao
+        {
+            id = proximoId++, empresa = empresa, equipamentoId = e.id, planoIndice = plano, meses = meses, mensal = mensal,
+            franquia = p.franquia, excedentePB = p.excedentePB, excedenteCor = p.excedenteCor,
+            paginasMes = paginasMes, fracCor = fracCor, fornecedorSuprimento = 0, diaAssinatura = Hoje, diaFim = Hoje + meses * 30
+        };
+        e.contratoId = c.id;
+        contratos.Add(c);
+        return c;
+    }
+
     // ---------- Controle de impressão (bilhetagem) ----------
 
     public const float MensalBilhetagem = 49f;     // por impressora, para o cliente

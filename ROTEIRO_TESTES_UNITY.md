@@ -40,6 +40,18 @@ Tudo abaixo já passou nos testes de lógica fora da Unity. O que falta conferir
 ## 6. Salvar e carregar
 - [ ] Salvar no meio do jogo, sair, voltar: sede, parcerias, projetos, licitações, foco, conquistas e objetivos continuam iguais
 
+## 7. Parte 3D (rua, casa, cama e peças)
+Depois de mudar o MontarCenario: **TI Service → 3. Montar cenário** (remonta e salva a cena).
+Atalhos no Play: **TI Service → Teste (Play)** (aperte Esc antes, para o menu abrir com o cursor solto).
+- [x] Porta do escritório abre com E; dá para sair a pé, atravessar a rua e subir a calçada
+- [x] Porta da casa abre com E e o jogador passa (cápsula de 1,80 m)
+- [x] Cama: "[E] Dormir..." → resumo "Você foi dormir às..." → acorda em casa olhando para a porta
+- [x] Impressora e roteador com a frente virada para a sala
+- [x] Peças da impressora: tampa abre de verdade, segurar E retira o cartucho, LED fica laranja sem toner
+- [x] Parte de trás alcançável mirando por cima (equipamento encostado na parede)
+- [ ] Postes acendem às 17h30 (conferir à noite)
+- [ ] Roteador e computador: mirar em todas as peças e resolver um chamado inteiro só pelas peças
+
 ## O que anotar
 - Textos cortados ou que vazam do cartão (os botões mais largos: "Controle de impressão", "Entregar N impressoras")
 - Caracteres que aparecem como quadrado (→, ·, —)

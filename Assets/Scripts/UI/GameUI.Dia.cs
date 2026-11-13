@@ -46,7 +46,7 @@ public partial class GameUI
     void RegistrarEventosDia()
     {
         bExpediente = new EventBinding<ExpedienteEncerradoEvent>(_ =>
-            Toast("<b>18h: fim do expediente!</b>\nNovos chamados só amanhã. Saia pela porta do escritório para encerrar o dia.",
+            Toast("<b>18h: fim do expediente!</b>\nNovos chamados só amanhã. " + ComoEncerrarODia(),
                   UIFactory.Alerta, 5f));
         bDiaFim = new EventBinding<DiaEncerradoEvent>(e => MostrarResumo(e.resumo));
         bDiaInicio = new EventBinding<DiaIniciadoEvent>(e =>
@@ -70,6 +70,11 @@ public partial class GameUI
         EventBus<FalenciaEvent>.Deregister(bFalencia);
     }
 
+    static string ComoEncerrarODia() =>
+        DiaManager.Instance != null && DiaManager.Instance.TemCasa
+            ? "Atravesse a rua até a sua casa e durma na cama para encerrar o dia."
+            : "Saia pela porta do escritório para encerrar o dia.";
+
     void AtualizarRelogio()
     {
         var d = DiaManager.Instance;
@@ -89,6 +94,7 @@ public partial class GameUI
         txtResumoTitulo.text = $"Fim do dia  <size=60%><color=#9AA6B8>{data:dd/MM/yyyy}</color></size>";
         txtResumoSub.text = r.dormiuNoEscritorio
             ? $"<color=#F2545B>Você ficou até {r.horaSaida} e acabou dormindo no escritório (-2 reputação).</color>"
+            : DiaManager.Instance != null && DiaManager.Instance.TemCasa ? $"Você foi dormir às {r.horaSaida}."
             : $"Você foi embora às {r.horaSaida}.";
 
         UIFactory.Limpar(resumoLinhas);

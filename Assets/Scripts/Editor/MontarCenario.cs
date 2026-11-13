@@ -14,7 +14,7 @@ using PP = UnityEngine.Rendering.PostProcessing;
 // - móveis do Kenney Furniture Kit (CC0), com madeira texturizada;
 // - luz do sol entrando pelas janelas, luzes de teto, reflexos e pós-processamento.
 // Pode ser rodado de novo: apaga o "Cenario" antigo e monta outro.
-public static class MontarCenario
+public static partial class MontarCenario
 {
     const string PastaModelos = "Assets/Models/Kenney/Furniture/";
     const string PastaMateriais = "Assets/Materials/Cenario";
@@ -49,7 +49,7 @@ public static class MontarCenario
     static Material mPisoMadeira, mCarpete, mParedeEscritorio, mParedeCliente, mForro, mMadeira,
                     mRodape, mAluminio, mVidro, mMetal, mGrama;
 
-    [MenuItem("TI Service/3. Montar cenário (escritório + cliente)")]
+    [MenuItem("TI Service/3. Montar cenário (escritório, cliente, rua e casa)")]
     public static void Montar()
     {
         if (GameObject.FindWithTag("Player") == null || Object.FindAnyObjectByType<MissionManager>() == null)
@@ -82,8 +82,11 @@ public static class MontarCenario
         // Gramado em volta das salas (é o que se vê pelas janelas)
         Caixa(raiz, "Gramado", new Vector3(20f, -0.07f, 0f), new Vector3(160f, 0.1f, 80f), mGrama, 4f);
 
+        portasAbrem = true;            // escritório: a porta abre e dá para a rua
         var spawn = MontarEscritorio();
+        portasAbrem = false;           // cliente: a porta leva de volta (Teleporte)
         MontarCliente(spawn);
+        MontarRuaECasaDentro();
         AjustarJogador(spawn);
         Iluminacao();
 
@@ -93,7 +96,7 @@ public static class MontarCenario
         EditorSceneManager.MarkSceneDirty(cena);
         EditorSceneManager.SaveScene(cena);
         AssetDatabase.SaveAssets();
-        Debug.Log("[Cenário] Escritório e cliente montados com visual realista. Cena salva.");
+        Debug.Log("[Cenário] Escritório, cliente, rua e casa montados. Cena salva.");
     }
 
     // ---------------- Escritório do jogador ----------------
@@ -171,11 +174,12 @@ public static class MontarCenario
 
         // Impressora em cima de um armário, na parede leste
         var armario = Modelo("kitchenCabinet", sala, new Vector3(4.5f, 0, 0.8f), -90);
-        PosicionarEquipamento("Impressora", sala, new Vector3(4.45f, Altura(armario), 0.8f), -90, VisualImpressora);
+        // O visual da impressora tem a frente em -z: 90° deixa a frente virada para a sala
+        PosicionarEquipamento("Impressora", sala, new Vector3(4.45f, Altura(armario), 0.8f), 90, VisualImpressora);
 
         // Roteador em cima de um aparador, na parede oeste
         var aparador = Modelo("sideTable", sala, new Vector3(-4.55f, 0, -1.8f), 90);
-        PosicionarEquipamento("Roteador", sala, new Vector3(-4.5f, Altura(aparador), -1.8f), 90, VisualRoteador);
+        PosicionarEquipamento("Roteador", sala, new Vector3(-4.5f, Altura(aparador), -1.8f), -90, VisualRoteador);
 
         // Decoração
         Modelo("bookcaseClosedWide", sala, new Vector3(-4.6f, 0, 1.6f), 90);
@@ -331,13 +335,36 @@ public static class MontarCenario
         Caixa(j, "Batente_Esq", new Vector3(c - l / 2f + bt / 2f, t / 2f, T / 2f), new Vector3(bt, t, T + 0.03f), mRodape, 1f, false);
         Caixa(j, "Batente_Dir", new Vector3(c + l / 2f - bt / 2f, t / 2f, T / 2f), new Vector3(bt, t, T + 0.03f), mRodape, 1f, false);
         Caixa(j, "Batente_Topo", new Vector3(c, t - bt / 2f, T / 2f), new Vector3(l, bt, T + 0.03f), mRodape, 1f, false);
-        Caixa(j, "Folha", new Vector3(c, (t - bt) / 2f + 0.005f, T / 2f), new Vector3(l - 2 * bt - 0.01f, t - bt - 0.01f, 0.045f), mMadeira, 1.2f);
+
+        // Folha, maçanetas e espelhos ficam dentro da dobradiça (lado esquerdo), para a porta poder abrir
+        var dobradica = new GameObject("Dobradica").transform;
+        dobradica.SetParent(j, false);
+        dobradica.localPosition = new Vector3(c - l / 2f + bt, 0f, T / 2f);
+        var folha = new List<GameObject>
+        {
+            Caixa(j, "Folha", new Vector3(c, (t - bt) / 2f + 0.005f, T / 2f), new Vector3(l - 2 * bt - 0.01f, t - bt - 0.01f, 0.045f), mMadeira, 1.2f)
+        };
         float xm = c + l / 2f - bt - 0.12f;
-        Caixa(j, "Macaneta_Dentro", new Vector3(xm, 1.0f, T / 2f - 0.045f), new Vector3(0.13f, 0.022f, 0.022f), mMetal, 1f, false);
-        Caixa(j, "Macaneta_Fora", new Vector3(xm, 1.0f, T / 2f + 0.045f), new Vector3(0.13f, 0.022f, 0.022f), mMetal, 1f, false);
-        Caixa(j, "Espelho_Dentro", new Vector3(xm + 0.05f, 1.0f, T / 2f - 0.026f), new Vector3(0.04f, 0.14f, 0.008f), mMetal, 1f, false);
-        Caixa(j, "Espelho_Fora", new Vector3(xm + 0.05f, 1.0f, T / 2f + 0.026f), new Vector3(0.04f, 0.14f, 0.008f), mMetal, 1f, false);
+        folha.Add(Caixa(j, "Macaneta_Dentro", new Vector3(xm, 1.0f, T / 2f - 0.045f), new Vector3(0.13f, 0.022f, 0.022f), mMetal, 1f, false));
+        folha.Add(Caixa(j, "Macaneta_Fora", new Vector3(xm, 1.0f, T / 2f + 0.045f), new Vector3(0.13f, 0.022f, 0.022f), mMetal, 1f, false));
+        folha.Add(Caixa(j, "Espelho_Dentro", new Vector3(xm + 0.05f, 1.0f, T / 2f - 0.026f), new Vector3(0.04f, 0.14f, 0.008f), mMetal, 1f, false));
+        folha.Add(Caixa(j, "Espelho_Fora", new Vector3(xm + 0.05f, 1.0f, T / 2f + 0.026f), new Vector3(0.04f, 0.14f, 0.008f), mMetal, 1f, false));
+        foreach (var go in folha) go.transform.SetParent(dobradica, true);
+
+        if (portasAbrem)
+        {
+            // O ponto de interação fica no meio da porta (o grupo "Porta" está no centro da parede)
+            var ponto = new GameObject("Interacao").transform;
+            ponto.SetParent(j, false);
+            ponto.localPosition = new Vector3(c, 1f, T / 2f);
+            var porta = ponto.gameObject.AddComponent<PortaAbrivel>();
+            porta.dobradica = dobradica;
+            porta.distanciaInteracao = 1.6f;
+        }
     }
+
+    // Salas montadas com esta opção ligada ganham portas que abrem com E (escritório e casa)
+    static bool portasAbrem;
 
     static void LuzTeto(Transform sala, string nome, Vector3 pos, float intensidade, float alcance, bool sombra)
     {
@@ -375,7 +402,7 @@ public static class MontarCenario
     static void Iluminacao()
     {
         // Sol: entra pelas janelas do lado norte
-        foreach (var luz in Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
+        foreach (var luz in Object.FindObjectsByType<Light>())
         {
             if (luz.type != LightType.Directional) continue;
             Undo.RecordObject(luz, "Sol");
@@ -743,6 +770,8 @@ public static class MontarCenario
         {
             Undo.RecordObject(cc, "Ajustar jogador");
             cc.radius = 0.35f; // cabe entre os móveis
+            cc.height = 1.8f;  // passa nas portas (2,10 m) mesmo vindo da calçada, 12 cm mais alta
+            cc.center = Vector3.zero;
         }
     }
 

@@ -46,6 +46,17 @@ public class PlayerController : MonoBehaviour
         controller.Move((movimento * vel + Vector3.up * velocidadeVertical) * Time.deltaTime);
     }
 
+    // Vira o corpo e a câmera para olhar um ponto (usado pelos atalhos de teste e cenas)
+    public void OlharPara(Vector3 ponto)
+    {
+        if (cam == null) cam = GetComponentInChildren<Camera>();
+        Vector3 d = ponto - cam.transform.position;
+        Vector3 plano = new Vector3(d.x, 0f, d.z);
+        if (plano.sqrMagnitude > 0.0001f) transform.rotation = Quaternion.LookRotation(plano);
+        rotacaoVertical = Mathf.Clamp(-Mathf.Atan2(d.y, plano.magnitude) * Mathf.Rad2Deg, -80f, 80f);
+        cam.transform.localRotation = Quaternion.Euler(rotacaoVertical, 0f, 0f);
+    }
+
     void RotacionarCamera()
     {
         float mouseX = Input.GetAxis("Mouse X") * sensibilidadeMouse;

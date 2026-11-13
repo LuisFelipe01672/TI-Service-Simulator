@@ -317,8 +317,9 @@ public partial class GameUI
         MontarCrimpagem();
     }
 
-    // Refazer a ponta do cabo do equipamento do cliente (uma ponta)
-    void CrimparNoCliente()
+    // Refazer a ponta do cabo do equipamento do cliente (uma ponta).
+    // Pela peça 3D, ao terminar volta para o jogo; pela janela, volta para a janela.
+    void CrimparNoCliente(bool pelaPeca = false)
     {
         var mm = MissionManager.Instance;
         var e = mm?.Estado;
@@ -338,8 +339,9 @@ public partial class GameUI
             else if (cabo.defeito != DefeitoCabo.Rompido) cabo.defeito = DefeitoCabo.Conector;
             mm.CobrarPeca(2f);
             Registrar("Você refez a ponta do cabo. Teste com o testador para ter certeza.");
-            AbrirManutencao(eq);
-        }, () => { if (eq != null) AbrirManutencao(eq); });
+            if (pelaPeca) { FecharModal(); MostrarResultadoPeca("Você refez a ponta do cabo. Teste com o testador para ter certeza."); }
+            else AbrirManutencao(eq);
+        }, () => { if (pelaPeca) FecharModal(); else if (eq != null) AbrirManutencao(eq); });
     }
 
     // ---------- Bancada da sede ----------

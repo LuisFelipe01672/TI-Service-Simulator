@@ -154,10 +154,10 @@ public class DiaManager : MonoBehaviour
         }
         if (Hora >= horaLimite)
         {
-            // Ficou até tarde demais: dormiu no escritório
-            hoje.dormiuNoEscritorio = true;
-            ReputationManager.Instance?.AlterarReputacao(-2f);
-            EncerrarDia();
+            // Ficou até tarde demais: se ainda estava no escritório, dormiu lá (pega mal com os clientes)
+            hoje.dormiuNoEscritorio = JogadorNoEscritorio();
+            if (hoje.dormiuNoEscritorio) ReputationManager.Instance?.AlterarReputacao(-2f);
+            EncerrarDia(true);
         }
 
         AtualizarSol();
@@ -166,12 +166,12 @@ public class DiaManager : MonoBehaviour
     // ---------- Encerrar e começar o dia ----------
 
     // Devolve false (e explica) se ainda não dá para encerrar
-    public bool EncerrarDia()
+    public bool EncerrarDia(bool forcado = false)
     {
         if (diaEncerrado) return false;
 
         var mm = MissionManager.Instance;
-        if (mm != null && mm.chamadoAtivo != null && !hoje.dormiuNoEscritorio)
+        if (mm != null && mm.chamadoAtivo != null && !forcado)
         {
             GameUI.Instance?.Toast("Termine ou desista do chamado em atendimento antes de ir embora.", UIFactory.Perigo, 3f);
             return false;
@@ -211,7 +211,12 @@ public class DiaManager : MonoBehaviour
         // O jogador acorda e começa de novo no escritório
         var jogador = GameObject.FindWithTag("Player");
         var spawn = PontoDeInicio();
-        if (jogador != null && spawn != null) Teleporte.MoverJogador(jogador.transform, spawn);
+        if (jogador != null && spawn != null)
+        {
+            Teleporte.MoverJogador(jogador.transform, spawn);
+            // Acorda olhando para a frente (não para o chão onde estava olhando ao deitar)
+            jogador.GetComponent<PlayerController>()?.OlharPara(spawn.position + spawn.forward * 5f + Vector3.up * 0.6f);
+        }
 
         MissionManager.Instance?.GerarChamados();
         AtualizarSol();
@@ -230,20 +235,37 @@ public class DiaManager : MonoBehaviour
         return escritorio != null ? escritorio.transform : null;
     }
 
-    // Porta do escritório que encerra o dia (criada aqui para não precisar remontar o cenário)
+    // Cenário com rua e casa (menu "TI Service/4. Montar rua e casa"): o dia acaba na cama
+    public bool TemCasa { get; private set; }
+
+    // Se não há casa, o jogador sempre "está no escritório" (comportamento antigo)
+    bool JogadorNoEscritorio()
+    {
+        var sala = GameObject.Find("Cenario/Escritorio");
+        var jogador = GameObject.FindWithTag("Player");
+        if (!TemCasa || sala == null || jogador == null) return true;
+        Vector3 local = sala.transform.InverseTransformPoint(jogador.transform.position);
+        return Mathf.Abs(local.x) < 3.2f && Mathf.Abs(local.z) < 3.2f;
+    }
+
+    // Porta do escritório que encerra o dia (criada aqui para não precisar remontar o cenário).
+    // Com rua e casa, a porta só abre: o jogador vai a pé para casa e dorme na cama.
     void CriarSaidaDoEscritorio()
     {
         var sala = GameObject.Find("Cenario/Escritorio");
-        if (sala == null || FindAnyObjectByType<SaidaEscritorio>() != null) return;
+        TemCasa = FindAnyObjectByType<Cama>() != null;
+        if (sala == null) return;
+
+        // Bancada para fazer cabos, encostada na parede leste (embaixo da janela)
+        if (FindAnyObjectByType<Bancada>() == null)
+            Bancada.Criar(sala.transform, new Vector3(2.65f, 0f, -1.3f), -90f);
+
+        if (TemCasa || FindAnyObjectByType<SaidaEscritorio>() != null) return;
         var porta = new GameObject("Porta_EncerrarDia");
         porta.transform.SetParent(sala.transform, false);
         porta.transform.localPosition = new Vector3(0f, 1f, -2.75f);
         var saida = porta.AddComponent<SaidaEscritorio>();
         saida.distanciaInteracao = 1.3f;
-
-        // Bancada para fazer cabos, encostada na parede leste (embaixo da janela)
-        if (FindAnyObjectByType<Bancada>() == null)
-            Bancada.Criar(sala.transform, new Vector3(2.65f, 0f, -1.3f), -90f);
     }
 
     // ---------- Sol e céu ----------
@@ -252,7 +274,7 @@ public class DiaManager : MonoBehaviour
     {
         sol = RenderSettings.sun;
         if (sol == null)
-            foreach (var l in FindObjectsByType<Light>(FindObjectsSortMode.None))
+            foreach (var l in FindObjectsByType<Light>())
                 if (l.type == LightType.Directional) { sol = l; break; }
         if (sol != null) solYaw = sol.transform.eulerAngles.y;
     }

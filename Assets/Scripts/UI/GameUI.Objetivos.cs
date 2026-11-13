@@ -11,7 +11,8 @@ public partial class GameUI
     void ConstruirObjetivos(RectTransform raiz)
     {
         painelObjetivo = UIFactory.Painel(raiz, "Objetivo", UIFactory.Fundo);
-        UIFactory.Ancorar(painelObjetivo, new Vector2(1, 1), new Vector2(-24, -24), new Vector2(380, 0));
+        // Um pouco abaixo do canto: o contador de FPS do console de debug fica bem no topo
+        UIFactory.Ancorar(painelObjetivo, new Vector2(1, 1), new Vector2(-24, -110), new Vector2(380, 0));
         UIFactory.Vertical(painelObjetivo, 4, 16);
         UIFactory.AjustarAoConteudo(painelObjetivo);
         txtObjProgresso = UIFactory.Texto(painelObjetivo, "", 15, UIFactory.Destaque, FontStyles.Bold);
@@ -21,7 +22,10 @@ public partial class GameUI
 
     void AtualizarObjetivos()
     {
-        if (painelObjetivo == null || Time.unscaledTime < proximaChecagemObj) return;
+        if (painelObjetivo == null) return;
+        // Esconde na hora ao abrir o tablet ou outra janela (o resto é checado 1 vez por segundo)
+        if (modal != Modal.Nenhum && painelObjetivo.gameObject.activeSelf) painelObjetivo.gameObject.SetActive(false);
+        if (Time.unscaledTime < proximaChecagemObj) return;
         proximaChecagemObj = Time.unscaledTime + 1f;
 
         string concluido = Objetivos.Atualizar();

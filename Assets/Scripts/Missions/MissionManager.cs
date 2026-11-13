@@ -139,7 +139,7 @@ public class MissionManager : MonoBehaviour
         get
         {
             if (chamadoAtivo != null)
-                foreach (var eq in FindObjectsByType<Equipamento>(FindObjectsSortMode.None))
+                foreach (var eq in FindObjectsByType<Equipamento>())
                     if (eq.tipoEquipamento == chamadoAtivo.equipamento) return eq.transform.position;
             return jogador != null ? jogador.position : Vector3.zero;
         }

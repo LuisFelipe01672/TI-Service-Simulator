@@ -154,7 +154,9 @@ public partial class GameUI : MonoBehaviour
             else AbrirPausa();
         }
 
-        if (modal == Modal.Nenhum && Input.GetKeyDown(KeyCode.E))
+        // Mirando uma peça do equipamento, o E é dela; senão vale o interagível mais próximo
+        bool mirandoPeca = AtualizarPecas();
+        if (modal == Modal.Nenhum && !mirandoPeca && Input.GetKeyDown(KeyCode.E))
             Interactable.MaisProximoEmAlcance()?.Interagir();
 
         AtualizarPrompt();
@@ -179,6 +181,7 @@ public partial class GameUI : MonoBehaviour
 
         ConstruirHud(raiz);
         ConstruirCardChamado(raiz);
+        ConstruirPainelPeca(raiz, mira);
 
         // Aviso de interação
         prompt = UIFactory.Painel(raiz, "Prompt", UIFactory.Fundo);
@@ -267,7 +270,7 @@ public partial class GameUI : MonoBehaviour
 
     void ConstruirTablet(RectTransform pai)
     {
-        tablet = JanelaModal(pai, "Tablet", new Vector2(1040, 720));
+        tablet = JanelaModal(pai, "Tablet", new Vector2(1120, 720));
 
         // Cabeçalho
         var cab = UIFactory.Vazio(tablet, "Cabecalho");
@@ -293,7 +296,7 @@ public partial class GameUI : MonoBehaviour
         abaNegocios = UIFactory.Botao(abas, "Negócios", () => TrocarAba(6), UIFactory.CartaoClaro, 130, 52, 18);
         abaCentral = UIFactory.Botao(abas, "Central", () => TrocarAba(5), UIFactory.CartaoClaro, 130, 52, 18);
         abaEmpresa = UIFactory.Botao(abas, "Empresa", () => TrocarAba(3), UIFactory.CartaoClaro, 120, 52, 18);
-        abaEquipe = UIFactory.Botao(abas, "Equipe", () => TrocarAba(1), UIFactory.CartaoClaro, 130, 52, 18);
+        abaEquipe = UIFactory.Botao(abas, "Equipe", () => TrocarAba(1), UIFactory.CartaoClaro, 190, 52, 18);
         abaLoja = UIFactory.Botao(abas, "Loja", () => TrocarAba(2), UIFactory.CartaoClaro, 110, 52, 18);
 
         // Conteúdo com rolagem
@@ -410,7 +413,7 @@ public partial class GameUI : MonoBehaviour
     void AtualizarPrompt()
     {
         string texto = null;
-        if (modal == Modal.Nenhum)
+        if (modal == Modal.Nenhum && pecaMirada == null)
             texto = Interactable.MaisProximoEmAlcance()?.TextoPrompt;
         bool mostrar = texto != null;
         if (prompt.gameObject.activeSelf != mostrar) prompt.gameObject.SetActive(mostrar);
@@ -590,7 +593,7 @@ public partial class GameUI : MonoBehaviour
 
         bool foraDoExpediente = DiaManager.Instance != null && DiaManager.Instance.ForaDoExpediente;
         if (foraDoExpediente)
-            UIFactory.Texto(tabletConteudo, "<color=#F5B83F>Fora do expediente:</color> os clientes voltam a ligar amanhã às 8h. Saia pela porta do escritório para encerrar o dia.",
+            UIFactory.Texto(tabletConteudo, "<color=#F5B83F>Fora do expediente:</color> os clientes voltam a ligar amanhã às 8h. " + ComoEncerrarODia(),
                 20, UIFactory.CorTexto);
 
         Secao("CHAMADOS ABERTOS");

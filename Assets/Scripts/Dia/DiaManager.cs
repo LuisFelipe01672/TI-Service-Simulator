@@ -184,7 +184,8 @@ public class DiaManager : MonoBehaviour
         float salarios = 0f;
         if (FuncionarioManager.Instance != null)
             foreach (var f in FuncionarioManager.Instance.equipe)
-                salarios += f.salarioMensal / Mathf.Max(1f, diasUteisPorMes);
+                salarios += f.salarioMensal / Mathf.Max(1f, diasUteisPorMes) *
+                            (EmpresaManager.Instance != null ? EmpresaManager.Instance.MultEncargos : 1f);
         salarios = Mathf.Round(salarios);
         if (salarios > 0f && GameEconomy.Instance != null) GameEconomy.Instance.Gastar(salarios);
 
@@ -276,11 +277,20 @@ public class DiaManager : MonoBehaviour
         RenderSettings.reflectionIntensity = Mathf.Lerp(0.3f, 0.8f, dia01);
     }
 
+    // ---------- Calendário ----------
+    // O dia 1 do jogo é uma segunda-feira, 2 de março de 2026. Impostos e boletos vencem em datas do mês.
+
+    public static readonly System.DateTime Inicio = new System.DateTime(2026, 3, 2);
+    public static System.DateTime DataDoDia(int d) => Inicio.AddDays(Mathf.Max(1, d) - 1);
+    public System.DateTime Data => DataDoDia(dia);
+    public bool FimDeSemana => Data.DayOfWeek == System.DayOfWeek.Saturday || Data.DayOfWeek == System.DayOfWeek.Sunday;
+
     // ---------- Textos ----------
 
-    static readonly string[] diasSemana = { "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom" };
+    static readonly string[] diasSemana = { "Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb" };
 
-    public string DiaSemana => diasSemana[(Mathf.Max(1, dia) - 1) % 7];
+    public string DiaSemana => diasSemana[(int)Data.DayOfWeek];
+    public string DataTexto => Data.ToString("dd/MM/yyyy");
 
     public string HoraTexto()
     {

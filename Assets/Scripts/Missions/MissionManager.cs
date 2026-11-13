@@ -52,6 +52,10 @@ public class MissionManager : MonoBehaviour
 
         int fase = ReputationManager.Instance != null ? ReputationManager.Instance.FaseAtual : 1;
         int quantidade = Mathf.Min(fase == 1 ? 3 : fase == 2 ? 4 : 5, maxChamadosSimultaneos);
+        // Fim de semana: sábado tem pouco movimento, domingo quase nada
+        var d = DiaManager.Instance;
+        if (d != null && d.Data.DayOfWeek == System.DayOfWeek.Saturday) quantidade = Mathf.Min(quantidade, 2);
+        if (d != null && d.Data.DayOfWeek == System.DayOfWeek.Sunday) quantidade = 1;
 
         for (int i = 0; i < quantidade; i++)
             chamadosDisponiveis.Add(CriarChamadoPorFase(fase));
@@ -85,11 +89,19 @@ public class MissionManager : MonoBehaviour
         chamado.problema = p;
         chamado.personalidade = jeito;
         chamado.contato = CatalogoProblemas.SortearContato();
+        // Quanto maior o cliente, mais exige nota fiscal
+        chamado.exigeNota = Random.value < (fase == 1 ? 0.25f : fase == 2 ? 0.6f : 0.9f);
         return chamado;
     }
 
     public void AceitarChamado(Chamado chamado)
     {
+        var empresa = EmpresaManager.Instance;
+        if (empresa != null && !empresa.PodeAtender(chamado, out string motivo))
+        {
+            GameUI.Instance?.Toast(motivo, UIFactory.Perigo, 4f);
+            return;
+        }
         chamadoAtivo = chamado;
         chamadosDisponiveis.Remove(chamado);
         chamado.estado = new EstadoEquipamentos();
@@ -187,7 +199,11 @@ public class MissionManager : MonoBehaviour
         var ch = chamadoAtivo;
 
         ReputationManager.Instance?.AvaliarChamado(tempoGasto, ch.tempoLimite, cometeuErro, ch.MultReputacao);
-        GameEconomy.Instance?.ReceberPagamento((cometeuErro ? ch.recompensa * 0.3f : ch.recompensa) + ch.pecasCobradas);
+        float valor = (cometeuErro ? ch.recompensa * 0.3f : ch.recompensa) + ch.pecasCobradas;
+        if (EmpresaManager.Instance != null)
+            GameUI.Instance?.Toast(EmpresaManager.Instance.RegistrarServico(ch, valor, false), UIFactory.Destaque, 4f);
+        else
+            GameEconomy.Instance?.ReceberPagamento(valor);
 
         // Sujeira esquecida no chão: o cliente reclama
         if (Sujeira.Todas.Count > 0)

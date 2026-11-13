@@ -34,6 +34,9 @@ public class Chamado
     public int acoesFeitas;
     public float pecasCobradas;       // toner, cabos... (o cliente paga junto)
 
+    [Tooltip("Cliente empresa: só contrata e paga com nota fiscal")]
+    public bool exigeNota;
+
     [Header("Cliente")]
     public string contato;                // quem atende o técnico (ex.: "Dona Márcia")
     public Personalidade personalidade;

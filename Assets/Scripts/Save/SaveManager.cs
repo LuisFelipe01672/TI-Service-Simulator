@@ -12,6 +12,7 @@ public class SaveData
     public int versao = 2;
     public int dia = 1;
     public Mochila.Dados mochila;
+    public EmpresaManager.Dados empresa;
     public float saldo;
     public float reputacao;
     public int fase;
@@ -77,6 +78,7 @@ public class SaveManager : MonoBehaviour
             fase = ReputationManager.Instance != null ? ReputationManager.Instance.FaseAtual : 1,
             chamadosConcluidos = chamadosConcluidos,
             mochila = Mochila.Instance != null ? Mochila.Instance.Exportar() : null,
+            empresa = EmpresaManager.Instance != null ? EmpresaManager.Instance.Exportar() : null,
             dia = DiaManager.Instance != null ? DiaManager.Instance.dia : Mathf.Max(1, DiaManager.DiaSalvo),
             equipe = FuncionarioManager.Instance != null
                      ? new List<Funcionario>(FuncionarioManager.Instance.equipe)
@@ -104,6 +106,8 @@ public class SaveManager : MonoBehaviour
         DiaManager.DiaSalvo = 0;
         Mochila.dadosSalvos = null;
         if (Mochila.Instance != null) Mochila.Instance.Inicial();
+        EmpresaManager.dadosSalvos = null;
+        EmpresaManager.Instance?.NovoJogo();
         GameEconomy.Instance?.DefinirSaldo(saldoInicial);
         Debug.Log($"[Save] Jogo novo: R${saldoInicial:F0} para começar.");
     }
@@ -138,6 +142,8 @@ public class SaveManager : MonoBehaviour
         DiaManager.DiaSalvo = Mathf.Max(1, data.dia);
         if (Mochila.Instance != null) Mochila.Instance.Carregar(data.mochila);
         else Mochila.dadosSalvos = data.mochila;
+        if (EmpresaManager.Instance != null) EmpresaManager.Instance.Carregar(data.empresa);
+        else EmpresaManager.dadosSalvos = data.empresa;
         if (DiaManager.Instance != null) DiaManager.Instance.dia = DiaManager.DiaSalvo;
 
         Debug.Log($"[Save] Jogo carregado (salvo em {data.salvoEm}): R${data.saldo:F2}, reputação {data.reputacao:F0}, fase {data.fase}, {data.equipe?.Count ?? 0} funcionário(s)");

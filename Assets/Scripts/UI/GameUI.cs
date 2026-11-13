@@ -42,7 +42,7 @@ public partial class GameUI : MonoBehaviour
     RectTransform tablet, pausa;
     readonly List<RectTransform> janelas = new List<RectTransform>();   // todas as janelas modais
     RectTransform tabletConteudo;
-    Button abaChamados, abaEquipe, abaLoja;
+    Button abaChamados, abaEquipe, abaLoja, abaEmpresa;
     int abaAtiva;
     TextMeshProUGUI txtTabletInfo;
 
@@ -287,6 +287,7 @@ public partial class GameUI : MonoBehaviour
         abaChamados = UIFactory.Botao(abas, "Chamados", () => TrocarAba(0), UIFactory.Destaque, 220, 52);
         abaEquipe = UIFactory.Botao(abas, "Equipe", () => TrocarAba(1), UIFactory.CartaoClaro, 220, 52);
         abaLoja = UIFactory.Botao(abas, "Loja e mochila", () => TrocarAba(2), UIFactory.CartaoClaro, 240, 52);
+        abaEmpresa = UIFactory.Botao(abas, "Empresa", () => TrocarAba(3), UIFactory.CartaoClaro, 200, 52);
 
         // Conteúdo com rolagem
         var area = UIFactory.Vazio(tablet, "Area");
@@ -514,6 +515,7 @@ public partial class GameUI : MonoBehaviour
         abaChamados.GetComponent<Image>().color = abaAtiva == 0 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaEquipe.GetComponent<Image>().color = abaAtiva == 1 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaLoja.GetComponent<Image>().color = abaAtiva == 2 ? UIFactory.Destaque : UIFactory.CartaoClaro;
+        abaEmpresa.GetComponent<Image>().color = abaAtiva == 3 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaEquipe.GetComponentInChildren<TextMeshProUGUI>().text = fase >= 2 ? "Equipe" : "Equipe (Fase 2)";
 
         float saldo = GameEconomy.Instance != null ? GameEconomy.Instance.saldo : 0f;
@@ -522,7 +524,8 @@ public partial class GameUI : MonoBehaviour
         UIFactory.Limpar(tabletConteudo);
         if (abaAtiva == 0) MontarAbaChamados();
         else if (abaAtiva == 1) MontarAbaEquipe();
-        else MontarAbaLoja();
+        else if (abaAtiva == 2) MontarAbaLoja();
+        else MontarAbaEmpresa();
     }
 
     RectTransform Cartao(Color? cor = null)
@@ -595,8 +598,12 @@ public partial class GameUI : MonoBehaviour
                 $"   <color={chamado.CorPersonalidade()}><size=18>{chamado.PersonalidadeTexto().ToUpper()}</size></color>",
                 26, UIFactory.CorTexto);
             UIFactory.Texto(c, $"\"{chamado.DescricaoVisivel}\"  <color=#9AA6B8>— {chamado.contato}</color>", 21, UIFactory.CorTexto);
-            UIFactory.Texto(c, $"Paga {UIFactory.Dinheiro(chamado.recompensa)}  ·  Prazo {Tempo(chamado.tempoLimite)}  ·  {chamado.EquipamentoVisivel}",
+            UIFactory.Texto(c, $"Paga {UIFactory.Dinheiro(chamado.recompensa)}  ·  Prazo {Tempo(chamado.tempoLimite)}  ·  {chamado.EquipamentoVisivel}" +
+                (chamado.exigeNota ? "  ·  <color=#F5B83F>exige nota fiscal</color>" : "  ·  aceita recibo"),
                 19, UIFactory.CorSuave);
+            string motivoBloqueio = null;
+            bool liberado = EmpresaManager.Instance == null || EmpresaManager.Instance.PodeAtender(chamado, out motivoBloqueio);
+            if (!liberado) UIFactory.Texto(c, $"<color=#F2545B>{motivoBloqueio}</color>", 18, UIFactory.CorTexto);
 
             var linha = LinhaBotoes(c);
             var atender = UIFactory.Botao(linha, "Atender", () =>
@@ -604,7 +611,7 @@ public partial class GameUI : MonoBehaviour
                 mm.AceitarChamado(chamado);
                 FecharModal();
             }, UIFactory.Destaque, 180, 48, 22);
-            atender.interactable = mm.chamadoAtivo == null && !foraDoExpediente;
+            atender.interactable = mm.chamadoAtivo == null && !foraDoExpediente && liberado;
 
             if (equipeLivre && !foraDoExpediente)
             {

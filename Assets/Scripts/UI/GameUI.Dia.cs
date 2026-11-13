@@ -50,7 +50,11 @@ public partial class GameUI
                   UIFactory.Alerta, 5f));
         bDiaFim = new EventBinding<DiaEncerradoEvent>(e => MostrarResumo(e.resumo));
         bDiaInicio = new EventBinding<DiaIniciadoEvent>(e =>
-            Toast($"<b>Dia {e.dia}</b> começou. Bom trabalho!", UIFactory.Destaque, 3f));
+        {
+            var data = DiaManager.DataDoDia(e.dia);
+            bool fds = data.DayOfWeek == System.DayOfWeek.Saturday || data.DayOfWeek == System.DayOfWeek.Sunday;
+            Toast($"<b>{data:dd/MM/yyyy}</b>" + (fds ? " — fim de semana: poucos clientes ligam hoje." : " — bom trabalho!"), UIFactory.Destaque, 3f);
+        });
         EventBus<ExpedienteEncerradoEvent>.Register(bExpediente);
         EventBus<DiaEncerradoEvent>.Register(bDiaFim);
         EventBus<DiaIniciadoEvent>.Register(bDiaInicio);
@@ -70,7 +74,7 @@ public partial class GameUI
         if (d == null) { txtRelogio.text = ""; return; }
 
         string cor = d.ForaDoExpediente ? "#F5B83F" : "#E8ECF2";
-        txtRelogio.text = $"{d.DiaSemana} · Dia {d.dia}   <color={cor}>{d.HoraTexto()}</color>" +
+        txtRelogio.text = $"{d.DiaSemana}, {d.Data:dd/MM}   <color={cor}>{d.HoraTexto()}</color>" +
                           (d.ForaDoExpediente ? "  <size=75%><color=#F5B83F>fora do expediente</color></size>" : "");
     }
 
@@ -78,8 +82,8 @@ public partial class GameUI
     {
         AbrirModal(Modal.Resumo, resumo);
 
-        string semana = DiaManager.Instance != null ? DiaManager.Instance.DiaSemana : "";
-        txtResumoTitulo.text = $"Fim do dia {r.dia}  <size=60%><color=#9AA6B8>{semana}</color></size>";
+        var data = DiaManager.DataDoDia(r.dia);
+        txtResumoTitulo.text = $"Fim do dia  <size=60%><color=#9AA6B8>{data:dd/MM/yyyy}</color></size>";
         txtResumoSub.text = r.dormiuNoEscritorio
             ? $"<color=#F2545B>Você ficou até {r.horaSaida} e acabou dormindo no escritório (-2 reputação).</color>"
             : $"Você foi embora às {r.horaSaida}.";
@@ -95,7 +99,7 @@ public partial class GameUI
               r.deltaReputacao >= 0 ? UIFactory.Sucesso : UIFactory.Perigo);
         Linha("Saldo", UIFactory.Dinheiro(r.saldoFinal), r.saldoFinal >= 0 ? UIFactory.CorTexto : UIFactory.Perigo);
 
-        txtBotaoDormir.text = $"Dormir e começar o dia {r.dia + 1}";
+        txtBotaoDormir.text = $"Dormir (amanhã é {DiaManager.DataDoDia(r.dia + 1):dd/MM})";
         botaoDormir.interactable = true;
     }
 

@@ -31,6 +31,16 @@ public class FuncionarioManager : MonoBehaviour
             return false;
         }
 
+        // Registrar funcionário exige CNPJ; o MEI só pode ter 1
+        var empresa = EmpresaManager.Instance;
+        if (empresa != null && equipe.Count >= empresa.LimiteFuncionarios)
+        {
+            GameUI.Instance?.Toast(empresa.regime == Regime.Autonomo
+                ? "Para contratar com carteira assinada você precisa de um CNPJ (aba Empresa)."
+                : "O MEI só pode ter 1 funcionário. Para crescer, abra uma Microempresa (aba Empresa).", UIFactory.Alerta, 4f);
+            return false;
+        }
+
         Funcionario novo = new Funcionario(nome, nivel);
         equipe.Add(novo);
         EventBus<FuncionarioContratadoEvent>.Raise(new FuncionarioContratadoEvent { funcionario = novo });
@@ -90,10 +100,9 @@ public class FuncionarioManager : MonoBehaviour
         if (ReputationManager.Instance != null)
             ReputationManager.Instance.AvaliarChamado(tempo, chamado.tempoLimite, errou);
 
-        if (GameEconomy.Instance != null)
-            GameEconomy.Instance.ReceberPagamento(
-                errou ? chamado.recompensa * 0.3f : chamado.recompensa
-            );
+        float valor = errou ? chamado.recompensa * 0.3f : chamado.recompensa;
+        if (EmpresaManager.Instance != null) EmpresaManager.Instance.RegistrarServico(chamado, valor, true);
+        else if (GameEconomy.Instance != null) GameEconomy.Instance.ReceberPagamento(valor);
 
         string resultado = errou ? "cometeu um erro!" : "resolveu com sucesso!";
         Debug.Log($"[FuncionarioManager] {func.nome} {resultado}");

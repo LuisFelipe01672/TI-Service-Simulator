@@ -47,7 +47,7 @@ public static class Conquistas
         var info = System.Array.Find(Lista, c => c.id == id);
         if (info == null) return;
         desbloqueadas.Add(id);
-        GameUI.Instance?.Toast($"<b>Conquista desbloqueada: {info.nome}</b>\n{info.descricao}", UIFactory.Hex("#C9A227"), 5f);
+        GameUI.Instance?.Toast($"<b>Conquista desbloqueada: {info.nome}</b>\n{info.descricao}", GameUI.CorConquista, 5f);
         Debug.Log($"[Conquistas] {info.nome}");
     }
 

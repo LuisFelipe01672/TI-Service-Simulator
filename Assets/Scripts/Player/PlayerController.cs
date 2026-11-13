@@ -44,7 +44,21 @@ public class PlayerController : MonoBehaviour
         velocidadeVertical += gravidade * Time.deltaTime;
 
         controller.Move((movimento * vel + Vector3.up * velocidadeVertical) * Time.deltaTime);
+
+        // Passos: um som a cada ~0,6 m andando no chão (correndo, passos mais longos)
+        if (controller.isGrounded && movimento.sqrMagnitude > 0.01f)
+        {
+            distanciaPasso += movimento.magnitude * vel * Time.deltaTime;
+            float passo = vel > velocidade ? 0.8f : 0.6f;
+            if (distanciaPasso >= passo)
+            {
+                distanciaPasso = 0f;
+                SomManager.TocarEm("passo", transform.position + Vector3.down * 0.8f, 0.35f, Random.Range(0.85f, 1.15f));
+            }
+        }
     }
+
+    float distanciaPasso;
 
     // Vira o corpo e a câmera para olhar um ponto (usado pelos atalhos de teste e cenas)
     public void OlharPara(Vector3 ponto)
@@ -59,8 +73,10 @@ public class PlayerController : MonoBehaviour
 
     void RotacionarCamera()
     {
-        float mouseX = Input.GetAxis("Mouse X") * sensibilidadeMouse;
-        float mouseY = Input.GetAxis("Mouse Y") * sensibilidadeMouse;
+        // Sensibilidade e eixo Y vêm das configurações do jogador
+        float sens = Configuracoes.Sensibilidade;
+        float mouseX = Input.GetAxis("Mouse X") * sens;
+        float mouseY = Input.GetAxis("Mouse Y") * sens * (Configuracoes.InverterY ? -1f : 1f);
 
         rotacaoVertical -= mouseY;
         rotacaoVertical = Mathf.Clamp(rotacaoVertical, -80f, 80f);

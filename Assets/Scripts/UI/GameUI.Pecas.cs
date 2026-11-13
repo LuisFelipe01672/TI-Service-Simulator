@@ -157,6 +157,7 @@ public partial class GameUI
 
     void ConcluirAcaoPeca(AcaoFisica a)
     {
+        if (pecaMirada != null) SomManager.SomDaAcao(a.rotulo, pecaMirada.transform.position);
         string r = a.executar();
         if (!a.observacao) MissionManager.Instance?.RegistrarAcao();
         Registrar(r);

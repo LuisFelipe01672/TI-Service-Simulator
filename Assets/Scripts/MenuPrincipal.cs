@@ -58,6 +58,17 @@ public class MenuPrincipal : MonoBehaviour
             SceneManager.LoadScene(CenaJogo);
         }, SaveManager.ExisteSave ? UIFactory.CartaoClaro : UIFactory.Destaque, 380, 64, 28);
 
+        // Configurações: a coluna do menu some e a janela aparece no lugar
+        var config = UIFactory.Painel(fundo, "Configuracoes", UIFactory.Fundo);
+        UIFactory.Ancorar(config, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(820, 0));
+        config.pivot = new Vector2(0.5f, 0.5f);
+        UIFactory.Vertical(config, 10, 32);
+        UIFactory.AjustarAoConteudo(config);
+        JanelaConfiguracoes.Montar(config, () => { config.gameObject.SetActive(false); coluna.gameObject.SetActive(true); });
+        config.gameObject.SetActive(false);
+
+        UIFactory.Botao(coluna, "Configurações", () => { coluna.gameObject.SetActive(false); config.gameObject.SetActive(true); },
+            UIFactory.CartaoClaro, 380, 64, 28);
         UIFactory.Botao(coluna, "Sair", Application.Quit, UIFactory.CartaoClaro, 380, 64, 28);
 
         var dica = UIFactory.Texto(fundo, "WASD andar  ·  Mouse olhar  ·  E interagir  ·  Tab tablet  ·  Esc pausa",

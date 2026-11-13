@@ -13,7 +13,7 @@ public partial class GameUI : MonoBehaviour
 {
     public static GameUI Instance;
 
-    enum Modal { Nenhum, Tablet, Manutencao, Pausa, Conversa, Resumo, Computador, Crimpagem, Bancada, Falencia }
+    enum Modal { Nenhum, Tablet, Manutencao, Pausa, Conversa, Resumo, Computador, Crimpagem, Bancada, Falencia, Configuracoes }
     Modal modal = Modal.Nenhum;
     public bool PainelAberto => modal != Modal.Nenhum;
 
@@ -150,7 +150,8 @@ public partial class GameUI : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Escape) && modal != Modal.Resumo && modal != Modal.Falencia)   // resumo e falência só fecham pelo botão
         {
-            if (modal != Modal.Nenhum) FecharModal();
+            if (modal == Modal.Configuracoes) AbrirPausa();   // volta para a pausa
+            else if (modal != Modal.Nenhum) FecharModal();
             else AbrirPausa();
         }
 
@@ -312,14 +313,22 @@ public partial class GameUI : MonoBehaviour
         tabletConteudo = lista;
     }
 
+    RectTransform configuracoes;
+
     void ConstruirPausa(RectTransform pai)
     {
+        configuracoes = JanelaModal(pai, "Configuracoes", new Vector2(820, 0));
+        UIFactory.Vertical(configuracoes, 10, 32);
+        UIFactory.AjustarAoConteudo(configuracoes);
+        JanelaConfiguracoes.Montar(configuracoes, AbrirPausa);
+
         pausa = JanelaModal(pai, "Pausa", new Vector2(460, 0));
         UIFactory.Vertical(pausa, 14, 36, TextAnchor.UpperCenter);
         UIFactory.AjustarAoConteudo(pausa);
 
         UIFactory.Texto(pausa, "Pausado", 40, UIFactory.CorTexto, FontStyles.Bold, TextAlignmentOptions.Center);
         UIFactory.Botao(pausa, "Continuar", FecharModal, UIFactory.Destaque, 380, 56);
+        UIFactory.Botao(pausa, "Configurações", () => AbrirModal(Modal.Configuracoes, configuracoes), UIFactory.CartaoClaro, 380, 56);
         UIFactory.Botao(pausa, "Salvar jogo", () =>
         {
             SaveManager.Instance?.Salvar();
@@ -349,7 +358,11 @@ public partial class GameUI : MonoBehaviour
             ease: Ease.OutCubic);
         Pulsar(hud);
         // Não mostra "+R$" quando o valor veio do save carregado no início da cena
-        if (e.delta > 0.01f && Time.timeSinceLevelLoad > 1f) Toast($"+{UIFactory.Dinheiro(e.delta)}", UIFactory.Sucesso, 1.8f);
+        if (e.delta > 0.01f && Time.timeSinceLevelLoad > 1f)
+        {
+            SomManager.Tocar("dinheiro", 0.7f);
+            Toast($"+{UIFactory.Dinheiro(e.delta)}", UIFactory.Sucesso, 1.8f);
+        }
     }
 
     void AtualizarReputacao(float rep, bool animar)
@@ -380,6 +393,7 @@ public partial class GameUI : MonoBehaviour
 
     void AoConcluirChamado(ChamadoConcluidoEvent e)
     {
+        if (!e.cometeuErro) SomManager.Tocar("sucesso", 0.8f);
         if (e.porFuncionario)
             Toast(e.cometeuErro
                 ? $"Sua equipe errou no chamado de {e.chamado.nomeCliente}. Reputação caiu."
@@ -426,8 +440,15 @@ public partial class GameUI : MonoBehaviour
 
     // ---------- Notificações ----------
 
+    public static readonly Color CorConquista = UIFactory.Hex("#C9A227");
+
     public void Toast(string texto, Color cor, float duracao = 2.5f)
     {
+        // Som pelo tipo do aviso (o verde de sucesso tem som próprio em cada evento)
+        if (cor == UIFactory.Perigo) SomManager.Tocar("erro", 0.5f);
+        else if (cor == CorConquista) SomManager.Tocar("conquista", 0.8f);
+        else if (cor != UIFactory.Sucesso) SomManager.Tocar("aviso", cor == UIFactory.Alerta ? 0.6f : 0.4f);
+
         // No máximo 5 na tela: com mais, a coluna espreme os cartões e os textos se sobrepõem
         while (areaToasts.childCount >= 5)
         {
@@ -488,7 +509,7 @@ public partial class GameUI : MonoBehaviour
             onValueChange: v => { if (janela != null) janela.localScale = Vector3.one * v; },
             ease: Ease.OutBack, useUnscaledTime: true);
 
-        Time.timeScale = tipo == Modal.Pausa ? 0f : 1f;
+        Time.timeScale = tipo == Modal.Pausa || tipo == Modal.Configuracoes ? 0f : 1f;
     }
 
     public void FecharModal()

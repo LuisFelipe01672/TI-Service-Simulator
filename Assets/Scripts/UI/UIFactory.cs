@@ -96,11 +96,49 @@ public static class UIFactory
         cores.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
         cores.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
         botao.colors = cores;
+        botao.onClick.AddListener(() => SomManager.Tocar("clique", 0.6f));
         if (aoClicar != null) botao.onClick.AddListener(() => aoClicar());
 
         var t = Texto(rt, rotulo, tamanhoFonte, Color.white, FontStyles.Bold, TextAlignmentOptions.Center);
         Esticar(t.rectTransform);
         return botao;
+    }
+
+    // Barra deslizante (volume, sensibilidade...): fundo, preenchimento e alça
+    public static Slider Barra(Transform pai, float min, float max, float valor, Action<float> aoMudar, float largura = 360)
+    {
+        var raiz = Vazio(pai, "Barra");
+        var le = raiz.gameObject.AddComponent<LayoutElement>();
+        le.preferredWidth = largura; le.minWidth = largura;
+        le.preferredHeight = 34; le.minHeight = 34;
+
+        var fundo = Painel(raiz, "Fundo", CartaoClaro);
+        fundo.anchorMin = new Vector2(0, 0.35f); fundo.anchorMax = new Vector2(1, 0.65f);
+        fundo.offsetMin = fundo.offsetMax = Vector2.zero;
+
+        var areaFill = Vazio(raiz, "AreaFill");
+        areaFill.anchorMin = new Vector2(0, 0.35f); areaFill.anchorMax = new Vector2(1, 0.65f);
+        areaFill.offsetMin = areaFill.offsetMax = Vector2.zero;
+        var fill = Painel(areaFill, "Fill", Destaque);
+        fill.anchorMin = Vector2.zero; fill.anchorMax = Vector2.one;
+        fill.offsetMin = fill.offsetMax = Vector2.zero;
+
+        var areaAlca = Vazio(raiz, "AreaAlca");
+        areaAlca.anchorMin = Vector2.zero; areaAlca.anchorMax = Vector2.one;
+        areaAlca.offsetMin = new Vector2(10, 0); areaAlca.offsetMax = new Vector2(-10, 0);
+        var alca = Painel(areaAlca, "Alca", Color.white);
+        alca.anchorMin = new Vector2(0, 0); alca.anchorMax = new Vector2(0, 1);
+        alca.sizeDelta = new Vector2(20, 0);
+
+        var s = raiz.gameObject.AddComponent<Slider>();
+        s.fillRect = fill;
+        s.handleRect = alca;
+        s.targetGraphic = alca.GetComponent<Image>();
+        s.direction = Slider.Direction.LeftToRight;
+        s.minValue = min; s.maxValue = max;
+        s.SetValueWithoutNotify(valor);
+        if (aoMudar != null) s.onValueChanged.AddListener(v => aoMudar(v));
+        return s;
     }
 
     public static VerticalLayoutGroup Vertical(RectTransform rt, float espaco = 12, int margem = 0,

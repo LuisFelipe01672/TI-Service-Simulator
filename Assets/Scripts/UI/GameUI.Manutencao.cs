@@ -158,6 +158,7 @@ public partial class GameUI
 
     void Concluir(AcaoFisica a)
     {
+        if (equipamentoAtual != null) SomManager.SomDaAcao(a.rotulo, equipamentoAtual.transform.position);
         string r = a.executar();
         if (!a.observacao) MissionManager.Instance?.RegistrarAcao();
         Registrar(r);

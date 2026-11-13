@@ -127,6 +127,7 @@ public partial class GameUI
     {
         botaoDormir.interactable = false;
         telaPreta.blocksRaycasts = true;
+        SomManager.Tocar("dormir", 0.7f);
         Tween.Custom(startValue: 0f, endValue: 1f, duration: 0.7f,
                 onValueChange: v => { if (telaPreta != null) telaPreta.alpha = v; }, useUnscaledTime: true)
             .OnComplete(() =>

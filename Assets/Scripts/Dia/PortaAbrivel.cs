@@ -13,7 +13,11 @@ public class PortaAbrivel : Interactable
 
     public override string TextoPrompt => aberta ? "[E] Fechar a porta" : "[E] Abrir a porta";
 
-    public override void Interagir() => aberta = !aberta;
+    public override void Interagir()
+    {
+        aberta = !aberta;
+        SomManager.TocarEm("porta", transform.position, 0.9f, aberta ? 1f : 0.9f);
+    }
 
     protected override void Update()
     {

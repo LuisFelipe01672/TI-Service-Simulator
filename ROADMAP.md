@@ -81,9 +81,13 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ✅ Pipeline gráfico escolhido: **Built-in** (ver Pilar gráfico)
 
 ## Fase 1A — Casa jogável (quarto + home office)
-O jogo passa a **começar em casa** (acordando na cama), não no escritório.
-- ⬜ Quarto realista: cama de casal, criado-mudo, abajur, guarda-roupa, cortina, tapete, luz baked
-- ⬜ Home office: mesa, cadeira, **PC do jogador**, prateleira de ferramentas, mochila física
+- ✅ O jogo novo **começa em casa** (ao lado da cama), não no escritório
+- ✅ Quarto realista: cama de casal, 2 criados-mudos, despertador, porta-retrato, quadro, guarda-roupa, persianas,
+      tapete, planta, teto de gesso (modelos Poly Haven + Sketchfab; persianas feitas por código)
+- ⬜ Abajur no criado-mudo e luz pré-calculada (baked) na casa
+- ✅ Home office (visual): mesa de metal, cadeira presidente, PC, luminária, blocos de notas, relógio, estante de aço
+      com caixa de ferramentas e caixas, mochila
+- ⬜ **PC do jogador** funcionando (sentar e usar: chamados, loja, banco) e mochila física ligada ao inventário
 - ⬜ Interruptores que acendem luzes, relógio de parede com a hora do jogo, sol pela janela
 - ⬜ **Atendimento remoto** pelo PC de casa (programa fictício): resolver de longe senha, impressora padrão, driver,
       e-mail — mais rápido e barato, mas nem tudo dá; o cliente precisa estar no computador e aceitar a conexão

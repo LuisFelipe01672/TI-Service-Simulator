@@ -191,6 +191,52 @@ public static class TesteGrafico
         EditorApplication.isPlaying = true;
     }
 
+    [MenuItem("TI Service/Teste gráfico/0. Abrir cena do jogo", priority = 1299)]
+    public static void AbrirCenaDoJogo()
+    {
+        if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity");
+    }
+
+    // Fotos da casa na cena do jogo, sem Play (para conferir posição e giro dos modelos). Builds/Capturas/Casa_*.png
+    [MenuItem("TI Service/Teste gráfico/4. Fotos da casa (cena do jogo)", priority = 1310)]
+    public static void FotosDaCasa()
+    {
+        var c = new Vector3(0f, 0f, -19.5f);   // MontarCenario.CentroCasa
+        Foto("Casa_Quarto", c + new Vector3(0.3f, 1.65f, 0.4f), c + new Vector3(-2.3f, 0.6f, -2.0f));
+        Foto("Casa_Escritorio", c + new Vector3(-1.4f, 1.6f, 0.3f), c + new Vector3(-3.0f, 0.9f, 2.6f));
+        Foto("Casa_Estante", c + new Vector3(-1.9f, 1.6f, 0.2f), c + new Vector3(-0.3f, 0.9f, 2.6f));
+        Foto("Casa_GuardaRoupa", c + new Vector3(-0.6f, 1.6f, -1.0f), c + new Vector3(-3.7f, 1.0f, -0.6f));
+        Foto("Casa_Geral", c + new Vector3(3.6f, 2.5f, 2.6f), c + new Vector3(-1.5f, 0.5f, -0.8f));
+        Debug.Log("[TesteGrafico] Fotos da casa salvas em Builds/Capturas");
+    }
+
+    static void Foto(string nome, Vector3 de, Vector3 para)
+    {
+        var go = new GameObject("CameraFoto") { hideFlags = HideFlags.HideAndDontSave };
+        var cam = go.AddComponent<Camera>();
+        go.transform.position = de;
+        go.transform.LookAt(para);
+        cam.fieldOfView = 75f;
+        cam.nearClipPlane = 0.05f;
+        cam.allowHDR = false;
+        var rt = new RenderTexture(1600, 900, 24);
+        cam.targetTexture = rt;
+        cam.Render();
+        var tex = new Texture2D(1600, 900, TextureFormat.RGB24, false);
+        RenderTexture.active = rt;
+        tex.ReadPixels(new Rect(0, 0, 1600, 900), 0, 0);
+        tex.Apply();
+        RenderTexture.active = null;
+        var pasta = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), "Builds", "Capturas");
+        System.IO.Directory.CreateDirectory(pasta);
+        System.IO.File.WriteAllBytes(System.IO.Path.Combine(pasta, nome + ".png"), tex.EncodeToPNG());
+        cam.targetTexture = null;
+        Object.DestroyImmediate(go);
+        Object.DestroyImmediate(rt);
+        Object.DestroyImmediate(tex);
+    }
+
     // ---------------- Auxiliares ----------------
 
     static void PosProcessamento(Camera cam)

@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 
 // Ferramenta de desenvolvimento: executa um item de menu da Unity escrito num arquivo, sem precisar clicar.
-// Escreva o caminho do menu (ex.: "TI Service/Teste gráfico/1. Montar cômodo de prova") em
+// Escreva o caminho do menu (ex.: "TI Service/Teste gráfico/1. Montar cômodo de prova"), ou "play"/"stop", em
 // Temp/comando_unity.txt; o editor executa e apaga o arquivo. Resultado vai para o Console/Editor.log.
 [InitializeOnLoad]
 static class ComandoExterno
@@ -24,6 +24,12 @@ static class ComandoExterno
         catch { return; }
         if (string.IsNullOrEmpty(menu)) return;
 
+        if (menu == "play" || menu == "stop")
+        {
+            EditorApplication.isPlaying = menu == "play";
+            Debug.Log($"[ComandoExterno] '{menu}' → executado");
+            return;
+        }
         bool ok = EditorApplication.ExecuteMenuItem(menu);
         Debug.Log($"[ComandoExterno] '{menu}' → {(ok ? "executado" : "menu não encontrado")}");
     }

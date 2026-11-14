@@ -1,4 +1,6 @@
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 // Parte do MontarCenario: rua na frente do escritório (calçadas, asfalto, faixa de pedestre e postes),
 // a casa do jogador do outro lado da rua (quarto, sala e cozinha num só cômodo) e prédios vizinhos.
@@ -108,6 +110,12 @@ public static partial class MontarCenario
             leste: new[] { Janela(0.3f) },
             oeste: new[] { Janela(0.6f) });
 
+        // Casa tem teto de gesso liso (o forro de placas é de escritório)
+        var forro = casa.Find("Forro");
+        if (forro != null)
+            forro.GetComponent<MeshRenderer>().sharedMaterial =
+                MatPBR("Teto_Casa", "PaintedPlaster017", new Color(0.97f, 0.97f, 0.96f), 0.08f);
+
         LuzTeto(casa, "Luz_Teto_Quarto", new Vector3(-2f, H - 0.15f, -1f), 1.3f, 6.5f, true);
         LuzTeto(casa, "Luz_Teto_Sala", new Vector3(2f, H - 0.15f, 0.5f), 1.2f, 6.5f, false);
         Sonda(casa, new Vector3(8f, H, 6f));
@@ -118,37 +126,158 @@ public static partial class MontarCenario
             new Vector3(1.2f, 0.08f, CalcadaSulZ1 - zParede), mCalcada, 1.5f);
         Modelo("rugDoormat", casa, new Vector3(1.5f, 0.012f, 2.55f), 0, Colisao.Nenhuma);
 
-        // Quarto (canto sudoeste)
-        // 180°: a cabeceira encosta na parede sul, com o criado-mudo ao lado
-        var cama = Modelo("bedDouble", casa, new Vector3(-2.7f, 0f, -1.75f), 180);
-        var criado = Modelo("cabinetBedDrawerTable", casa, new Vector3(-1.05f, 0f, -2.65f), 0);
-        Modelo("lampRoundTable", casa, new Vector3(-1.05f, Altura(criado), -2.65f), 0, Colisao.Nenhuma);
-        Modelo("rugRounded", casa, new Vector3(-2.7f, 0.012f, 0.1f), 0, Colisao.Nenhuma);
-        if (cama != null)
-        {
-            var c = cama.AddComponent<Cama>();
-            c.distanciaInteracao = 2.0f;   // medido da base da cama até o centro do jogador
-        }
+        MontarQuarto(casa);
+        MontarHomeOffice(casa);
+        Persianas(casa);
 
-        // Sala (canto sudeste): sofá olhando para a TV
+        // Sala (canto sudeste): sofá olhando para a TV — Kenney por enquanto (Fase 1B)
         Modelo("loungeSofa", casa, new Vector3(2.4f, 0f, -2.45f), 0);
         var rack = Modelo("cabinetTelevision", casa, new Vector3(2.4f, 0f, -0.3f), 180);
         Modelo("televisionModern", casa, new Vector3(2.4f, Altura(rack), -0.3f), 180, Colisao.Nenhuma);
         Modelo("rugRectangle", casa, new Vector3(2.4f, 0.012f, -1.4f), 0, Colisao.Nenhuma);
-        Modelo("pottedPlant", casa, new Vector3(3.55f, 0f, -2.6f), 0);
 
-        // Cozinha (parede norte, a oeste da porta) e mesa
-        Modelo("kitchenFridge", casa, new Vector3(-3.55f, 0f, 2.6f), 180);
-        Modelo("kitchenCabinet", casa, new Vector3(-2.6f, 0f, 2.65f), 180);
-        Modelo("kitchenSink", casa, new Vector3(-1.7f, 0f, 2.65f), 180);
-        Modelo("kitchenStove", casa, new Vector3(-0.8f, 0f, 2.65f), 180);
-        Modelo("tableRound", casa, new Vector3(-0.3f, 0f, 0.6f), 0);
-        Modelo("chair", casa, new Vector3(-0.3f, 0f, 1.35f), 180);
-        Modelo("chair", casa, new Vector3(-0.3f, 0f, -0.15f), 0);
-        Modelo("coatRackStanding", casa, new Vector3(3.5f, 0f, 2.55f), 0);
+        // Cozinha na parede leste, entre a janela e a porta — Kenney por enquanto (Fase 1B)
+        Modelo("kitchenFridge", casa, new Vector3(3.55f, 0f, 2.55f), -90);
+        Modelo("kitchenSink", casa, new Vector3(3.6f, 0f, 1.7f), -90);
+        Modelo("kitchenStove", casa, new Vector3(3.6f, 0f, 1.0f), -90);
+        Modelo("coatRackStanding", casa, new Vector3(2.45f, 0f, 2.6f), 0);
 
         // Onde o jogador acorda (o DiaManager procura "SpawnCasa"): ao lado da cama, olhando para a porta
         Ponto("SpawnCasa", casa, new Vector3(0.2f, 1f, -1.2f), 0);
+    }
+
+    // ---------------- Quarto e home office (modelos realistas, Fase 1A) ----------------
+    // Casa: x de -4 a 4 (oeste → leste), z de -3 a 3 (sul → norte, a rua fica ao norte).
+
+    const string PastaPolyHaven = "Assets/Models/PolyHaven/";
+    const string PastaSketchfab = "Assets/Models/Sketchfab/";
+    static string PH(string id) => PastaPolyHaven + id + "/" + id + ".gltf";
+    static string SF(string nome) => PastaSketchfab + nome + ".glb";
+
+    static void MontarQuarto(Transform casa)
+    {
+        // Cama com a cabeceira na parede sul
+        var cama = ModeloReal(SF("Cama_Casal"), casa, new Vector3(-2.35f, 0f, -1.95f), 2.1f, RotCama);
+        if (cama != null) cama.AddComponent<Cama>().distanciaInteracao = 2.0f;   // da base da cama ao jogador
+
+        var criadoEsq = ModeloReal(PH("ClassicNightstand_01"), casa, new Vector3(-3.55f, 0f, -2.72f), 0.5f, 0);
+        var criadoDir = ModeloReal(PH("ClassicNightstand_01"), casa, new Vector3(-1.15f, 0f, -2.72f), 0.5f, 0);
+        ModeloReal(PH("alarm_clock_01"), casa, new Vector3(-1.15f, Altura(criadoDir), -2.7f), 0.12f, 160, Colisao.Nenhuma);
+        ModeloReal(PH("standing_picture_frame_01"), casa, new Vector3(-3.5f, Altura(criadoEsq), -2.78f), 0.2f, 15, Colisao.Nenhuma);
+        ModeloReal(PH("hanging_picture_frame_01"), casa, new Vector3(-2.35f, 1.35f, -2.97f), 0.7f, 180, Colisao.Nenhuma);
+
+        // Tapete aos pés da cama
+        Caixa(casa, "Tapete_Quarto", new Vector3(-2.35f, 0.006f, -0.45f), new Vector3(2.0f, 0.012f, 1.2f), mCarpete, 1.5f, false);
+
+        // Guarda-roupa branco na parede oeste, entre a cama e a janela
+        // o arquivo traz dois guarda-roupas (fechado e aberto): fica só o fechado
+        ModeloReal(SF("Guarda_Roupa"), casa, new Vector3(-3.68f, 0f, -0.75f), 1.9f, RotGuardaRoupa,
+            manterMetade: +1);
+        ModeloReal(PH("potted_plant_02"), casa, new Vector3(-0.55f, 0f, -2.6f), 0.9f, 0);
+    }
+
+    static void MontarHomeOffice(Transform casa)
+    {
+        // Mesa no canto noroeste, de frente para a parede norte, com a janela à direita
+        var mesa = ModeloReal(PH("metal_office_desk"), casa, new Vector3(-3.0f, 0f, 2.55f), 1.5f, RotMesa);
+        float tampo = Altura(mesa);
+        ModeloReal(SF("Cadeira_Escritorio"), casa, new Vector3(-3.0f, 0f, 1.75f), 1.15f, RotCadeira);
+        ModeloReal(SF("Computador_Mesa"), casa, new Vector3(-3.1f, tampo, 2.6f), 0.85f, 180, Colisao.Nenhuma);
+        ModeloReal(PH("desk_lamp_arm_01"), casa, new Vector3(-3.6f, tampo, 2.7f), 0.5f, 135, Colisao.Nenhuma);
+        ModeloReal(PH("office_notepads"), casa, new Vector3(-2.45f, tampo, 2.35f), 0.3f, 20, Colisao.Nenhuma);
+        ModeloReal(PH("potted_plant_04"), casa, new Vector3(-2.35f, tampo, 2.75f), 0.25f, 0, Colisao.Nenhuma);
+        ModeloReal(PH("wall_clock"), casa, new Vector3(-3.0f, 2.15f, 2.97f), 0.32f, RotRelogio, Colisao.Nenhuma);
+        ModeloReal(SF("Mochila"), casa, new Vector3(-2.2f, 0f, 2.4f), 0.5f, 200);
+
+        // Estante de aço com as ferramentas, na parede norte entre a janela e a porta
+        var estante = ModeloReal(PH("steel_frame_shelves_03"), casa, new Vector3(-0.35f, 0f, 2.68f), 1.8f, RotEstante);
+        ModeloReal(PH("metal_toolbox"), casa, new Vector3(-0.35f, 0f, 2.25f), 0.5f, 10);
+        ModeloReal(PH("cardboard_box_01"), casa, new Vector3(0.25f, 0f, 2.45f), 0.45f, 25);
+        if (estante != null) ModeloReal(PH("cardboard_box_01"), casa, new Vector3(-0.35f, Altura(estante) * 0.55f, 2.7f), 0.4f, -8, Colisao.Nenhuma);
+
+        // Luminárias de teto (só o visual; as luzes são as LuzTeto)
+        ModeloReal(PH("modern_ceiling_lamp_01"), casa, new Vector3(-2f, H - 0.35f, -1f), 0.45f, 0, Colisao.Nenhuma);
+        ModeloReal(PH("modern_ceiling_lamp_01"), casa, new Vector3(2f, H - 0.35f, 0.5f), 0.45f, 0, Colisao.Nenhuma);
+    }
+
+    // Persiana horizontal por dentro de cada janela (mesmas posições do Sala(...) da casa), feita de lâminas.
+    // Fica meio aberta (lâminas a 35°), deixando a luz do sol entrar em faixas.
+    static void Persianas(Transform casa)
+    {
+        var mLamina = Mat("Persiana_Aluminio", new Color(0.9f, 0.9f, 0.88f), 0.55f, 0.3f);
+        void Uma(string nome, Vector3 centro, float rotY)
+        {
+            var p = new GameObject(nome).transform;
+            p.SetParent(casa, false);
+            p.localPosition = centro;
+            p.localRotation = Quaternion.Euler(0, rotY, 0);
+            const float largura = 1.3f, topo = 2.2f - 1.5f, baixo = 0.95f - 1.5f, passo = 0.045f;
+            Caixa(p, "Trilho", new Vector3(0, topo + 0.02f, 0), new Vector3(largura + 0.04f, 0.04f, 0.05f), mLamina, 1f, false);
+            int n = 0;
+            for (float y = topo - 0.03f; y > baixo; y -= passo, n++)
+            {
+                var l = Caixa(p, "Lamina", new Vector3(0, y, 0), new Vector3(largura, 0.003f, 0.04f), mLamina, 1f, false, true);
+                l.transform.localRotation = Quaternion.Euler(35f, 0, 0);
+            }
+            Caixa(p, "Base", new Vector3(0, baixo, 0), new Vector3(largura, 0.012f, 0.045f), mLamina, 1f, false);
+            Caixa(p, "Cordao", new Vector3(largura / 2f - 0.06f, (topo + baixo) / 2f - 0.15f, 0.03f),
+                new Vector3(0.006f, topo - baixo, 0.006f), mLamina, 1f, false, false);
+        }
+        // a janela vai de 0,9 a 2,1 m; a persiana fica 6 cm para dentro da parede
+        Uma("Persiana_Norte", new Vector3(-1.7f, 1.5f, 3f - 0.06f), 0);
+        Uma("Persiana_Sul", new Vector3(1.8f, 1.5f, -3f + 0.06f), 180);
+        Uma("Persiana_Leste", new Vector3(4f - 0.06f, 1.5f, 0.3f), 90);
+        Uma("Persiana_Oeste", new Vector3(-4f + 0.06f, 1.5f, 0.6f), -90);
+    }
+
+    // Giro de cada modelo para ficar de frente para dentro da casa (conferido nas fotos do menu Teste gráfico)
+    const float RotCama = 0f, RotGuardaRoupa = 90f, RotMesa = 180f, RotCadeira = 180f, RotRelogio = 180f,
+                RotEstante = 180f;
+
+    // Modelo glTF/GLB realista: mantém o giro original do arquivo, ajusta o maior lado para 'maiorLado'
+    // (metros), apoia a base em 'pos' (local do pai), centraliza e gira 'rotY'.
+    // manterMetade: -1/+1 apaga as peças do outro lado do eixo horizontal mais comprido (arquivos com dois modelos)
+    static GameObject ModeloReal(string caminho, Transform pai, Vector3 pos, float maiorLado, float rotY,
+        Colisao colisao = Colisao.Caixa, int manterMetade = 0)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(caminho);
+        if (prefab == null) { Debug.LogError("[Cenário] Modelo não encontrado: " + caminho); return null; }
+
+        var suporte = new GameObject(System.IO.Path.GetFileNameWithoutExtension(caminho)).transform;
+        var modelo = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        modelo.transform.SetParent(suporte, false);
+
+        var b = Limites(modelo);
+        if (manterMetade != 0)
+        {
+            PrefabUtility.UnpackPrefabInstance(modelo, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+            bool eixoX = b.size.x >= b.size.z;
+            foreach (var r in modelo.GetComponentsInChildren<Renderer>())
+            {
+                float d = eixoX ? r.bounds.center.x - b.center.x : r.bounds.center.z - b.center.z;
+                if (d * manterMetade < 0) Object.DestroyImmediate(r.gameObject);
+            }
+            b = Limites(modelo);
+        }
+        float lado = Mathf.Max(b.size.x, b.size.y, b.size.z);
+        if (lado > 0.0001f) modelo.transform.localScale *= maiorLado / lado;
+        b = Limites(modelo);
+        modelo.transform.localPosition -= new Vector3(b.center.x, b.min.y, b.center.z);
+
+        foreach (var r in modelo.GetComponentsInChildren<Renderer>())
+            r.shadowCastingMode = ShadowCastingMode.On;
+
+        if (colisao == Colisao.Caixa)
+        {
+            var bc = suporte.gameObject.AddComponent<BoxCollider>();
+            bc.center = new Vector3(0, b.size.y / 2f, 0);
+            bc.size = b.size;
+        }
+
+        suporte.SetParent(pai, false);
+        suporte.localPosition = pos;
+        suporte.localRotation = Quaternion.Euler(0, rotY, 0);
+        return suporte.gameObject;
     }
 
     // ---------------- Vizinhança ----------------

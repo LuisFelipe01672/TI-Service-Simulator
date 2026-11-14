@@ -87,7 +87,9 @@ public static partial class MontarCenario
         portasAbrem = false;           // cliente: a porta leva de volta (Teleporte)
         MontarCliente(spawn);
         MontarRuaECasaDentro();
-        AjustarJogador(spawn);
+        // O jogo começa em casa, ao lado da cama (Fase 1A); sem casa, no escritório
+        var spawnCasa = GameObject.Find("SpawnCasa");
+        AjustarJogador(spawnCasa != null ? spawnCasa.transform : spawn);
         Iluminacao();
 
         Debug.Log("[Cenário] Materiais dos móveis do Kenney: " + string.Join(", ", materiaisKenney.OrderBy(n => n)));

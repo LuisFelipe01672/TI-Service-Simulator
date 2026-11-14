@@ -172,4 +172,5 @@ LightingData.asset     binary
 
 # Modelos glTF binários (Sketchfab)
 *.glb                   lfs
+Assets/Models/**/*.bin    lfs
 *.GLB                   lfs

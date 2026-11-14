@@ -25,9 +25,15 @@ certificado digital vencido, domínio vencido derrubando o e-mail, operadora que
 Construídos uma vez; cada equipamento novo só pluga as suas peças, causas e ações.
 
 **Pilar gráfico** — o mais realista possível sem travar PCs médios
-- ⬜ Post-processing: tonemapping ACES, bloom leve, oclusão de ambiente (SSAO), gradação de cor, profundidade de
-      campo só nos closes
+Decisão do dono (13/11/2026): **fica no Built-in RP**. Teste do cômodo de prova (RX 6500 XT 4 GB): Built-in 549 FPS
+× HDRP 314 FPS, com ganho visual pequeno; o que mais pesa no realismo são os **modelos**, não o pipeline.
+Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteGrafico_HomeOffice`, fotos em
+`Builds/Capturas`). Reavaliar URP só se a Unity abandonar o Built-in.
+- ✅ Post-processing v2 no jogo (ACES, bloom, AO, gradação de cor, vinheta)
+- ⬜ Tirar o tom marrom/amarelado da gradação de cor (cores mais neutras, como no teste HDRP)
+- ⬜ Profundidade de campo só nos closes
 - ⬜ Iluminação baked (lightmaps) nos interiores + reflection probes + light probes para personagens
+      (validada no cômodo de prova: peças sobrepostas nas quinas, modelos recebem luz por light probes)
 - ⬜ Materiais PBR (ambientCG/Poly Haven) em todo piso, parede, metal e plástico; sujeira/desgaste onde faz sentido
 - ⬜ Modelos realistas (Poly Haven CC0 / Sketchfab CC-BY) substituindo as caixas, cômodo por cômodo
 - ⬜ Opções gráficas (baixo/médio/alto/ultra)
@@ -64,16 +70,15 @@ Construídos uma vez; cada equipamento novo só pluga as suas peças, causas e a
 
 ---
 
-## Fase 0 — Fundação (próxima sessão)
+## Fase 0 — Fundação
 - ✅ glTFast instalado e os 11 modelos importados (Switch_Rack_24: texturas 4K→2K e UVs unificadas para importar)
 - ✅ Commit e push dos modelos + `CREDITOS.md` + skills + este roadmap (1f03f7f)
 - ✅ `CLAUDE.md` na raiz com as convenções do projeto (português, UI por código, managers por evento, saves)
 - ✅ Tela de **Créditos** no menu principal (autores do `CREDITOS.md`; exigido pelo CC-BY)
 - ⬜ Corrigir a marcação falsa de "cena modificada" ao gerar o executável
-- ⬜ **Teste gráfico decisivo**: montar um cômodo de prova (home office) com os mesmos modelos e texturas no
+- ✅ **Teste gráfico decisivo**: cômodo de prova (home office) com os mesmos modelos e texturas no
       Built-in + post-processing e numa cópia do projeto em **HDRP** (e/ou URP); comparar visual e FPS
-- ❓ Escolher o pipeline gráfico definitivo **antes** de construir a casa (trocar depois obriga a refazer
-      materiais e luz)
+- ✅ Pipeline gráfico escolhido: **Built-in** (ver Pilar gráfico)
 
 ## Fase 1A — Casa jogável (quarto + home office)
 O jogo passa a **começar em casa** (acordando na cama), não no escritório.
@@ -126,7 +131,8 @@ O jogo passa a **começar em casa** (acordando na cama), não no escritório.
 - ⬜ **Limpeza satisfatória**: poeira saindo com ar comprimido e pincel (antes/depois); cooler sujo = superaquecimento
 - ⬜ **Pasta térmica** (tirar a velha, aplicar a nova) e **organização de cabos** dentro do gabinete
 - ⬜ Cabos atrás: rede, energia, vídeo (monitor sem imagem por cabo solto)
-- ⬜ Monitor mostrando o "Windows" do jogo na própria tela 3D (o computador simulado que já existe)
+- ⬜ Monitor mostrando o "Windows" do jogo na própria tela 3D (o computador simulado que já existe) — a textura
+      original do Computador_Mesa mostra um Windows real: trocar pela tela do jogo (marca real)
 - ⬜ **Ferramentas de diagnóstico**: testador de fonte, multímetro, **placa POST**, pendrive de diagnóstico (teste
       de memória, saúde do disco, antivírus), testador de cabo
 - ⬜ **Check-up completo** (serviço vendável): inspeção de todas as peças com laudo de saúde em %

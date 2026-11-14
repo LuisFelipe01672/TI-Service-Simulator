@@ -38,4 +38,8 @@ Roteiro de testes manuais: `ROTEIRO_TESTES_UNITY.md`. Créditos de assets: `CRED
 - Abra a Unity **pelo Unity Hub** (licença). Não recompile com o Play rodando.
 - Atalhos de teste: menu *TI Service/Teste (Play)*. Executável: *TI Service/4. Gerar executável (Windows)* →
   `Builds/Windows/` (fora do Git). Depois do build: `git checkout -- ProjectSettings/ProjectSettings.asset`.
+- **Rodar menus sem clicar**: escreva o caminho do menu (ex.: `Assets/Refresh`,
+  `TI Service/Teste gráfico/1. Montar cômodo de prova`) em `Temp/comando_unity.txt`; o editor executa e apaga
+  (`Editor/ComandoExterno.cs`). Leia o resultado no `Editor.log`.
+- **Pipeline gráfico: Built-in** (decidido após teste contra HDRP — ver ROADMAP, Pilar gráfico).
 - Detalhes na skill `testar-na-unity`.

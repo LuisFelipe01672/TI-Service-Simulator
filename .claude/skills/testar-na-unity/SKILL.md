@@ -16,6 +16,15 @@ Projeto: `C:\Projetos\TI Service Simulator` (Unity 6000.4.10f1, Built-in RP). Wi
 - Se a janela do Editor estiver minimizada, restaure com `ShowWindow(handle, 3)` + `SetForegroundWindow` (user32) usando
   o processo `Unity` cujo `MainWindowTitle` contém "TI Service".
 
+## 1b. Rodar menus sem clicar (preferido)
+- Com o editor aberto, escreva o caminho de um item de menu em `Temp/comando_unity.txt` (raiz do projeto), ex.:
+  `printf 'Assets/Refresh' > Temp/comando_unity.txt` (compila scripts novos) ou
+  `printf 'TI Service/Teste gráfico/3. Capturar fotos e FPS (Play)' > Temp/comando_unity.txt`.
+- `Editor/ComandoExterno.cs` executa em ~1 s e loga `[ComandoExterno] '<menu>' → executado` no `Editor.log`.
+  Espere a linha de resultado com um laço `grep` no log (não precisa focar a janela da Unity).
+- Fotos/FPS de cenas de teste: `Builds/Capturas` (script `Utils/CapturaTesteGrafico.cs`).
+- Placa do dono tem 4 GB: não deixe duas Unitys com HDRP/cenas pesadas abertas ao mesmo tempo.
+
 ## 2. Compilar e ler erros
 - Na Unity: clique no Console e `Ctrl+R` (refresh). Espere ~20–25 s.
 - Log completo: `$env:LOCALAPPDATA\Unity\Editor\Editor.log` — procure `error CS`, `Exception`, `[Build]`.

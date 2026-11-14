@@ -69,6 +69,18 @@ public class MenuPrincipal : MonoBehaviour
 
         UIFactory.Botao(coluna, "Configurações", () => { coluna.gameObject.SetActive(false); config.gameObject.SetActive(true); },
             UIFactory.CartaoClaro, 380, 64, 28);
+
+        // Créditos (licença CC-BY dos modelos 3D exige)
+        var creditos = UIFactory.Painel(fundo, "Creditos", UIFactory.Fundo);
+        UIFactory.Ancorar(creditos, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1100, 0));
+        creditos.pivot = new Vector2(0.5f, 0.5f);
+        UIFactory.Vertical(creditos, 10, 32);
+        UIFactory.AjustarAoConteudo(creditos);
+        JanelaCreditos.Montar(creditos, () => { creditos.gameObject.SetActive(false); coluna.gameObject.SetActive(true); });
+        creditos.gameObject.SetActive(false);
+
+        UIFactory.Botao(coluna, "Créditos", () => { coluna.gameObject.SetActive(false); creditos.gameObject.SetActive(true); },
+            UIFactory.CartaoClaro, 380, 64, 28);
         UIFactory.Botao(coluna, "Sair", Application.Quit, UIFactory.CartaoClaro, 380, 64, 28);
 
         var dica = UIFactory.Texto(fundo, "WASD andar  ·  Mouse olhar  ·  E interagir  ·  Tab tablet  ·  Esc pausa",

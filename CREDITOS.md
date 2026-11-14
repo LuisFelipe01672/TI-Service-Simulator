@@ -11,7 +11,7 @@
 | `Assets/Models/Sketchfab/Computador_Mesa.glb` | [Desktop Computer](https://sketchfab.com/3d-models/desktop-computer-561abc2fc95941609fc7bc6f232895c2) | [Tytan](https://sketchfab.com/tylerhalterman) | — |
 | `Assets/Models/Sketchfab/Roteador.glb` | [3D Router](https://sketchfab.com/3d-models/3d-router-fc90c018647c4fd1a3a9f62559bf67f0) | [SanForge Studio](https://sketchfab.com/SanForge) | — |
 | `Assets/Models/Sketchfab/Switch_5_Portas.glb` | [TL-SF1005D](https://sketchfab.com/3d-models/tl-sf1005d-90966bd409204294918c68c11c7da831) | [arieffitrah](https://sketchfab.com/arieffitrah) | Logotipo trocado por marca fictícia |
-| `Assets/Models/Sketchfab/Switch_Rack_24.glb` | [Network Switching](https://sketchfab.com/3d-models/network-switching-ffc2e813f20141169e6f97bd1ae08385) | [hjhj87](https://sketchfab.com/hjhj87) | — |
+| `Assets/Models/Sketchfab/Switch_Rack_24.glb` | [Network Switching](https://sketchfab.com/3d-models/network-switching-ffc2e813f20141169e6f97bd1ae08385) | [hjhj87](https://sketchfab.com/hjhj87) | Texturas reduzidas para 2048 px e UVs duplicadas unificadas (compatibilidade) |
 | `Assets/Models/Sketchfab/Rack.glb` | [Server Rack](https://sketchfab.com/3d-models/server-rack-62f6779cb7e448b19aaf58544c3c7218) | [Spellkaze](https://sketchfab.com/Spellkaze) | — |
 | `Assets/Models/Sketchfab/Patch_Panel.glb` | [PATCH PANEL](https://sketchfab.com/3d-models/patch-panel-f96c2ca585974914a6ff4eed98e5d477) | [Yohio.Art](https://sketchfab.com/Yohio.Art) | — |
 | `Assets/Models/Sketchfab/Telefone_Escritorio.glb` | [Office Phone](https://sketchfab.com/3d-models/office-phone-4176a01b6d0b4d13ad165c0df278a6b5) | [maxdragonn](https://sketchfab.com/maxdragon) | — |

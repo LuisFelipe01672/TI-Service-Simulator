@@ -65,10 +65,10 @@ Construídos uma vez; cada equipamento novo só pluga as suas peças, causas e a
 ---
 
 ## Fase 0 — Fundação (próxima sessão)
-- 🔜 Abrir a Unity pelo Hub → instalar glTFast e importar os 11 modelos de `Assets/Models/Sketchfab` (commitar os .meta)
+- ✅ glTFast instalado e os 11 modelos importados (Switch_Rack_24: texturas 4K→2K e UVs unificadas para importar)
 - ✅ Commit e push dos modelos + `CREDITOS.md` + skills + este roadmap (1f03f7f)
-- ⬜ `CLAUDE.md` na raiz com as convenções do projeto (português, UI por código, managers por evento, saves)
-- ⬜ Tela de **Créditos** no menu principal (autores do `CREDITOS.md`; exigido pelo CC-BY)
+- ✅ `CLAUDE.md` na raiz com as convenções do projeto (português, UI por código, managers por evento, saves)
+- ✅ Tela de **Créditos** no menu principal (autores do `CREDITOS.md`; exigido pelo CC-BY)
 - ⬜ Corrigir a marcação falsa de "cena modificada" ao gerar o executável
 - ⬜ **Teste gráfico decisivo**: montar um cômodo de prova (home office) com os mesmos modelos e texturas no
       Built-in + post-processing e numa cópia do projeto em **HDRP** (e/ou URP); comparar visual e FPS

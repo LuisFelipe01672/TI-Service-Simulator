@@ -191,6 +191,36 @@ public static class TesteGrafico
         EditorApplication.isPlaying = true;
     }
 
+    // Lista no log a hierarquia (nome, tamanho em cm e posição) dos modelos de impressora/computador,
+    // para saber quais peças existem separadas (tampas, gavetas) e podem ser animadas
+    [MenuItem("TI Service/Teste gráfico/5. Listar peças dos modelos de equipamento", priority = 1320)]
+    public static void ListarPecas()
+    {
+        foreach (var caminho in new[] { Sketchfab + "Impressora_MFP_Compacta.fbx", Sketchfab + "Impressora_MFP_Escritorio.glb",
+                                        Sketchfab + "Impressora_Interior.glb", Sketchfab + "Cartucho_Toner.glb" })
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(caminho);
+            if (prefab == null) { Debug.Log("[Peças] não achou " + caminho); continue; }
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            var total = Limites(go);
+            var sb = new System.Text.StringBuilder($"[Peças] {caminho} — total {total.size * 100f} cm\n");
+            foreach (var r in go.GetComponentsInChildren<Renderer>())
+            {
+                var b = r.bounds;
+                sb.AppendLine($"   {CaminhoNoModelo(r.transform, go.transform)} | {b.size.x * 100:0}x{b.size.y * 100:0}x{b.size.z * 100:0} cm | centro {(b.center - total.center) * 100f}");
+            }
+            Debug.Log(sb.ToString());
+            Object.DestroyImmediate(go);
+        }
+    }
+
+    static string CaminhoNoModelo(Transform t, Transform raiz)
+    {
+        string s = t.name;
+        while (t.parent != null && t.parent != raiz) { t = t.parent; s = t.name + "/" + s; }
+        return s;
+    }
+
     [MenuItem("TI Service/Teste gráfico/0. Abrir cena do jogo", priority = 1299)]
     public static void AbrirCenaDoJogo()
     {
@@ -209,6 +239,7 @@ public static class TesteGrafico
         Foto("Casa_GuardaRoupa", c + new Vector3(-0.6f, 1.6f, -1.0f), c + new Vector3(-3.7f, 1.0f, -0.6f));
         Foto("Casa_PC", c + new Vector3(-3.05f, 1.25f, 1.9f), c + new Vector3(-3.1f, 1.05f, 2.65f));
         Foto("Casa_Interruptor", c + new Vector3(0.6f, 1.4f, 1.6f), c + new Vector3(0.85f, 1.15f, 3f));
+        Foto("Cliente_Impressora", new Vector3(42.9f, 1.45f, 0.1f), new Vector3(44.45f, 0.95f, 0.8f));
         Foto("Casa_Geral", c + new Vector3(3.6f, 2.5f, 2.6f), c + new Vector3(-1.5f, 0.5f, -0.8f));
         Debug.Log("[TesteGrafico] Fotos da casa salvas em Builds/Capturas");
     }

@@ -82,6 +82,14 @@ public static class AtalhosTeste
     [MenuItem(Menu + "Cliente: impressora", false, 120)]
     static void Impressora() => IrAoEquipamento(TipoEquipamento.Impressora);
 
+    [MenuItem(Menu + "Cliente: impressora — abrir/fechar a tampa (teste)", false, 124)]
+    static void TampaImpressora()
+    {
+        if (!Application.isPlaying) return;
+        EquipamentoPecas.testeTampaAberta = !EquipamentoPecas.testeTampaAberta;
+        Debug.Log("[Teste] Tampa da impressora " + (EquipamentoPecas.testeTampaAberta ? "aberta" : "fechada"));
+    }
+
     [MenuItem(Menu + "Cliente: roteador", false, 121)]
     static void Roteador() => IrAoEquipamento(TipoEquipamento.Roteador);
 

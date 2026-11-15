@@ -178,7 +178,7 @@ public static partial class MontarCenario
         // Impressora em cima de um armário, na parede leste
         var armario = Modelo("kitchenCabinet", sala, new Vector3(4.5f, 0, 0.8f), -90);
         // O visual da impressora tem a frente em -z: 90° deixa a frente virada para a sala
-        PosicionarEquipamento("Impressora", sala, new Vector3(4.45f, Altura(armario), 0.8f), 90, VisualImpressora);
+        PosicionarEquipamento("Impressora", sala, new Vector3(4.45f, Altura(armario), 0.8f), 90, VisualImpressoraReal);
 
         // Roteador em cima de um aparador, na parede oeste
         var aparador = Modelo("sideTable", sala, new Vector3(-4.55f, 0, -1.8f), 90);

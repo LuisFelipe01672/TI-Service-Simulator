@@ -122,7 +122,9 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 
 ## Fase 3 — Impressora completa e locação  (detalhe em `PLANO_FASE_IMPRESSORA.md`)
 - ✅ Peças com mira + E, tampa animada, crimpagem animada em 3D
-- ⬜ Modelo realista (Impressora_MFP_Compacta / MFP_Escritorio) com logotipo fictício e visor com texto real
+- ✅ Modelo realista no cliente (Impressora_MFP_Compacta, materiais próprios sem logotipo): a parte de cima
+      (scanner) levanta na dobradiça e mostra o toner realista; peças de mira encaixadas por âncoras
+- ⬜ Visor com texto real (mensagens do estado: "Pronta", "Sem toner", "Tampa aberta")
 - ⬜ Mão/item segurado + close de câmera
 - ⬜ Toner completo (tirar, olhar, recolocar o mesmo, novo, chacoalhar, lacre, encaixar; toner usado na mochila)
 - ⬜ Traseira: plugue RJ45 animado, LEDs, testador com luzes 1–8

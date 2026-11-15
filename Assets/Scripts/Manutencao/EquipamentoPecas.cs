@@ -14,6 +14,8 @@ public class EquipamentoPecas : MonoBehaviour
     Transform dobradica, cartucho;
     Renderer painel, botaoLiga;
     float anguloTampa;
+    float anguloAberta = 75f;   // a impressora realista levanta o scanner só 55°
+    public static bool testeTampaAberta;   // atalho de teste: abre a tampa sem precisar de chamado
 
     // Roteador
     Renderer[] leds;
@@ -90,6 +92,7 @@ public class EquipamentoPecas : MonoBehaviour
     {
         if (visual == null) { MontarGenerico(); return; }
         VirarParaASala();
+        if (visual.Find("Ancora_Dobradica") != null) { MontarImpressoraReal(); return; }
 
         // Tampa com dobradiça na borda de trás: abre para cima
         var tampa = visual.Find("Tampa");
@@ -113,6 +116,40 @@ public class EquipamentoPecas : MonoBehaviour
         PecaEquipamento.Criar(visual, eq, "cartucho", "Cartucho de toner", new Vector3(0f, 0.25f, 0.05f), new Vector3(0.34f, 0.1f, 0.2f));
         // A peça da tampa vai junto com a tampa (aberta, ela sai da frente do cartucho)
         PecaEquipamento.Criar(dobradica, eq, "tampa", "Tampa", new Vector3(0f, -0.01f, -0.16f), new Vector3(0.52f, 0.05f, 0.32f));
+    }
+
+    // Impressora realista (MontarCenario.VisualImpressoraReal): as peças seguem as âncoras do Visual
+    void MontarImpressoraReal()
+    {
+        Transform A(string n) => visual.Find("Ancora_" + n);
+        Vector3 P(string n) => A(n).localPosition;
+        Vector3 S(string n) => A(n).localScale;
+
+        // A parte de cima (scanner) gira na dobradiça da borda de trás
+        var tampa = visual.Find("Tampa");
+        dobradica = new GameObject("Dobradica").transform;
+        dobradica.SetParent(visual, false);
+        dobradica.localPosition = P("Dobradica");
+        if (tampa != null) tampa.SetParent(dobradica, true);
+        anguloAberta = 55f;
+
+        cartucho = visual.Find("Cartucho");
+        if (cartucho == null)
+            cartucho = Cubo(visual, "Cartucho", P("Cartucho"), S("Cartucho"), mCartucho).transform;
+
+        // Botão liga/desliga: LED pequeno na frente do corpo de baixo
+        botaoLiga = Cubo(visual, "BotaoLiga", P("Energia") + new Vector3(0f, 0f, -0.003f), new Vector3(0.018f, 0.018f, 0.006f), mVerde).GetComponent<Renderer>();
+        var p = visual.GetComponentsInChildren<Transform>(true);
+        foreach (var t in p) if (t.name == "Painel") { painel = t.GetComponent<Renderer>(); break; }
+
+        PecaEquipamento.Criar(visual, eq, "visor", "Visor", P("Visor"), S("Visor"));
+        PecaEquipamento.Criar(visual, eq, "botao", "Botão de teste", P("BotaoTeste"), S("BotaoTeste"));
+        PecaEquipamento.Criar(visual, eq, "energia", "Botão liga/desliga", P("Energia"), S("Energia"));
+        PecaEquipamento.Criar(visual, eq, "traseira", "Parte de trás (cabo de rede)", P("Traseira"), S("Traseira"));
+        PecaEquipamento.Criar(visual, eq, "cartucho", "Cartucho de toner", P("Cartucho"), S("Cartucho"));
+        // A peça da tampa acompanha a parte de cima quando ela levanta
+        PecaEquipamento.Criar(dobradica, eq, "tampa", "Tampa (levantar o scanner)",
+            P("Tampa") - P("Dobradica"), S("Tampa") + new Vector3(0.01f, 0.02f, 0.01f));
     }
 
     // ---------- Roteador ----------
@@ -205,10 +242,10 @@ public class EquipamentoPecas : MonoBehaviour
 
         if (eq.tipoEquipamento == TipoEquipamento.Impressora)
         {
-            bool aberta = e != null && e.impTampaAberta;
-            anguloTampa = Mathf.MoveTowards(anguloTampa, aberta ? 75f : 0f, 300f * Time.deltaTime);
+            bool aberta = testeTampaAberta || (e != null && e.impTampaAberta);
+            anguloTampa = Mathf.MoveTowards(anguloTampa, aberta ? anguloAberta : 0f, 220f * Time.deltaTime);
             if (dobradica != null) dobradica.localRotation = Quaternion.Euler(anguloTampa, 0f, 0f);
-            if (cartucho != null) cartucho.gameObject.SetActive(anguloTampa > 20f && e != null && e.impCartuchoPresente);
+            if (cartucho != null) cartucho.gameObject.SetActive(anguloTampa > 20f && (e == null || e.impCartuchoPresente));
             bool ligada = e == null || e.impLigada;
             Pintar(botaoLiga, ligada ? mVerde : mApagado);
             Pintar(painel, ligada ? (e != null && e.impCartuchoPresente && e.impToner > 0.1f ? mVerde : mLaranja) : mApagado);

@@ -523,6 +523,7 @@ public partial class GameUI : MonoBehaviour
         // Desistir da crimpagem volta para a janela de onde ela foi aberta
         if (modal == Modal.Crimpagem && aoCancelarCrimpagem != null) { CancelarCrimpagem(); return; }
         crimpAtual = null;
+        NoComputador = false;
         if (cenaCrimp != null) cenaCrimp.Mostrar(false);
         modal = Modal.Nenhum;
         equipamentoAtual = null;
@@ -540,8 +541,19 @@ public partial class GameUI : MonoBehaviour
     // O mesmo sistema abre no tablet (Tab) ou no PC de casa (ComputadorCasa), só muda o título
     public void AbrirTablet() => AbrirTablet("TABLET · TI Service");
 
+    // true quando o sistema foi aberto sentado no PC de casa (libera o acesso remoto)
+    public bool NoComputador { get; private set; }
+
+    public void AbrirNoComputador(string titulo)
+    {
+        AbrirTablet(titulo);
+        NoComputador = true;
+        AtualizarTablet();
+    }
+
     public void AbrirTablet(string titulo)
     {
+        NoComputador = false;
         if (tituloTablet != null) tituloTablet.text = titulo;
         AbrirModal(Modal.Tablet, tablet);
         FuncionarioManager.Instance?.GerarCandidatosSeVazio();
@@ -676,6 +688,14 @@ public partial class GameUI : MonoBehaviour
                 FecharModal();
             }, UIFactory.Destaque, 180, 48, 22);
             atender.interactable = mm.chamadoAtivo == null && !foraDoExpediente && liberado;
+
+            // Do PC de casa: tentar resolver por acesso remoto (só software; físico precisa de visita)
+            if (NoComputador)
+            {
+                var remoto = UIFactory.Botao(linha, "Acesso remoto", () => StartCoroutine(SessaoRemota(chamado)),
+                    UIFactory.Sucesso, 220, 48, 22);
+                remoto.interactable = mm.chamadoAtivo == null && !foraDoExpediente && liberado && !sessaoRemotaEmAndamento;
+            }
 
             if (equipeLivre && !foraDoExpediente)
             {

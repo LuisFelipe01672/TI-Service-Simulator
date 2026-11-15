@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MissionManager : MonoBehaviour
+public partial class MissionManager : MonoBehaviour
 {
     public static MissionManager Instance;
 

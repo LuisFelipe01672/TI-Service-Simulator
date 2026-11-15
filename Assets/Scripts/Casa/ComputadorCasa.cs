@@ -40,7 +40,7 @@ public class ComputadorCasa : Interactable
             {
                 estado = Estado.Usando;
                 if (controle != null) controle.enabled = true;   // parado de qualquer jeito: o painel está aberto
-                GameUI.Instance?.AbrirTablet("COMPUTADOR · TI OS");
+                GameUI.Instance?.AbrirNoComputador("COMPUTADOR · TI OS");
             });
     }
 

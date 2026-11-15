@@ -47,6 +47,20 @@ public static class AtalhosTeste
         Debug.Log($"[Teste] Energia agora: {EnergiaTecnico.Instance?.energia:0}");
     }
 
+    [MenuItem(Menu + "Remoto: tentar todos os chamados abertos (log)", false, 113)]
+    static void TestarRemoto()
+    {
+        var mm = MissionManager.Instance;
+        if (!Application.isPlaying || mm == null) return;
+        foreach (var c in new System.Collections.Generic.List<Chamado>(mm.chamadosDisponiveis))
+        {
+            float antes = DiaManager.Instance != null ? DiaManager.Instance.minutoAtual : 0f;
+            var r = mm.AtenderRemoto(c, out string msg);
+            float gasto = (DiaManager.Instance != null ? DiaManager.Instance.minutoAtual : 0f) - antes;
+            Debug.Log($"[Teste] Remoto {c.nomeCliente} ({c.problema?.equipamento}: {c.problema?.solucao}) → {r} em {gasto:0} min — {msg}");
+        }
+    }
+
     [MenuItem(Menu + "Casa: pegar a mochila", false, 112)]
     static void PegarMochila()
     {

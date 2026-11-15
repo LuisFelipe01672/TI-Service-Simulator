@@ -93,8 +93,10 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
       cabos não estão à mão (aviso ao chegar e lembrete ao aceitar chamado)
 - ✅ Interruptores (quarto e sala) que apagam/acendem as luzes, relógio de parede com a hora do jogo
       (ponteiros de verdade; segundos em tempo real), sol entrando pelas persianas
-- ⬜ **Atendimento remoto** pelo PC de casa (programa fictício): resolver de longe senha, impressora padrão, driver,
-      e-mail — mais rápido e barato, mas nem tudo dá; o cliente precisa estar no computador e aceitar a conexão
+- ✅ **Atendimento remoto** pelo PC de casa: botão "Acesso remoto" nos chamados (só sentado no PC); liga para o
+      cliente, conecta e resolve software (spooler, fila, driver, IP do PC, reiniciar, config. do roteador); físico
+      (cabo, toner, roteador fora = sem internet) pede visita; cliente às vezes ausente; paga 75%, gasta 30 min
+- ⬜ Remoto: mais casos de software (senha, e-mail, impressora padrão) quando entrarem no catálogo
 - ⬜ **Celular do técnico** (primeira versão: mensagens, ligações de triagem, orçamentos, GPS)
 - ✅ **Energia do técnico** no HUD: cai com as horas e o trabalho; cansado anda/trabalha mais devagar; dormir cedo
       recupera tudo (tarde ou no escritório, menos); café na cozinha (+20, até 3 por dia) — salva no save

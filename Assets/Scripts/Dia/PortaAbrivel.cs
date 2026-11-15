@@ -11,6 +11,8 @@ public class PortaAbrivel : Interactable
 
     float angulo;
 
+    protected override bool PrecisaMirar => true;   // só com o jogador olhando para a porta
+
     public override string TextoPrompt => aberta ? "[E] Fechar a porta" : "[E] Abrir a porta";
 
     public override void Interagir()

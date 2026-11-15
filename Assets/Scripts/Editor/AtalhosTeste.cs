@@ -136,6 +136,25 @@ public static class AtalhosTeste
         FocarJogo();
     }
 
+    // Diagnóstico do [E]: para na frente da mesa e olha a mochila, depois o PC, e diz quem receberia o E
+    [MenuItem(Menu + "Diagnóstico: mochila x PC (quem recebe o E)", false, 121)]
+    static void DiagE()
+    {
+        var m = Object.FindAnyObjectByType<MochilaFisica>();
+        var pc = Object.FindAnyObjectByType<ComputadorCasa>();
+        if (m == null || pc == null) return;
+        Vector3 pos = pc.transform.position + new Vector3(0.5f, 0.3f, -1.3f);
+        Ir(pos, m.PontoMira);
+        var cam = Camera.main;
+        foreach (var it in new Interactable[] { m, pc })
+            Debug.Log($"[Teste] {it.GetType().Name}: ativo {it.isActiveAndEnabled} perto {it.JogadorPerto(out float dd)} d {dd:0.00}/{it.distanciaInteracao} ângulo {Vector3.Angle(cam.transform.forward, it.PontoMira - cam.transform.position):0} mira {it.PontoMira} cam {cam.transform.position}");
+        Debug.Log("[Teste] Olhando a mochila: " + Interactable.MaisProximoEmAlcance()?.TextoPrompt);
+        Jogador().OlharPara(pc.PontoMira);
+        Debug.Log("[Teste] Olhando o PC: " + Interactable.MaisProximoEmAlcance()?.TextoPrompt);
+        var porta = Object.FindAnyObjectByType<Teleporte>();
+        if (porta != null) { Ir(porta.transform.position + new Vector3(0.3f, 0f, 1.0f), porta.transform.position + new Vector3(3f, 0f, 3f)); Debug.Log("[Teste] Perto da porta do cliente, olhando para o lado: " + (Interactable.MaisProximoEmAlcance()?.TextoPrompt ?? "(nada)")); Jogador().OlharPara(porta.transform.position); Debug.Log("[Teste] Olhando a porta: " + Interactable.MaisProximoEmAlcance()?.TextoPrompt); }
+    }
+
     [MenuItem(Menu + "Casa: pegar a mochila", false, 112)]
     static void PegarMochila()
     {

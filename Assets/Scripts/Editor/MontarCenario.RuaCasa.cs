@@ -134,7 +134,7 @@ public static partial class MontarCenario
         MontarSala(casa);
 
         MontarCozinha(casa);
-        Modelo("coatRackStanding", casa, new Vector3(2.45f, 0f, 2.6f), 0);
+        Modelo("coatRackStanding", casa, new Vector3(2.5f, 0f, 2.7f), 0);
 
         // Encomendas (Fase 2): chegam como caixas na frente de casa, ao lado da porta (EncomendaFisica)
         Ponto("PontoEntrega", casa, new Vector3(2.55f, 0f, 3.55f), 180);
@@ -193,7 +193,7 @@ public static partial class MontarCenario
         // Estante de aço com as ferramentas, na parede norte entre a janela e a porta
         var estante = ModeloReal(PH("steel_frame_shelves_03"), casa, new Vector3(-0.35f, 0f, 2.68f), 1.8f, RotEstante);
         ModeloReal(PH("metal_toolbox"), casa, new Vector3(-0.35f, 0f, 2.25f), 0.5f, 10);
-        ModeloReal(PH("cardboard_box_01"), casa, new Vector3(0.25f, 0f, 2.45f), 0.45f, 25);
+        ModeloReal(PH("cardboard_box_01"), casa, new Vector3(-1.0f, 0f, 2.3f), 0.45f, 25);
         if (estante != null) ModeloReal(PH("cardboard_box_01"), casa, new Vector3(-0.35f, Altura(estante) * 0.55f, 2.7f), 0.4f, -8, Colisao.Nenhuma);
 
         // Luminárias de teto (só o visual; as luzes são as LuzTeto)
@@ -222,9 +222,10 @@ public static partial class MontarCenario
         CriarTV(casa, new Vector3(2.4f, Altura(rack), -0.2f), 180f);
 
         // Jantar: mesa redonda e duas cadeiras viradas para ela
-        ModeloReal(PH("round_wooden_table_01"), casa, new Vector3(1.65f, 0f, 1.25f), 0.95f, 0);
-        ModeloReal(PH("dining_chair_02"), casa, new Vector3(1.0f, 0f, 1.25f), 0.95f, 90);
-        ModeloReal(PH("dining_chair_02"), casa, new Vector3(2.3f, 0f, 1.25f), 0.95f, -90);
+        // mesa pequena encostada perto da cozinha, longe do caminho da porta (x 1,0–2,0)
+        ModeloReal(PH("round_wooden_table_01"), casa, new Vector3(2.55f, 0f, 0.75f), 0.75f, 0);
+        ModeloReal(PH("dining_chair_02"), casa, new Vector3(2.0f, 0f, 0.75f), 0.95f, 90);
+        ModeloReal(PH("dining_chair_02"), casa, new Vector3(2.55f, 0f, 1.32f), 0.95f, 180);
     }
 
     // TV de tela plana 50": painel preto brilhante (desligada reflete o ambiente), moldura fina e pé central.

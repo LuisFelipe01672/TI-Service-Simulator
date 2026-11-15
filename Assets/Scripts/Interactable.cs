@@ -25,25 +25,54 @@ public class Interactable : MonoBehaviour
     public bool JogadorPerto(out float distancia)
     {
         distancia = float.MaxValue;
+        // procura o jogador aqui também: uma subclasse com Start próprio esconde o Start desta classe
+        if (jogador == null) { var p = GameObject.FindWithTag("Player"); if (p != null) jogador = p.transform; }
         if (jogador == null) return false;
         distancia = Vector3.Distance(transform.position, jogador.position);
         return distancia <= distanciaInteracao;
     }
 
-    // O interagível mais próximo do jogador dentro do alcance (ou null).
-    // A GameUI usa isso para o aviso "[E] ..." e para decidir quem recebe o E,
-    // assim só um objeto reage mesmo quando vários estão perto.
+    // Portas e saídas só respondem quando o jogador olha para elas (evita sair do cliente sem querer)
+    protected virtual bool PrecisaMirar => false;
+
+    // Centro de verdade do objeto (colisor ou malha), e não o pivô — a mochila tem o pivô no chão, por exemplo
+    Renderer[] renderers;
+    Collider[] colisores;
+    public Vector3 PontoMira
+    {
+        get
+        {
+            colisores ??= GetComponentsInChildren<Collider>();
+            renderers ??= GetComponentsInChildren<Renderer>();
+            foreach (var c in colisores) if (c != null && c.enabled) return c.bounds.center;
+            foreach (var r in renderers) if (r != null && r.enabled) return r.bounds.center;
+            return transform.position;
+        }
+    }
+
+    const float AnguloMaximo = 60f;          // fora disso o objeto não está "na sua frente"
+    const float AnguloMaximoMirar = 20f;     // portas: precisa olhar para elas
+    const float GrausPorMetro = 12f;         // desempate: um pouco mais perto vale um pouco de ângulo
+
+    // Quem recebe o E: entre os interagíveis ao alcance, o que está mais no centro da visão (e perto).
+    // A GameUI usa isso para o aviso "[E] ..." e para decidir quem reage, assim só um objeto reage.
     public static Interactable MaisProximoEmAlcance()
     {
+        var cam = Camera.main;
         Interactable melhor = null;
-        float menor = float.MaxValue;
+        float melhorNota = float.MaxValue;
         foreach (var it in Todos)
         {
-            if (it != null && it.isActiveAndEnabled && it.JogadorPerto(out float d) && d < menor)
+            if (it == null || !it.isActiveAndEnabled || !it.JogadorPerto(out float d)) continue;
+            float nota = d;
+            if (cam != null)
             {
-                menor = d;
-                melhor = it;
+                Vector3 alvo = it.PontoMira - cam.transform.position;
+                float angulo = Vector3.Angle(cam.transform.forward, alvo);
+                if (angulo > (it.PrecisaMirar ? AnguloMaximoMirar : AnguloMaximo)) continue;
+                nota = angulo + d * GrausPorMetro;
             }
+            if (nota < melhorNota) { melhorNota = nota; melhor = it; }
         }
         return melhor;
     }

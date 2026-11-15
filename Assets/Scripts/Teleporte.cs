@@ -6,6 +6,8 @@ public class Teleporte : Interactable
     public Transform destino;
     public string rotulo = "Voltar ao escritório";
 
+    protected override bool PrecisaMirar => true;   // só com o jogador olhando para a porta
+
     public override string TextoPrompt => "[E] " + rotulo;
 
     public override void Interagir()

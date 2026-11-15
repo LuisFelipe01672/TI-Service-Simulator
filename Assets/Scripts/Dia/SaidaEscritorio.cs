@@ -4,6 +4,8 @@ using UnityEngine;
 // (Quando a rua e a casa existirem, ela vai levar para fora e o dia acaba na cama.)
 public class SaidaEscritorio : Interactable
 {
+    protected override bool PrecisaMirar => true;   // só com o jogador olhando para a porta
+
     public override string TextoPrompt
     {
         get

@@ -66,6 +66,8 @@ public class EstadoEquipamentos
     public bool impRelatorioVisto;            // o técnico imprimiu o relatório de configuração de rede
     public bool impDriverErrado;              // driver errado no computador: saem folhas com caracteres estranhos
     public const string IpNovoImpressora = "192.168.0.87";
+    [System.NonSerialized] public string visorTemporario;     // ex.: contador de páginas (menu Informações)
+    [System.NonSerialized] public float visorTemporarioAte;
     public int testesDeCabo;                  // o visual mostra o testador a cada teste
     public DefeitoCabo ultimoTesteCabo;
     public ResultadoPagina ultimaPagina = ResultadoPagina.Nenhuma;

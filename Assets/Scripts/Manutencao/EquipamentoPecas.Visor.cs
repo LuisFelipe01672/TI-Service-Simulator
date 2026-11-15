@@ -46,7 +46,12 @@ public partial class EquipamentoPecas
         string msg;
         if (!ligada) msg = "";
         else if (e == null) msg = "Pronta";
+        else if (!string.IsNullOrEmpty(e.visorTemporario) && Time.time < e.visorTemporarioAte) msg = e.visorTemporario;
         else if (e.impTampaAberta) msg = "Tampa aberta";
+        else if (e.impTampaMalFechada) msg = "Feche a tampa";
+        else if (e.impPapelAtolado) msg = "Papel atolado";
+        else if (e.impGavetaAberta) msg = "Feche a gaveta";
+        else if (e.impSemPapel) msg = "Sem papel";
         else if (!e.impCartuchoPresente) msg = "Instale o toner";
         else if (e.impToner < 0.1f) msg = "Toner esgotado";
         else if (e.impToner < 0.25f) msg = "Toner baixo";

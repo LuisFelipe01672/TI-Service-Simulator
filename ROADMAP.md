@@ -155,7 +155,7 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
       trocar a unidade de imagem — item novo na loja)
 - ✅ Mais problemas: IP mudou (relatório de configuração), tampa mal fechada, driver errado — via sistema de
       diagnóstico ("a impressora não imprime" pode ser qualquer um)
-- ⬜ **Franquia de páginas + excedente**: todo mês ler o contador (no visor ou pelo sistema) e cobrar o excedente
+- ✅ **Franquia de páginas + excedente**: todo mês ler o contador (no visor, em chamado, ou na visita) e cobrar o excedente
 - ⬜ **Peças por tempo de uso**: cilindro, fusor e rolos duram X mil páginas; trocar antes evita chamado, tarde
       demais gera chamado e cliente bravo
 - ⬜ **Toner reserva no cliente** (estoque deixado lá) para evitar visita urgente; controlar quanto sobrou

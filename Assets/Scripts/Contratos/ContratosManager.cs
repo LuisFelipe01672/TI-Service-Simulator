@@ -298,8 +298,7 @@ public class ContratosManager : MonoBehaviour
         var t = e != null ? e.Tipo : CatalogoLocacao.Equipamentos[0];
         int mes = EmpresaManager.MesDoDia(Hoje);
 
-        c.mesLeitura = mes;
-        c.paginasLidas = c.paginasNoMes;
+        RegistrarLeitura(c);
 
         float faltando = 1f - c.suprimento;
         float custo = Mathf.Round(faltando * t.rendimentoRefil * CatalogoLocacao.CustoPorPagina(t, c.fracCor, CatalogoLocacao.Fornecedor(c.fornecedorSuprimento)) * FocoEmpresa.MultSuprimento * 100f) / 100f;
@@ -309,6 +308,33 @@ public class ContratosManager : MonoBehaviour
         c.satisfacao = Mathf.Min(100f, c.satisfacao + 3f);
         return $"Visita na <b>{c.empresa}</b>: contador em {c.contadorTotal} ({c.paginasNoMes} páginas este mês)." +
                (custo > 0f ? $" Suprimento reposto: {UIFactory.Dinheiro(custo)}." : "");
+    }
+
+    // Leitura do contador (na visita de rotina ou no visor, durante um chamado): sem ela o excedente não é cobrado
+    void RegistrarLeitura(ContratoLocacao c)
+    {
+        c.mesLeitura = EmpresaManager.MesDoDia(Hoje);
+        c.paginasLidas = c.paginasNoMes;
+    }
+
+    public static float ValorExcedente(ContratoLocacao c, int paginas) =>
+        Mathf.Max(0, paginas - c.franquia) * ((1f - c.fracCor) * c.excedentePB + c.fracCor * c.excedenteCor);
+
+    // Contrato de locação ligado a um chamado (o id pode coincidir com contrato de serviço: confere a empresa)
+    public ContratoLocacao DoChamado(Chamado ch) =>
+        ch == null || ch.contratoId <= 0 ? null : contratos.Find(x => x.id == ch.contratoId && x.ativo && x.Instalado && x.empresa == ch.nomeCliente);
+
+    // O técnico leu o contador no visor da impressora alugada: vale como leitura do mês
+    public string LerContadorNoVisor(ContratoLocacao c)
+    {
+        bool jaLido = c.mesLeitura == EmpresaManager.MesDoDia(Hoje) && c.paginasLidas == c.paginasNoMes;
+        RegistrarLeitura(c);
+        int exc = Mathf.Max(0, c.paginasNoMes - c.franquia);
+        string franquia = exc > 0
+            ? $"<color=#F5B83F>{exc} páginas acima da franquia de {c.franquia}</color> (≈ {UIFactory.Dinheiro(ValorExcedente(c, c.paginasNoMes))} de excedente até agora)"
+            : $"dentro da franquia de {c.franquia} (faltam {c.franquia - c.paginasNoMes})";
+        return $"Contador total: <b>{c.contadorTotal:N0}</b> páginas. Neste mês: {c.paginasNoMes:N0}, {franquia}." +
+               (jaLido ? "" : " Leitura anotada para a fatura do mês.");
     }
 
     // ---------- Dia a dia ----------
@@ -418,9 +444,21 @@ public class ContratosManager : MonoBehaviour
             float valor = c.mensal * fracao;
 
             // Excedente só entra se o contador foi lido no mês
+            // Sem controle de impressão, vale o que estava no contador no dia da leitura (o resto do mês fica de fora)
+            int paginasFaturadas = c.bilhetagem ? c.paginasNoMes : c.mesLeitura == mes ? Mathf.Min(c.paginasLidas, c.paginasNoMes) : 0;
             int excedentes = Mathf.Max(0, c.paginasNoMes - c.franquia);
-            float excedenteValor = excedentes * ((1f - c.fracCor) * c.excedentePB + c.fracCor * c.excedenteCor);
-            if (c.mesLeitura == mes || c.bilhetagem) valor += excedenteValor;
+            float excedenteValor = ValorExcedente(c, c.paginasNoMes);
+            float excedenteCobrado = Mathf.Round(ValorExcedente(c, paginasFaturadas) * 100f) / 100f;
+            if (c.mesLeitura == mes || c.bilhetagem)
+            {
+                valor += excedenteCobrado;
+                int cobradas = Mathf.Max(0, paginasFaturadas - c.franquia);
+                if (cobradas > 0)
+                    Avisar($"Fatura da <b>{c.empresa}</b>: fixo {UIFactory.Dinheiro(c.mensal * fracao)} + {cobradas} páginas excedentes ({UIFactory.Dinheiro(excedenteCobrado)})." +
+                           (excedentes > cobradas ? $" Outras {excedentes - cobradas} saíram depois da leitura e não entraram." : ""), UIFactory.Destaque, 5f);
+                // conta muito acima do combinado assusta o cliente
+                if (excedenteCobrado > c.mensal * 0.5f) c.satisfacao = Mathf.Max(0f, c.satisfacao - 4f);
+            }
             else if (excedenteValor > 1f)
                 Avisar($"Você não leu o contador da <b>{c.empresa}</b>: perdeu {UIFactory.Dinheiro(excedenteValor)} de excedente.", UIFactory.Perigo, 4.5f);
 

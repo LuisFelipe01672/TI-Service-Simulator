@@ -50,6 +50,14 @@ public static class AcoesFisicas
     {
         PecaAtual = "visor";
         l.Add(new AcaoFisica("Olhar o visor", () => $"Visor: \"{e.VisorImpressora()}\"") { observacao = true });
+        var locacao = ContratosManager.Instance != null ? ContratosManager.Instance.DoChamado(MM != null ? MM.chamadoAtivo : null) : null;
+        if (e.impLigada && locacao != null)
+            l.Add(new AcaoFisica("Ler o contador de páginas (menu Informações)", () =>
+            {
+                e.visorTemporario = $"Contador {locacao.contadorTotal:N0}";
+                e.visorTemporarioAte = UnityEngine.Time.time + 6f;
+                return ContratosManager.Instance.LerContadorNoVisor(locacao);
+            }, 1.5f) { observacao = true });
         if (e.impLigada)
         {
             l.Add(new AcaoFisica("Imprimir o relatório de configuração de rede (menu do painel)", () =>

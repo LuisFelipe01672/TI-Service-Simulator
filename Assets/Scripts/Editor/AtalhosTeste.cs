@@ -483,6 +483,41 @@ public static class AtalhosTeste
         typeof(Licitacoes).GetMethod("NovoEdital", Privado)?.Invoke(null, null);
     }
 
+    // Cria um contrato de locação já instalado, com o mês estourando a franquia, e abre um chamado dele
+    [MenuItem(Menu + "Locação: contrato de teste com chamado (franquia estourada)", false, 182)]
+    static void LocacaoTeste()
+    {
+        var cm = ContratosManager.Instance; var mm = MissionManager.Instance;
+        if (Jogador() == null || cm == null || mm == null) return;
+        var c = cm.contratos.Find(x => x.ativo && x.Instalado);
+        if (c == null)
+        {
+            var tipo = CatalogoLocacao.Equipamentos[0];
+            if (cm.EmEstoque(tipo.id).Count == 0) cm.patrimonio.Add(new EquipamentoPatrimonio { id = 9000 + cm.patrimonio.Count, tipoId = tipo.id, diaChegada = 0 });
+            c = cm.CriarContratoDireto("Escritório Teste Ltda", tipo.id, 0, 12, tipo.planos[0].mensal, 1500, 0f);
+            if (c == null) { Debug.LogWarning("[Teste] Não consegui criar o contrato."); return; }
+            c.diaInstalacao = 1;
+        }
+        c.paginasNoMes = c.franquia + 340; c.contadorTotal = 48213; c.mesLeitura = -99;
+        if (mm.chamadoAtivo != null) mm.AbandonarChamado();
+        mm.AdicionarChamadoDeContrato(c.id, c.empresa);
+        mm.AceitarChamado(mm.chamadosDisponiveis[0]);
+        Debug.Log($"[Teste] Contrato {c.empresa}: franquia {c.franquia}, mês {c.paginasNoMes}. Chamado: {mm.chamadoAtivo?.solucao}");
+        IrAoEquipamento(TipoEquipamento.Impressora);
+    }
+    [MenuItem(Menu + "Locação: ler o contador no visor", false, 182)]
+    static void LocacaoLer() => AcaoImpressora("Ler o contador");
+    [MenuItem(Menu + "Locação: faturar o mês agora", false, 182)]
+    static void LocacaoFaturar()
+    {
+        var cm = ContratosManager.Instance;
+        if (cm == null) return;
+        int mes = EmpresaManager.MesDoDia(DiaManager.Instance != null ? DiaManager.Instance.dia : 1);
+        typeof(ContratosManager).GetMethod("Faturar", Privado)?.Invoke(cm, new object[] { mes });
+        var rs = EmpresaManager.Instance != null ? EmpresaManager.Instance.recebiveis : null;
+        Debug.Log($"[Teste] Faturado o mês {mes}. A receber: {(rs != null && rs.Count > 0 ? rs[rs.Count - 1].cliente + " " + rs[rs.Count - 1].valor.ToString("F2") : "nada")}");
+    }
+
     [MenuItem(Menu + "Gerar contato de locação de impressora", false, 182)]
     static void GerarLeadImpressora()
     {

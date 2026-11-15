@@ -302,12 +302,45 @@ public static class AtalhosTeste
     [MenuItem(Menu + "Impressora: chamado de teste — toner", false, 129)]
     static void TesteToner() => ChamadoTeste("Trocar toner");
 
+    [MenuItem(Menu + "Impressora: chamado de teste — tampa mal fechada", false, 129)]
+    static void TesteTampa() => ChamadoTeste("Fechar a tampa");
+    [MenuItem(Menu + "Impressora: chamado de teste — IP mudou", false, 129)]
+    static void TesteIp() => ChamadoTeste("Fixar o IP");
+    [MenuItem(Menu + "Impressora: chamado de teste — driver errado", false, 129)]
+    static void TesteDriver() => ChamadoTeste("Reinstalar driver da impressora");
+    [MenuItem(Menu + "Impressora: pressionar a tampa", false, 138)]
+    static void AcaoPressionar() => AcaoImpressora("Pressionar a tampa");
+    [MenuItem(Menu + "Impressora: relatório de rede", false, 138)]
+    static void AcaoRelatorio() => AcaoImpressora("Imprimir o relatório");
+    [MenuItem(Menu + "Impressora: fixar o IP", false, 138)]
+    static void AcaoFixarIp() => AcaoImpressora("Fixar o IP");
+    [MenuItem(Menu + "Impressora: imprimir pelo computador", false, 138)]
+    static void AcaoImprimirPc() => AcaoImpressora("Mandar imprimir");
+    [MenuItem(Menu + "Impressora: reinstalar o driver", false, 138)]
+    static void AcaoDriver() => AcaoImpressora("Remover a impressora e reinstalar");
+    [MenuItem(Menu + "Impressora: testar o cabo com o testador", false, 138)]
+    static void AcaoTestador() => AcaoImpressora("Testar o cabo");
+    [MenuItem(Menu + "Impressora: ping do computador na impressora", false, 138)]
+    static void PingImp() { var e = MissionManager.Instance?.Estado; if (e != null) Debug.Log("[Teste] ping → " + e.Ping(e.ipImpressora)); }
+
+    [MenuItem(Menu + "Impressora: chamado de teste — cabo de rede", false, 129)]
+    static void TesteCabo() => ChamadoTeste("Verificar cabo");
+    [MenuItem(Menu + "Capturar a tela do jogo (Builds/Capturas/teste.png)", false, 300)]
+    static void CapturarTela()
+    {
+        System.IO.Directory.CreateDirectory("Builds/Capturas");
+        ScreenCapture.CaptureScreenshot("Builds/Capturas/teste.png");
+        Debug.Log("[Teste] Tela capturada.");
+    }
+
     // Executa uma ação física da impressora pelo nome (começo do rótulo), como se o jogador tivesse feito
     static void AcaoImpressora(string inicio)
     {
         var mm = MissionManager.Instance;
         if (mm?.Estado == null) { Debug.LogWarning("[Teste] Aceite um chamado de impressora antes."); return; }
-        foreach (var a in AcoesFisicas.Para(mm.chamadoAtivo.equipamento, mm.Estado))
+        var todas = new System.Collections.Generic.List<AcaoFisica>(AcoesFisicas.Para(mm.chamadoAtivo.equipamento, mm.Estado));
+        foreach (TipoEquipamento tp in System.Enum.GetValues(typeof(TipoEquipamento))) if (tp != mm.chamadoAtivo.equipamento) todas.AddRange(AcoesFisicas.Para(tp, mm.Estado));
+        foreach (var a in todas)
             if (a.rotulo.StartsWith(inicio)) { string r = a.executar(); Debug.Log($"[Teste] {a.rotulo} → {r} | Visor: {mm.Estado?.VisorImpressora() ?? "(chamado concluído)"}"); return; }
         Debug.LogWarning("[Teste] Ação não disponível agora: " + inicio);
     }

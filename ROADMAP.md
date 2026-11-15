@@ -149,11 +149,11 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ✅ Toner completo: retirar (vai para a mão), olhar (peso/lacre), chacoalhar, recolocar o MESMO, guardar o usado na
       mochila (descarte), pegar novo, puxar o lacre, encaixar
 - ✅ Traseira: plugue RJ45 entra/sai animado (pendurado quando solto) e LED da porta piscando com link
-- ⬜ Testador com luzes 1–8 na mão
+- ✅ Testador com luzes 1–8 na mão (duas unidades, fios com defeito ficam apagados)
 - ✅ Página de teste sai pela frente com o resultado na folha (perfeita, em branco, clara com falhas, listra vertical)
 - ✅ Problemas novos: papel atolado (puxar pela tampa traseira), sem papel (gaveta), cilindro riscado (listra na folha;
       trocar a unidade de imagem — item novo na loja)
-- ⬜ Mais problemas: IP mudou (relatório de configuração), tampa mal fechada, driver errado — via sistema de
+- ✅ Mais problemas: IP mudou (relatório de configuração), tampa mal fechada, driver errado — via sistema de
       diagnóstico ("a impressora não imprime" pode ser qualquer um)
 - ⬜ **Franquia de páginas + excedente**: todo mês ler o contador (no visor ou pelo sistema) e cobrar o excedente
 - ⬜ **Peças por tempo de uso**: cilindro, fusor e rolos duram X mil páginas; trocar antes evita chamado, tarde

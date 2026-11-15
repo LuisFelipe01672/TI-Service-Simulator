@@ -112,7 +112,33 @@ public partial class EquipamentoPecas
         var px = new Color[w * h];
         for (int i = 0; i < px.Length; i++) px[i] = new Color(0.97f, 0.97f, 0.95f);
         var rnd = new System.Random(42);
-        if (r != ResultadoPagina.Branca)
+        if (r == ResultadoPagina.Lixo)
+        {
+            // driver errado: símbolos sem sentido espalhados pela folha inteira, sem margem nem linhas
+            for (int y = 2; y < h - 6; y += 5)
+                for (int x = 2; x < w - 4; x += 4)
+                {
+                    if (rnd.Next(100) < 30) continue;
+                    int lw = rnd.Next(1, 4), lh = rnd.Next(1, 5);
+                    for (int yy = y; yy < y + lh; yy++) for (int xx = x; xx < x + lw; xx++) px[yy * w + xx] = new Color(0.12f, 0.12f, 0.12f);
+                }
+        }
+        else if (r == ResultadoPagina.Relatorio)
+        {
+            // relatório de configuração: título e duas colunas (nome do campo e valor)
+            for (int y = h - 20; y < h - 13; y++) for (int x = 24; x < 104; x++) px[y * w + x] = new Color(0.15f, 0.15f, 0.15f);
+            for (int linha = 0; linha < 16; linha++)
+            {
+                int y0 = h - 36 - linha * 8;
+                int a = 14 + rnd.Next(24, 40), b = 64 + rnd.Next(20, 46);
+                for (int y = y0; y < y0 + 2; y++)
+                {
+                    for (int x = 14; x < a; x++) px[y * w + x] = new Color(0.15f, 0.15f, 0.15f);
+                    for (int x = 64; x < b; x++) px[y * w + x] = new Color(0.3f, 0.3f, 0.3f);
+                }
+            }
+        }
+        else if (r != ResultadoPagina.Branca)
         {
             float tinta = r == ResultadoPagina.Clara ? 0.72f : 0.15f;
             // título e linhas de texto

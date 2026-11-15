@@ -105,6 +105,15 @@ public static class CatalogoProblemas
             case "Impressora:Trocar toner":
                 e.impToner = Random.Range(0.01f, 0.06f);
                 break;
+            case "Impressora:Fechar a tampa":
+                e.impTampaMalFechada = true;
+                break;
+            case "Impressora:Fixar o IP":
+                e.impIpMudou = true;
+                break;
+            case "Impressora:Reinstalar driver da impressora":
+                e.impDriverErrado = true;
+                break;
             case "Impressora:Retirar papel atolado":
                 e.impPapelAtolado = true;
                 break;
@@ -182,6 +191,7 @@ public static class CatalogoProblemas
             case TipoEquipamento.Impressora:
                 return e.impLigada && !e.impTampaAberta && e.impCartuchoPresente && !e.impCartuchoComLacre && e.impToner >= 0.1f &&
                        !e.impPapelAtolado && !e.impSemPapel && !e.impGavetaAberta && !e.impCilindroRiscado &&
+                       !e.impTampaMalFechada && !e.impIpMudou && !e.impDriverErrado &&
                        e.spoolerRodando && !e.FilaTravada && e.ImpressoraOnline && e.PcNaRede;
             case TipoEquipamento.Computador:
                 return e.PcNaInternet && e.memoria < 0.8f && e.PcHardwareOk;
@@ -226,6 +236,17 @@ public static class CatalogoProblemas
                 "Todo mundo, porque a impressora é uma só.",
                 "Não, achei melhor não mexer." },
             Pergunta.DesdeQuando, "Sei lá, parou do nada."),
+
+        new Problema(TipoEquipamento.Impressora, "Fechar a tampa",
+            "A impressora parou de imprimir do nada.",
+            "Ela tá ligada, mas não imprime mais nada.",
+            new[] {
+                "Desde que trocamos o papel hoje de manhã.",
+                "Só abrimos para ver se tinha papel preso e fechamos.",
+                "No visor aparece \"Feche a tampa\", mas ela está fechada!",
+                "Ninguém consegue imprimir.",
+                "Desliguei e liguei, a mensagem continua." },
+            Pergunta.MexeramEmAlgo, "Ninguém encostou nela."),
 
         new Problema(TipoEquipamento.Impressora, "Retirar papel atolado",
             "A impressora puxa a folha e trava no meio.",
@@ -294,6 +315,28 @@ public static class CatalogoProblemas
                 "Só esse; o roteador e a impressora estão normais.",
                 "Troquei de tomada e nada." },
             Pergunta.MensagemErro, "Não senti cheiro nem nada, só parou."),
+
+        new Problema(TipoEquipamento.Impressora, "Fixar o IP",
+            "A impressora está ligada, mas aparece offline no computador.",
+            "Ela tá com a luzinha acesa, mas o computador diz que não acha.",
+            new[] {
+                "Desde ontem, quando faltou luz e voltou.",
+                "Não mexemos em nada; só reiniciaram o roteador depois da queda de luz.",
+                "No computador diz \"Impressora offline\". No visor dela diz \"Pronta\".",
+                "Nenhum computador imprime, mas a cópia direto nela funciona.",
+                "Reiniciei a impressora e o computador, igual." },
+            Pergunta.MexeramEmAlgo, "Ninguém mexeu em roteador nenhum."),
+
+        new Problema(TipoEquipamento.Impressora, "Reinstalar driver da impressora",
+            "A impressora imprime um monte de símbolos estranhos.",
+            "Sai um monte de folha com uns rabiscos, gastou a resma toda.",
+            new[] {
+                "Desde que o computador fez uma atualização grande.",
+                "O sobrinho do chefe \"instalou a impressora de novo\" na semana passada.",
+                "Não dá erro: imprime, só que sai tudo embaralhado.",
+                "Só do computador da recepção; a cópia direto na impressora sai certa.",
+                "Reiniciei tudo e continua saindo lixo." },
+            Pergunta.MexeramEmAlgo, "Ninguém instalou nada."),
 
         new Problema(TipoEquipamento.Impressora, "Trocar cilindro",
             "Todas as folhas saem com uma risca preta.",

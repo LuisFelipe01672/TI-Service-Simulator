@@ -39,7 +39,7 @@ public class CaboRede
 // cada problema começa quebrando alguma coisa aqui, e o jogador conserta mexendo nas peças e no PC.
 // Tudo é calculado a partir desse estado (LEDs, mensagens, ping, impressão), como num equipamento de verdade.
 [System.Serializable]
-public enum ResultadoPagina { Nenhuma, Perfeita, Branca, Clara, Listra }
+public enum ResultadoPagina { Nenhuma, Perfeita, Branca, Clara, Listra, Lixo, Relatorio }
 
 [System.Serializable]
 public class EstadoEquipamentos
@@ -61,6 +61,13 @@ public class EstadoEquipamentos
     public bool impSemPapel;
     public bool impCilindroRiscado;           // listra vertical sempre no mesmo lugar (não é o toner)
     public bool impGavetaAberta;
+    public bool impTampaMalFechada;           // a tampa não travou: visor "Feche a tampa"
+    public bool impIpMudou;                   // pegou outro IP por DHCP: o computador ainda imprime no IP antigo
+    public bool impRelatorioVisto;            // o técnico imprimiu o relatório de configuração de rede
+    public bool impDriverErrado;              // driver errado no computador: saem folhas com caracteres estranhos
+    public const string IpNovoImpressora = "192.168.0.87";
+    public int testesDeCabo;                  // o visual mostra o testador a cada teste
+    public DefeitoCabo ultimoTesteCabo;
     public ResultadoPagina ultimaPagina = ResultadoPagina.Nenhuma;
     public int paginasImpressas;              // conta as folhas que saíram (o visual cria uma folha a cada uma)
     public float impToner = 0.8f;             // 0 a 1
@@ -141,6 +148,7 @@ public class EstadoEquipamentos
     {
         if (!impLigada) return "(desligada)";
         if (impTampaAberta) return "Tampa aberta";
+        if (impTampaMalFechada) return "Feche a tampa";
         if (!impCartuchoPresente) return "Instale o cartucho de toner";
         if (impPapelAtolado) return "Atolamento de papel";
         if (impGavetaAberta) return "Feche a gaveta";
@@ -171,12 +179,14 @@ public class EstadoEquipamentos
         saiuBoa = false;
         if (!impLigada) return "A impressora está desligada.";
         if (impTampaAberta) return "Feche a tampa da impressora primeiro.";
+        if (impTampaMalFechada) return "Nada sai. Visor: \"Feche a tampa\" — mas a tampa parece fechada...";
         if (!impCartuchoPresente) return "Sem cartucho de toner.";
         if (pelaRede)
         {
             if (!spoolerRodando) return "Erro: o serviço Spooler de Impressão não está em execução.";
             if (!PcNaRede) return "Erro: este computador está sem rede.";
             if (!ImpressoraOnline) return "Impressora offline. O documento ficou na fila.";
+            if (impIpMudou) return $"Erro: a impressora não responde em {ipImpressora}. O documento ficou na fila.";
             if (FilaTravada) return "O documento entrou na fila atrás de um trabalho travado e não sai.";
         }
         if (impGavetaAberta) return "A gaveta de papel está aberta. Visor: \"Feche a gaveta\".";
@@ -184,6 +194,7 @@ public class EstadoEquipamentos
         if (impPapelAtolado) return "A folha entrou e travou lá dentro! Visor: \"Atolamento de papel\".";
         // A folha sai: o visual mostra o resultado na bandeja (é a pista)
         paginasImpressas++;
+        if (pelaRede && impDriverErrado) { ultimaPagina = ResultadoPagina.Lixo; return "Saíram folhas e mais folhas cheias de símbolos estranhos (driver errado no computador)."; }
         if (impCartuchoComLacre) { ultimaPagina = ResultadoPagina.Branca; return "A folha saiu em branco! (o lacre do toner ainda está no cartucho)"; }
         if (impToner < 0.1f) { ultimaPagina = ResultadoPagina.Clara; return "A folha saiu clarinha, cheia de faixas brancas."; }
         if (impCilindroRiscado) { ultimaPagina = ResultadoPagina.Listra; return "Saiu com uma listra preta vertical, sempre no mesmo lugar da folha."; }
@@ -202,7 +213,7 @@ public class EstadoEquipamentos
         if (!RoteadorFuncionando || pcIpErrado) return $"Esgotado o tempo limite do pedido. ({destino})";
         if (local)
         {
-            if (destino == ipImpressora && !ImpressoraOnline) return $"Host de destino inacessível. ({destino})";
+            if (destino == ipImpressora && (!ImpressoraOnline || impIpMudou)) return $"Host de destino inacessível. ({destino})";
             return $"Resposta de {destino}: bytes=32 tempo=1ms TTL=64";
         }
         if (!InternetOk) return $"Esgotado o tempo limite do pedido. ({destino})";

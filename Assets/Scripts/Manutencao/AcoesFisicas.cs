@@ -50,6 +50,26 @@ public static class AcoesFisicas
     {
         PecaAtual = "visor";
         l.Add(new AcaoFisica("Olhar o visor", () => $"Visor: \"{e.VisorImpressora()}\"") { observacao = true });
+        if (e.impLigada)
+        {
+            l.Add(new AcaoFisica("Imprimir o relatório de configuração de rede (menu do painel)", () =>
+            {
+                if (e.impTampaAberta || e.impTampaMalFechada || e.impSemPapel || e.impPapelAtolado || !e.impCartuchoPresente)
+                    return "A impressora não consegue imprimir agora (veja o visor).";
+                e.impRelatorioVisto = true;
+                e.paginasImpressas++;
+                e.ultimaPagina = ResultadoPagina.Relatorio;
+                string ip = e.impIpMudou ? EstadoEquipamentos.IpNovoImpressora : e.ipImpressora;
+                return $"Saiu o relatório: <b>IP {ip}</b> (obtido por DHCP), máscara 255.255.255.0, gateway 192.168.0.1." +
+                       (e.impIpMudou ? $" <color=#F5B83F>O computador está configurado para imprimir em {e.ipImpressora}!</color>" : "");
+            }, 2f) { observacao = true });
+            if (e.impIpMudou && e.impRelatorioVisto)
+                l.Add(new AcaoFisica($"Fixar o IP {e.ipImpressora} no painel (Rede > IP manual)", () =>
+                {
+                    e.impIpMudou = false;
+                    return $"IP fixo {e.ipImpressora} gravado. A impressora reiniciou a rede e voltou no endereço que o computador conhece.";
+                }, 3f));
+        }
         PecaAtual = "traseira";
         l.Add(new AcaoFisica("Olhar atrás da impressora", () => DescreverCabo(e.impCabo, e.impLigada, "impressora")) { observacao = true });
         AcoesCabo(e.impCabo, "da impressora", l);
@@ -87,6 +107,12 @@ public static class AcoesFisicas
 
         // Tampa e toner: a parte de cima (scanner) levanta para acessar o cartucho
         PecaAtual = "tampa";
+        if (e.impTampaMalFechada && !e.impTampaAberta)
+            l.Add(new AcaoFisica("Pressionar a tampa dos dois lados até travar", () =>
+            {
+                e.impTampaMalFechada = false;
+                return "Clique! Um dos lados não tinha travado. Agora fechou de verdade.";
+            }, 1f));
         if (!e.impTampaAberta)
             l.Add(new AcaoFisica("Levantar o scanner (abrir a tampa)", () => { e.impTampaAberta = true; return "Você levantou o scanner. Dá para ver o cartucho de toner."; }));
         else
@@ -168,6 +194,7 @@ public static class AcoesFisicas
             {
                 if (e.cartuchoNaMao) return "Encaixe ou guarde o cartucho que está na sua mão antes de fechar.";
                 e.impTampaAberta = false;
+                e.impTampaMalFechada = false;
                 return "Tampa fechada.";
             }));
         }
@@ -193,6 +220,22 @@ public static class AcoesFisicas
     {
         PecaAtual = "tela";
         if (e.pcLigado) l.Add(new AcaoFisica("Sentar e usar o computador", () => "") { abreComputador = true, observacao = true });
+        if (e.pcLigado)
+        {
+            l.Add(new AcaoFisica("Mandar imprimir uma página de teste pelo computador", () =>
+            {
+                string r = e.Imprimir(true, out bool boa);
+                if (boa) MM?.Verificar();
+                return r;
+            }, 2f));
+            if (e.impDriverErrado)
+                l.Add(new AcaoFisica("Remover a impressora e reinstalar com o driver certo (pendrive)", () =>
+                {
+                    e.impDriverErrado = false;
+                    MM?.ConsumirTempo(30f);
+                    return "Você removeu a impressora, apagou o driver genérico errado e instalou o do modelo certo.";
+                }, 3f, Item.PendriveDrivers));
+        }
         PecaAtual = "traseira";
         l.Add(new AcaoFisica("Olhar atrás do gabinete", () => DescreverCabo(e.pcCabo, e.pcLigado, "computador")) { observacao = true });
         AcoesCabo(e.pcCabo, "do computador", l);
@@ -408,6 +451,8 @@ public static class AcoesFisicas
         l.Add(new AcaoFisica($"Testar o cabo {de} com o testador", () =>
         {
             if (c.conectado) return "Desconecte o cabo primeiro para ligar no testador.";
+            var est = MM?.Estado;
+            if (est != null) { est.testesDeCabo++; est.ultimoTesteCabo = c.defeito; }
             return c.Testar();
         }, 2f, Item.TestadorCabo));
         if (!c.conectado)

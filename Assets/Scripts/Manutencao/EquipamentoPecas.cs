@@ -272,6 +272,7 @@ public partial class EquipamentoPecas : MonoBehaviour
     void Update()
     {
         var e = MissionManager.Instance != null ? MissionManager.Instance.Estado : null;
+        AtualizarTestador(e);
 
         if (eq.tipoEquipamento == TipoEquipamento.Impressora)
         {

@@ -202,6 +202,8 @@ public partial class EquipamentoPecas : MonoBehaviour
             PecaEquipamento.Criar(visual, eq, "tela", "Tela", A("Tela").localPosition, A("Tela").localScale);
             PecaEquipamento.Criar(visual, eq, "energia", "Botão liga/desliga", A("Energia").localPosition, A("Energia").localScale);
             PecaEquipamento.Criar(visual, eq, "traseira", "Parte de trás (cabo de rede)", A("Traseira").localPosition, A("Traseira").localScale);
+            // provisório: o gabinete 3D ainda não existe; a peça fica na base do monitor
+            PecaEquipamento.Criar(visual, eq, "gabinete", "Gabinete (por dentro)", A("Tela").localPosition + new Vector3(0f, -A("Tela").localScale.y * 0.75f, 0.05f), new Vector3(0.3f, 0.12f, 0.2f));
             botaoLiga = Cubo(visual, "LedLiga", A("Energia").localPosition + new Vector3(0f, 0.005f, -0.004f),
                 new Vector3(0.008f, 0.008f, 0.004f), mVerde).GetComponent<Renderer>();
             foreach (var t in visual.GetComponentsInChildren<Transform>(true))

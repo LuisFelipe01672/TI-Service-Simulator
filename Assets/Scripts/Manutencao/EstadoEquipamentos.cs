@@ -70,6 +70,14 @@ public class EstadoEquipamentos
 
     // ---------- Computador do cliente ----------
     public bool pcLigado = true;
+    // Por dentro do gabinete (Fase 4)
+    public bool pcGabineteAberto;
+    public float pcPoeira = 0.15f;            // 0 a 1; acima de 0,7 superaquece e desliga sozinho
+    public bool pcMemoriaRuim;                // liga, dá 3 bipes e não dá vídeo
+    public bool pcFonteQueimada;              // não liga: nem luz, nem ventoinha
+    public int pcTrocasMemoria, pcTrocasFonte, pcLimpezas;   // o visual anima a cada troca/limpeza
+    public bool PcSuperaquecendo => pcPoeira > 0.7f;
+    public bool PcHardwareOk => !pcMemoriaRuim && !pcFonteQueimada && !PcSuperaquecendo && !pcGabineteAberto;
     public CaboRede pcCabo = new CaboRede();
     public bool pcIpFixo;
     public string pcIp = "192.168.0.23";

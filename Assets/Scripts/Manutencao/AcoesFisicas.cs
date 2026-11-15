@@ -204,10 +204,74 @@ public static class AcoesFisicas
                 if (!e.clienteSalvouTrabalho) MM?.RegistrarErro("Desligou o PC no botão sem o cliente salvar: ele perdeu o trabalho!", 3f);
                 return "O computador apagou na hora.";
             }
+            if (e.pcGabineteAberto) return "Feche a tampa do gabinete antes de ligar.";
+            if (e.pcFonteQueimada) return "Você apertou o botão e nada: nem luz, nem ventoinha. Completamente morto.";
+            if (e.pcMemoriaRuim) return "Ligou, a ventoinha girou... e três bipes compridos. A tela continua preta.";
             e.pcLigado = true;
             e.ReiniciarPc();
-            return "O computador ligou e o Windows iniciou.";
+            return e.PcSuperaquecendo
+                ? "O computador ligou, mas a ventoinha já está berrando e sai ar muito quente pelas grades."
+                : "O computador ligou e o Windows iniciou.";
         }, e.pcLigado ? 3f : 0f));
+
+        // Gabinete: por dentro (Fase 4)
+        PecaAtual = "gabinete";
+        l.Add(new AcaoFisica("Olhar o gabinete (grades e ventoinha)", () =>
+            e.pcPoeira > 0.7f ? "As grades estão entupidas de poeira e a ventoinha faz um barulhão. Sai ar muito quente."
+            : e.pcFonteQueimada ? "Nenhuma luz acesa. Perto da fonte, atrás, tem um cheiro leve de queimado."
+            : e.pcMemoriaRuim ? "A luz de energia acende ao ligar, a ventoinha gira, mas ele só apita."
+            : "Gabinete normal: luz acesa, ventoinha baixinha.") { observacao = true });
+        if (!e.pcGabineteAberto)
+            l.Add(new AcaoFisica("Virar o gabinete e tirar a tampa lateral (2 parafusos)", () =>
+            {
+                if (e.pcLigado) return "Desligue o computador antes de abrir (e tire da tomada).";
+                e.pcGabineteAberto = true;
+                return "Você virou o gabinete, soltou os dois parafusos e deslizou a tampa lateral.";
+            }, 1.5f));
+        else
+        {
+            l.Add(new AcaoFisica("Olhar por dentro", () =>
+            {
+                string poeira = e.pcPoeira > 0.7f ? "Tem uma manta de poeira cobrindo tudo, e o cooler do processador está entupido."
+                              : e.pcPoeira > 0.3f ? "Tem poeira acumulada, mas nada grave." : "Está limpo por dentro.";
+                string fonte = e.pcFonteQueimada ? " A fonte tem um capacitor estufado e marca de queimado." : "";
+                string mem = e.pcMemoriaRuim ? " Os pentes de memória parecem encaixados, mas um deles tem os contatos escurecidos." : "";
+                return poeira + fonte + mem;
+            }) { observacao = true });
+            if (e.pcPoeira > 0.3f)
+                l.Add(new AcaoFisica("Limpar com pincel e ar comprimido", () =>
+                {
+                    e.pcPoeira = 0.05f;
+                    e.pcLimpezas++;
+                    Sujeira.Espalhar(MM != null ? MM.PosicaoEquipamentoAtual : UnityEngine.Vector3.zero, 2, "poeira");
+                    return "Você segurou a ventoinha para não girar, soprou o cooler e passou o pincel na placa. Saiu uma nuvem de poeira.";
+                }, 3f, Item.ArComprimido));
+            l.Add(new AcaoFisica("Tirar os pentes de memória e limpar os contatos", () =>
+            {
+                e.pcTrocasMemoria++;
+                return e.pcMemoriaRuim ? "Você limpou os contatos com borracha e encaixou de novo. (Só testando para saber se resolveu.)"
+                                       : "Contatos limpos e pentes encaixados de novo até o clique.";
+            }, 2f));
+            if (e.pcMemoriaRuim)
+                l.Add(new AcaoFisica("Trocar o pente de memória com defeito", () =>
+                {
+                    if (!Mochila.Instance.Usar(Item.Memoria)) return "Você não tem pente de memória.";
+                    e.pcMemoriaRuim = false;
+                    e.pcTrocasMemoria++;
+                    MM?.CobrarPeca(Mochila.Info(Item.Memoria).preco);
+                    return "Você abriu as travas, tirou o pente ruim e encaixou o novo até as duas travas fecharem.";
+                }, 2f, Item.Memoria));
+            if (e.pcFonteQueimada)
+                l.Add(new AcaoFisica("Trocar a fonte", () =>
+                {
+                    if (!Mochila.Instance.Usar(Item.Fonte)) return "Você não tem fonte nova.";
+                    e.pcFonteQueimada = false;
+                    e.pcTrocasFonte++;
+                    MM?.CobrarPeca(Mochila.Info(Item.Fonte).preco);
+                    return "Você soltou os 4 parafusos, desligou os conectores da placa e dos discos, e instalou a fonte nova.";
+                }, 4f, Item.Fonte));
+            l.Add(new AcaoFisica("Colocar a tampa e voltar o gabinete no lugar", () => { e.pcGabineteAberto = false; return "Tampa parafusada e gabinete de volta no lugar."; }, 1f));
+        }
     }
 
     // ---------- Roteador ----------

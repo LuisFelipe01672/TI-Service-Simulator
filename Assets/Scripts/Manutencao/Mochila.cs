@@ -14,7 +14,10 @@ public enum Item
     PendriveDrivers,
     CaixaCabo,
     Cilindro,
-    TonerUsado
+    TonerUsado,
+    Memoria,
+    Fonte,
+    ArComprimido
 }
 
 // Um cabo de rede já feito, guardado na mochila
@@ -79,6 +82,9 @@ public class Mochila : MonoBehaviour
         new InfoItem(Item.Clipe, "Ferramenta de reset (clipe)", "Para apertar o botão de reset escondido do roteador.", 5f, 1, true),
         new InfoItem(Item.Toner, "Cartucho de toner", "Para impressora a laser. O cliente reembolsa a peça usada.", 180f, 1, false),
         new InfoItem(Item.PendriveDrivers, "Pendrive com drivers", "Instala drivers de rede mesmo sem internet.", 40f, 1, true),
+        new InfoItem(Item.ArComprimido, "Pincel e ar comprimido", "Para tirar a poeira de dentro do gabinete e do cooler sem estragar nada.", 45f, 1, true),
+        new InfoItem(Item.Memoria, "Pente de memória 8 GB", "Para trocar memória com defeito (computador que liga, bipa e não dá vídeo).", 160f, 1, false),
+        new InfoItem(Item.Fonte, "Fonte ATX 500 W", "Para trocar fonte queimada (computador que não dá nenhum sinal de vida).", 190f, 1, false),
         new InfoItem(Item.Cilindro, "Cilindro (unidade de imagem)", "Peça da impressora a laser que dura milhares de páginas. Riscado = listra vertical na folha.", 150f, 1, false),
     };
 

@@ -122,6 +122,17 @@ public static class CatalogoProblemas
                 e.pcIpFixo = true;
                 e.pcIp = e.ipImpressora;
                 break;
+            case "Computador:Limpar por dentro":
+                e.pcPoeira = Random.Range(0.85f, 1f);
+                break;
+            case "Computador:Trocar memória":
+                e.pcMemoriaRuim = true;
+                e.pcLigado = false;
+                break;
+            case "Computador:Trocar fonte":
+                e.pcFonteQueimada = true;
+                e.pcLigado = false;
+                break;
             case "Computador:Reinstalar driver":
                 e.driverOk = false;
                 break;
@@ -166,7 +177,7 @@ public static class CatalogoProblemas
                        !e.impPapelAtolado && !e.impSemPapel && !e.impGavetaAberta && !e.impCilindroRiscado &&
                        e.spoolerRodando && !e.FilaTravada && e.ImpressoraOnline && e.PcNaRede;
             case TipoEquipamento.Computador:
-                return e.PcNaInternet && e.memoria < 0.8f;
+                return e.PcNaInternet && e.memoria < 0.8f && e.PcHardwareOk;
             default:
                 return e.PcNaInternet && e.wifiAtivo && e.rotConfigOk && !e.rotTravado && !e.dhcpDuplo;
         }
@@ -244,6 +255,39 @@ public static class CatalogoProblemas
     };
 
     public static readonly Problema[] Medios = {
+        new Problema(TipoEquipamento.Computador, "Limpar por dentro",
+            "O computador desliga sozinho no meio do trabalho.",
+            "Ele apaga do nada, e faz um barulhão de ventilador.",
+            new[] {
+                "Faz umas semanas, e piora nos dias quentes.",
+                "Ninguém nunca abriu esse computador, tem uns seis anos.",
+                "Não aparece nada, a tela só apaga de uma vez.",
+                "Só esse, os outros são mais novos.",
+                "Depois que esfria ele liga de novo, e daqui a pouco apaga." },
+            Pergunta.MexeramEmAlgo, "Mandei limpar mês passado, está novinho por dentro."),
+
+        new Problema(TipoEquipamento.Computador, "Trocar memória",
+            "O computador liga, apita e não aparece nada na tela.",
+            "Ele liga, faz uns apitos e a tela fica preta.",
+            new[] {
+                "Desde ontem, depois de uma queda de energia.",
+                "Só mudamos ele de mesa na semana passada.",
+                "Tela preta. São três apitos compridos toda vez que liga.",
+                "Só esse computador.",
+                "Liguei e desliguei umas dez vezes, sempre os apitos." },
+            Pergunta.MensagemErro, "Não tem apito nenhum, só não liga."),
+
+        new Problema(TipoEquipamento.Computador, "Trocar fonte",
+            "O computador não liga de jeito nenhum.",
+            "Morreu. Aperto o botão e nada acontece.",
+            new[] {
+                "Desde o temporal de ontem à noite.",
+                "Não mexemos, ele estava ligado quando caiu um raio perto.",
+                "Nada: nem luz, nem barulho. Senti um cheiro de queimado.",
+                "Só esse; o roteador e a impressora estão normais.",
+                "Troquei de tomada e nada." },
+            Pergunta.MensagemErro, "Não senti cheiro nem nada, só parou."),
+
         new Problema(TipoEquipamento.Impressora, "Trocar cilindro",
             "Todas as folhas saem com uma risca preta.",
             "Tem um risco estranho em tudo que imprime.",

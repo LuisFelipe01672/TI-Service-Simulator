@@ -180,7 +180,7 @@ public static partial class MontarCenario
 
         // Roteador em cima de um aparador, na parede oeste
         var aparador = Modelo("sideTable", sala, new Vector3(-4.55f, 0, -1.8f), 90);
-        PosicionarEquipamento("Roteador", sala, new Vector3(-4.5f, Altura(aparador), -1.8f), -90, VisualRoteador);
+        PosicionarEquipamento("Roteador", sala, new Vector3(-4.5f, Altura(aparador), -1.8f), -90, VisualRoteadorReal);
 
         // Decoração
         Modelo("bookcaseClosedWide", sala, new Vector3(-4.6f, 0, 1.6f), 90);

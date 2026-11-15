@@ -47,6 +47,16 @@ public static class AtalhosTeste
         Debug.Log($"[Teste] Energia agora: {EnergiaTecnico.Instance?.energia:0}");
     }
 
+    [MenuItem(Menu + "Casa: pegar a mochila", false, 112)]
+    static void PegarMochila()
+    {
+        var m = Object.FindAnyObjectByType<MochilaFisica>();
+        if (m == null) { Debug.LogWarning("[Teste] Sem mochila física (rode o menu 3)."); return; }
+        Ir(m.transform.position + new Vector3(0.9f, 1.1f, -0.9f), m.transform.position);
+        m.Interagir();
+        Debug.Log($"[Teste] Mochila com você: {Mochila.Instance?.comVoce}");
+    }
+
     [MenuItem(Menu + "Energia: cansar (-50)", false, 111)]
     static void Cansar()
     {
@@ -88,6 +98,16 @@ public static class AtalhosTeste
         if (!Application.isPlaying) return;
         EquipamentoPecas.testeTampaAberta = !EquipamentoPecas.testeTampaAberta;
         Debug.Log("[Teste] Tampa da impressora " + (EquipamentoPecas.testeTampaAberta ? "aberta" : "fechada"));
+    }
+
+    [MenuItem(Menu + "Cliente: impressora — olhar o visor de perto", false, 125)]
+    static void VisorImpressora()
+    {
+        var lcd = GameObject.Find("LCD");
+        if (lcd == null) { Debug.LogWarning("[Teste] Sem visor (impressora realista)."); return; }
+        var eq = lcd.GetComponentInParent<Equipamento>();
+        Vector3 frente = eq != null ? -eq.transform.Find("Visual").forward : Vector3.left;
+        Ir(lcd.transform.position + frente * 0.45f, lcd.transform.position);
     }
 
     [MenuItem(Menu + "Cliente: roteador", false, 121)]

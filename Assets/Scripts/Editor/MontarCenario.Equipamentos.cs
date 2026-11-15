@@ -98,6 +98,28 @@ public static partial class MontarCenario
         Ancora(v, "Ancora_Traseira", new Vector3(bMon.center.x, bMon.center.y + 0.12f, zTras + 0.03f), new Vector3(bMon.size.x, bMon.size.y + 0.25f, 0.1f));
     }
 
+    // Roteador realista: corpo do modelo + 4 LEDs na frente (o jogo acende conforme o estado), com âncoras da
+    // fonte (atrás, à direita) e do reset (atrás, à esquerda). RotRoteador acerta a frente do modelo para -Z.
+    const float RotRoteador = 0f;
+    static void VisualRoteadorReal(Transform v)
+    {
+        var r = ModeloReal(SF("Roteador"), v, Vector3.zero, 0.3f, RotRoteador, Colisao.Nenhuma);
+        if (r == null) { VisualRoteador(v); return; }
+        var b = LimitesLocal(r, v);
+        // altura do corpo (sem as antenas): a parte mais baixa e larga; estimada em 18% da altura total, mín. 3,5 cm
+        float corpo = Mathf.Max(0.035f, b.size.y * 0.18f);
+        var led = Mat("LED_Verde", new Color(0.2f, 0.9f, 0.45f), 0.6f);
+        for (int i = 0; i < 4; i++)
+            Cubo(v, "LED" + i, new Vector3(-0.075f + i * 0.05f, b.min.y + corpo * 0.6f, b.min.z - 0.002f), new Vector3(0.012f, 0.006f, 0.004f), led);
+        Ancora(v, "Ancora_Luzes", new Vector3(0f, b.min.y + corpo * 0.6f, b.min.z - 0.01f), new Vector3(0.26f, 0.05f, 0.05f));
+        Ancora(v, "Ancora_Corpo", new Vector3(0f, b.min.y + corpo / 2f, b.center.z), new Vector3(b.size.x, corpo + 0.02f, b.size.z * 0.8f));
+        Ancora(v, "Ancora_Fonte", new Vector3(b.size.x * 0.28f, b.min.y + corpo + 0.05f, b.max.z + 0.02f), new Vector3(0.1f, 0.14f, 0.06f));
+        Ancora(v, "Ancora_Reset", new Vector3(-b.size.x * 0.28f, b.min.y + corpo + 0.05f, b.max.z + 0.02f), new Vector3(0.1f, 0.14f, 0.06f));
+        Ancora(v, "Ancora_Plugue", new Vector3(b.size.x * 0.28f, b.min.y + corpo * 0.5f, b.max.z + 0.015f), new Vector3(0.03f, 0.025f, 0.03f));
+        Ancora(v, "Ancora_FuroReset", new Vector3(-b.size.x * 0.28f, b.min.y + corpo * 0.5f, b.max.z + 0.001f), new Vector3(0.008f, 0.008f, 0.002f));
+        Debug.Log($"[Cenário] Roteador real: {b.size * 100f} cm");
+    }
+
     static void Ancora(Transform pai, string nome, Vector3 pos, Vector3 tam)
     {
         var a = new GameObject(nome).transform;

@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 // e mostra o estado no modelo: tampa aberta, cartucho, luzes do roteador, LED da impressora.
 // Usa os nomes do "Visual" montado pelo MontarCenario (Corpo, Tampa, Painel, LED0..3);
 // não precisa remontar o cenário.
-public class EquipamentoPecas : MonoBehaviour
+public partial class EquipamentoPecas : MonoBehaviour
 {
     Equipamento eq;
     Transform visual;
@@ -142,6 +142,7 @@ public class EquipamentoPecas : MonoBehaviour
         botaoLiga = Cubo(visual, "BotaoLiga", P("Energia") + new Vector3(0f, 0f, -0.003f), new Vector3(0.018f, 0.018f, 0.006f), mVerde).GetComponent<Renderer>();
         var p = visual.GetComponentsInChildren<Transform>(true);
         foreach (var t in p) if (t.name == "Painel") { painel = t.GetComponent<Renderer>(); break; }
+        if (painel != null) CriarLcd(painel);
 
         PecaEquipamento.Criar(visual, eq, "visor", "Visor", P("Visor"), S("Visor"));
         PecaEquipamento.Criar(visual, eq, "botao", "Botão de teste", P("BotaoTeste"), S("BotaoTeste"));
@@ -165,6 +166,18 @@ public class EquipamentoPecas : MonoBehaviour
         {
             var l = visual.Find("LED" + i);
             if (l != null) leds[i] = l.GetComponent<Renderer>();
+        }
+        // Roteador realista (MontarCenario.VisualRoteadorReal): plugue e peças pelas âncoras
+        if (visual.Find("Ancora_Luzes") != null)
+        {
+            Transform A(string n) => visual.Find("Ancora_" + n);
+            plugue = Cubo(visual, "Plugue", A("Plugue").localPosition, A("Plugue").localScale, mPreto).transform;
+            Cubo(visual, "FuroReset", A("FuroReset").localPosition, A("FuroReset").localScale, mPreto);
+            PecaEquipamento.Criar(visual, eq, "luzes", "Luzes", A("Luzes").localPosition, A("Luzes").localScale);
+            PecaEquipamento.Criar(visual, eq, "etiqueta", "Roteador (etiqueta embaixo)", A("Corpo").localPosition, A("Corpo").localScale);
+            PecaEquipamento.Criar(visual, eq, "fonte", "Fonte na tomada", A("Fonte").localPosition, A("Fonte").localScale);
+            PecaEquipamento.Criar(visual, eq, "reset", "Botão de reset", A("Reset").localPosition, A("Reset").localScale);
+            return;
         }
         plugue = Cubo(visual, "Plugue", new Vector3(0.1f, 0.035f, 0.12f), new Vector3(0.03f, 0.025f, 0.03f), mPreto).transform;
         Cubo(visual, "FuroReset", new Vector3(-0.1f, 0.035f, 0.1105f), new Vector3(0.008f, 0.008f, 0.002f), mPreto);
@@ -263,6 +276,7 @@ public class EquipamentoPecas : MonoBehaviour
             bool ligada = e == null || e.impLigada;
             Pintar(botaoLiga, ligada ? mVerde : mApagado);
             Pintar(painel, ligada ? (e != null && e.impCartuchoPresente && e.impToner > 0.1f ? mVerde : mLaranja) : mApagado);
+            AtualizarLcd(e, ligada);
         }
         else if (eq.tipoEquipamento == TipoEquipamento.Roteador)
         {

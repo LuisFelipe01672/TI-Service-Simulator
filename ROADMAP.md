@@ -89,7 +89,8 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
       com caixa de ferramentas e caixas, mochila
 - ✅ **PC do jogador** funcionando: E senta na cadeira (câmera desliza até o monitor) e abre o sistema "TI OS";
       o monitor mostra a tela do jogo (papel de parede, ícones, relógio) no lugar da textura original
-- ⬜ Mochila física ligada ao inventário (pegar a mochila antes de sair)
+- ✅ Mochila física: cada dia começa com ela no home office; E pega; sem ela, no cliente, ferramentas, peças e
+      cabos não estão à mão (aviso ao chegar e lembrete ao aceitar chamado)
 - ✅ Interruptores (quarto e sala) que apagam/acendem as luzes, relógio de parede com a hora do jogo
       (ponteiros de verdade; segundos em tempo real), sol entrando pelas persianas
 - ⬜ **Atendimento remoto** pelo PC de casa (programa fictício): resolver de longe senha, impressora padrão, driver,
@@ -124,7 +125,8 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ✅ Peças com mira + E, tampa animada, crimpagem animada em 3D
 - ✅ Modelo realista no cliente (Impressora_MFP_Compacta, materiais próprios sem logotipo): a parte de cima
       (scanner) levanta na dobradiça e mostra o toner realista; peças de mira encaixadas por âncoras
-- ⬜ Visor com texto real (mensagens do estado: "Pronta", "Sem toner", "Tampa aberta")
+- ✅ Visor LCD com texto real conforme o estado ("Pronta", "Tampa aberta", "Instale o toner", "Toner baixo",
+      "Toner esgotado", "Sem rede"; apagado com a impressora desligada)
 - ⬜ Mão/item segurado + close de câmera
 - ⬜ Toner completo (tirar, olhar, recolocar o mesmo, novo, chacoalhar, lacre, encaixar; toner usado na mochila)
 - ⬜ Traseira: plugue RJ45 animado, LEDs, testador com luzes 1–8
@@ -157,7 +159,8 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ⬜ **Notebook**: tela, teclado, bateria estufada, dobradiça, limpeza
 
 ## Fase 5 — Rede, infraestrutura, CFTV e energia
-- ⬜ Roteador realista (luzes reais por estado, reset com clipe, painel web já existente)
+- ✅ Roteador realista (Roteador.glb) com 4 LEDs por estado, plugue da fonte e furo de reset atrás (âncoras)
+- ⬜ Reset com clipe animado (segurar o clipe no furo)
 - ⬜ Switch de mesa e de rack, rack com patch panel (modelos já baixados)
 - ⬜ **Projeto de cabeamento jogável em 3D**: passar cabo por canaleta, crimpar, conectar no patch panel, testar
       ponto a ponto, identificar com etiqueta

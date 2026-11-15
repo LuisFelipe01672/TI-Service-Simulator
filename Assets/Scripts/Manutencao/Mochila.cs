@@ -143,7 +143,21 @@ public class Mochila : MonoBehaviour
     }
 
     public int Quantidade(Item item) => (int)item < quantidades.Count ? quantidades[(int)item] : 0;
-    public bool Tem(Item item) => Quantidade(item) > 0;
+    public bool Tem(Item item) => Quantidade(item) > 0 && !EsquecidaLonge;
+
+    // Mochila física (Fase 1A): fica em casa até o jogador pegar (MochilaFisica). Sem ela, no cliente,
+    // as ferramentas e peças não estão com você. Cenas sem a mochila física: sempre com você.
+    public bool comVoce = true;
+    public bool EsquecidaLonge => !comVoce && NoCliente();
+
+    static bool NoCliente()
+    {
+        var sala = GameObject.Find("Cenario/Cliente");
+        var jogador = GameObject.FindWithTag("Player");
+        if (sala == null || jogador == null) return false;
+        Vector3 d = jogador.transform.position - sala.transform.position;
+        return Mathf.Abs(d.x) < 7f && Mathf.Abs(d.z) < 6f;
+    }
 
     public void Adicionar(Item item, int qtd)
     {
@@ -167,6 +181,7 @@ public class Mochila : MonoBehaviour
     // Escolhe o menor cabo que alcança a distância (e tira da mochila). Null se nenhum alcança.
     public CaboPronto PegarCabo(float metrosNecessarios)
     {
+        if (EsquecidaLonge) return null;   // os cabos estão na mochila, que ficou em casa
         CaboPronto melhor = null;
         foreach (var c in cabos)
             if (c.metros >= metrosNecessarios && (melhor == null || c.metros < melhor.metros)) melhor = c;

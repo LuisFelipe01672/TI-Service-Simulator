@@ -241,6 +241,9 @@ public static class TesteGrafico
         Foto("Casa_Interruptor", c + new Vector3(0.6f, 1.4f, 1.6f), c + new Vector3(0.85f, 1.15f, 3f));
         Foto("Cliente_Impressora", new Vector3(42.9f, 1.45f, 0.1f), new Vector3(44.45f, 0.95f, 0.8f));
         Foto("Cliente_Computador", new Vector3(37.2f, 1.45f, 1.9f), new Vector3(37.2f, 1.0f, 3.5f));
+        Foto("Cliente_Roteador", new Vector3(36.4f, 1.0f, -1.6f), new Vector3(35.5f, 0.7f, -1.8f));
+        Foto("Cliente_Roteador_Lado", new Vector3(35.6f, 1.0f, -0.8f), new Vector3(35.5f, 0.7f, -1.8f));
+        Foto("Cliente_Impressora_Perto", new Vector3(43.75f, 1.35f, 0.75f), new Vector3(44.45f, 0.95f, 0.8f));
         Foto("Casa_Geral", c + new Vector3(3.6f, 2.5f, 2.6f), c + new Vector3(-1.5f, 0.5f, -0.8f));
         Debug.Log("[TesteGrafico] Fotos da casa salvas em Builds/Capturas");
     }

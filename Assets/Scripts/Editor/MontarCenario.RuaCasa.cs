@@ -191,7 +191,8 @@ public static partial class MontarCenario
         ModeloReal(PH("potted_plant_04"), casa, new Vector3(-2.35f, tampo, 2.75f), 0.25f, 0, Colisao.Nenhuma);
         var relogio = ModeloReal(PH("wall_clock"), casa, new Vector3(-3.0f, 2.15f, 2.97f), 0.32f, RotRelogio, Colisao.Nenhuma);
         if (relogio != null) relogio.AddComponent<RelogioAnalogico>().frente = -casa.forward;   // mostrador para o sul
-        ModeloReal(SF("Mochila"), casa, new Vector3(-2.2f, 0f, 2.4f), 0.5f, 200);
+        var mochila = ModeloReal(SF("Mochila"), casa, new Vector3(-2.2f, 0f, 2.4f), 0.5f, 200);
+        if (mochila != null) mochila.AddComponent<MochilaFisica>();   // pegar antes de sair de casa
 
         // Estante de aço com as ferramentas, na parede norte entre a janela e a porta
         var estante = ModeloReal(PH("steel_frame_shelves_03"), casa, new Vector3(-0.35f, 0f, 2.68f), 1.8f, RotEstante);

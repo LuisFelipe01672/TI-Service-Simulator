@@ -124,9 +124,10 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ⬜ Saquinho de RJ45, caixa de toner, ferramentas e equipamentos de locação como objetos
 - ⬜ Cabos prontos enrolados (com o tamanho escrito) na mochila/bancada
 - ⬜ **Prateleiras de estoque** na sede: guardar cada item e ver o que está acabando (ligado ao estoque do sistema)
-- ⬜ Fornecedores com preço, prazo e confiabilidade diferentes: **entrega atrasada**, **peça errada**, peça com defeito
-- ⬜ **Preço de mercado oscilando** (dólar, falta de chip, promoção): decidir quando comprar estoque
-- ⬜ **Garantia/RMA**: peça defeituosa volta ao fabricante e demora (ou você paga outra)
+- ✅ 3 fornecedores fictícios (Distribuidora Centro TI, Loja do Bairro, MegaShop Online) com preço, prazo, expressa e
+      confiabilidade diferentes: **entrega atrasada** (o fornecedor avisa), **peça errada**, **peça com defeito**
+- ✅ **Preço de mercado oscilando** por dia e por item (−15% a +25%), mostrado na loja ("+8% hoje")
+- ✅ **Garantia/RMA**: peça errada ou com defeito descoberta ao abrir a caixa; troca automática sem custo, chega dias depois
 - ⬜ **Peças usadas e recondicionadas**: lote de equipamentos de empresa que fechou (leilão) e equipamentos
       descartados para testar, recuperar e revender ou colocar em locação
 - ⬜ **Descarte correto**: apagar dados de verdade (LGPD) antes de revender; lixo eletrônico para o ponto de coleta

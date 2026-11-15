@@ -52,6 +52,10 @@ public class Entrega
     public int dia;          // dia em que chega
     public float minuto;     // minuto do dia em que chega
     public bool naPorta;     // já chegou: está na porta de casa esperando o jogador abrir a caixa
+    public int fornecedor = Mercado.FornecedorPadrao;
+    public bool defeito, errado;   // sorteados na compra; o jogador descobre ao abrir a caixa
+    public int diaPrevisto = -1;   // atrasou: o fornecedor avisa quando passar do dia previsto
+    public bool reposicao;         // é a troca de um RMA (não sorteia defeito de novo)
 }
 
 // Mochila do técnico: começa só com o notebook. O resto se compra pelo tablet.
@@ -214,23 +218,31 @@ public class Mochila : MonoBehaviour
     // ---------- Loja ----------
 
     // Devolve uma mensagem explicando o que aconteceu
-    public string Comprar(Item item, bool expressa)
+    public string Comprar(Item item, bool expressa) => Comprar(item, expressa, Mercado.FornecedorPadrao);
+
+    // Compra num fornecedor: preço do dia, prazo dele; atraso, defeito e pedido errado são sorteados agora
+    // (o jogador só descobre quando a entrega atrasa ou quando abre a caixa)
+    public string Comprar(Item item, bool expressa, int fornecedor)
     {
         var info = Info(item);
+        var forn = Mercado.Fornecedores[Mathf.Clamp(fornecedor, 0, Mercado.Fornecedores.Length - 1)];
         if (info.ferramenta && (Tem(item) || ACaminho(item))) return $"Você já tem {info.nome}.";
+        if (expressa && !forn.expressa) return $"{forn.nome} não faz entrega expressa.";
 
-        float total = info.preco + (expressa ? TaxaExpressa : 0f);
+        float total = Mercado.Preco(info, fornecedor) + (expressa ? TaxaExpressa : 0f);
         var eco = GameEconomy.Instance;
         if (eco != null && eco.saldo < total) return $"Saldo insuficiente: {info.nome} custa {UIFactory.Dinheiro(total)}.";
         eco?.Gastar(total, LivroCaixa.Ferramentas);
 
         var d = DiaManager.Instance;
-        var entrega = new Entrega { item = item, quantidade = info.quantidadePorCompra };
+        var entrega = new Entrega { item = item, quantidade = info.quantidadePorCompra, fornecedor = fornecedor };
         if (d == null)
         {
             Adicionar(item, info.quantidadePorCompra);
             return $"Compra feita: {info.nome}!";
         }
+        entrega.defeito = Random.value < forn.chanceDefeito;
+        entrega.errado = !entrega.defeito && Random.value < forn.chanceErrado;
         if (expressa)
         {
             entrega.dia = d.dia;
@@ -238,13 +250,32 @@ public class Mochila : MonoBehaviour
         }
         else
         {
-            entrega.dia = d.dia + 1;
-            entrega.minuto = d.horaInicio * 60f;
+            entrega.dia = d.dia + forn.prazoDias;
+            entrega.minuto = d.horaInicio * 60f + Random.Range(0f, 240f);   // chega durante a manhã
+            if (Random.value < forn.chanceAtraso) { entrega.diaPrevisto = entrega.dia; entrega.dia += 1; }
         }
         entregas.Add(entrega);
-        return expressa
-            ? $"{info.nome} a caminho por motoboy: chega em {MinutosEntregaExpressa:F0} minutos."
-            : $"Compra feita: {info.nome}. Chega amanhã às {d.horaInicio}h.";
+        string quando = expressa ? $"chega em {MinutosEntregaExpressa:F0} minutos (motoboy)"
+                      : forn.prazoDias == 1 ? "chega amanhã de manhã" : $"chega em {forn.prazoDias} dias";
+        return $"Pedido feito em {forn.nome}: {info.nome} ({UIFactory.Dinheiro(total)}), {quando}.";
+    }
+
+    // Ao abrir a caixa: pedido errado ou peça com defeito aciona a garantia (troca sem custo, mas demora)
+    public string ProblemaNaEntrega(Entrega e)
+    {
+        if (e == null || (!e.defeito && !e.errado)) return null;
+        var forn = Mercado.Fornecedores[Mathf.Clamp(e.fornecedor, 0, Mercado.Fornecedores.Length - 1)];
+        var d = DiaManager.Instance;
+        int dias = forn.prazoDias + 1;
+        entregas.Add(new Entrega
+        {
+            item = e.item, quantidade = e.quantidade, fornecedor = e.fornecedor, reposicao = true,
+            dia = (d != null ? d.dia : 0) + dias, minuto = (d != null ? d.horaInicio : 8) * 60f + Random.Range(0f, 240f),
+        });
+        string nome = Info(e.item).nome;
+        return e.errado
+            ? $"Veio o produto errado no lugar de <b>{nome}</b>! Troca aberta com {forn.nome}: chega em {dias} dias."
+            : $"<b>{nome}</b> veio com defeito! Garantia (RMA) aberta com {forn.nome}: reposição em {dias} dias.";
     }
 
     void VerificarEntregas()
@@ -255,6 +286,13 @@ public class Mochila : MonoBehaviour
         {
             var e = entregas[i];
             if (e.naPorta) continue;   // já está na porta esperando
+            // Atrasou: passou da hora prevista e o fornecedor avisa (uma vez)
+            if (e.diaPrevisto >= 0 && d != null && (d.dia > e.diaPrevisto || (d.dia == e.diaPrevisto && d.minutoAtual >= e.minuto)))
+            {
+                e.diaPrevisto = -1;
+                var fa = Mercado.Fornecedores[Mathf.Clamp(e.fornecedor, 0, Mercado.Fornecedores.Length - 1)];
+                GameUI.Instance?.Toast($"{fa.nome}: a entrega de <b>{Info(e.item).nome}</b> atrasou e chega amanhã. Desculpe o transtorno.", UIFactory.Alerta, 5f);
+            }
             bool chegou = d == null || d.dia > e.dia || (d.dia == e.dia && d.minutoAtual >= e.minuto);
             if (!chegou) continue;
             // Com casa: a encomenda fica na porta como caixa, até o jogador ir buscar (EncomendaFisica)

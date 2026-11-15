@@ -133,13 +133,23 @@ public class EncomendaFisica : Interactable
         var m = Mochila.Instance;
         if (m == null || entrega == null) return;
         var info = Mochila.Info(entrega.item);
-        m.Adicionar(entrega.item, entrega.quantidade);
         m.entregas.Remove(entrega);
         naCena.Remove(entrega);
         SomManager.TocarEm("mexer", transform.position, 0.8f, 0.9f);
-        GameUI.Instance?.Toast(CaixaDeCabo
-            ? "Caixa de cabo (305 m) levada para a bancada do escritório."
-            : $"Encomenda aberta: <b>{info.nome}</b> guardado na mochila.", UIFactory.Sucesso, 3f);
+        // Pedido errado ou peça com defeito: não entra na mochila; a garantia manda outra (RMA)
+        string problema = m.ProblemaNaEntrega(entrega);
+        if (problema != null)
+        {
+            SomManager.Tocar("erro", 0.5f);
+            GameUI.Instance?.Toast(problema, UIFactory.Perigo, 5f);
+        }
+        else
+        {
+            m.Adicionar(entrega.item, entrega.quantidade);
+            GameUI.Instance?.Toast(CaixaDeCabo
+                ? "Caixa de cabo (305 m) levada para a bancada do escritório."
+                : $"Encomenda aberta: <b>{info.nome}</b> guardado na mochila.", UIFactory.Sucesso, 3f);
+        }
         entrega = null;
         enabled = false;
         Tween.Scale(transform, Vector3.zero, 0.25f, Ease.InBack).OnComplete(this, f => Destroy(f.gameObject));

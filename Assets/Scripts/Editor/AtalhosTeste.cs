@@ -83,6 +83,33 @@ public static class AtalhosTeste
         foreach (var e in m.entregas) e.minuto = 0f;   // chegam já
     }
 
+    [MenuItem(Menu + "Encomendas: testar MegaShop com defeito e atraso", false, 119)]
+    static void EncomendaProblema()
+    {
+        var m = Mochila.Instance;
+        if (!Application.isPlaying || m == null) return;
+        GameEconomy.Instance?.ReceberPagamento(300f);
+        foreach (var f in Mercado.Fornecedores)
+            Debug.Log($"[Teste] {f.nome}: conectores {UIFactory.Dinheiro(Mercado.Preco(Mochila.Info(Item.ConectorRJ45), System.Array.IndexOf(Mercado.Fornecedores, f)))} ({Mercado.VariacaoTexto(Item.ConectorRJ45)})");
+        Debug.Log("[Teste] " + m.Comprar(Item.ConectorRJ45, false, 2));
+        Debug.Log("[Teste] " + m.Comprar(Item.Toner, false, 2));
+        var d = DiaManager.Instance;
+        var e1 = m.entregas[m.entregas.Count - 2];   // conectores: chega agora, com defeito
+        e1.defeito = true; e1.errado = false; e1.dia = d.dia; e1.minuto = 0f; e1.diaPrevisto = -1;
+        var e2 = m.entregas[m.entregas.Count - 1];   // toner: atrasou (o aviso sai agora)
+        e2.diaPrevisto = d.dia; e2.minuto = 0f; e2.dia = d.dia + 1;
+    }
+
+    [MenuItem(Menu + "Encomendas: listar no log", false, 120)]
+    static void EncomendasListar()
+    {
+        var m = Mochila.Instance;
+        if (m == null) return;
+        foreach (var e in m.entregas)
+            Debug.Log($"[Teste] Entrega {e.item}: dia {e.dia} min {e.minuto:0} | {Mercado.Fornecedores[e.fornecedor].nome} | naPorta {e.naPorta} defeito {e.defeito} errado {e.errado} previsto {e.diaPrevisto} reposição {e.reposicao}");
+        Debug.Log($"[Teste] Dia atual {DiaManager.Instance?.dia} — conectores na mochila: {m.Quantidade(Item.ConectorRJ45)}");
+    }
+
     [MenuItem(Menu + "Encomendas: olhar as caixas na porta", false, 118)]
     static void EncomendasOlhar()
     {

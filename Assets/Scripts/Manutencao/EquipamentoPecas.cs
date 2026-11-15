@@ -13,6 +13,7 @@ public class EquipamentoPecas : MonoBehaviour
     // Impressora
     Transform dobradica, cartucho;
     Renderer painel, botaoLiga;
+    GameObject telaViva;   // computador: a tela do sistema (some com o PC desligado)
     float anguloTampa;
     float anguloAberta = 75f;   // a impressora realista levanta o scanner só 55°
     public static bool testeTampaAberta;   // atalho de teste: abre a tampa sem precisar de chamado
@@ -179,6 +180,19 @@ public class EquipamentoPecas : MonoBehaviour
 
     void MontarComputador()
     {
+        // Computador realista (MontarCenario.VisualComputadorReal): peças pelas âncoras e tela viva
+        if (visual != null && visual.Find("Ancora_Tela") != null)
+        {
+            Transform A(string n) => visual.Find("Ancora_" + n);
+            PecaEquipamento.Criar(visual, eq, "tela", "Tela", A("Tela").localPosition, A("Tela").localScale);
+            PecaEquipamento.Criar(visual, eq, "energia", "Botão liga/desliga", A("Energia").localPosition, A("Energia").localScale);
+            PecaEquipamento.Criar(visual, eq, "traseira", "Parte de trás (cabo de rede)", A("Traseira").localPosition, A("Traseira").localScale);
+            botaoLiga = Cubo(visual, "LedLiga", A("Energia").localPosition + new Vector3(0f, 0.005f, -0.004f),
+                new Vector3(0.008f, 0.008f, 0.004f), mVerde).GetComponent<Renderer>();
+            foreach (var t in visual.GetComponentsInChildren<Transform>(true))
+                if (t.name == "TelaViva") { telaViva = t.gameObject; break; }
+            return;
+        }
         MontarGenerico();
     }
 
@@ -265,7 +279,9 @@ public class EquipamentoPecas : MonoBehaviour
         }
         else
         {
-            Pintar(botaoLiga, e == null || e.pcLigado ? mVerde : mApagado);
+            bool pcLigado = e == null || e.pcLigado;
+            Pintar(botaoLiga, pcLigado ? mVerde : mApagado);
+            if (telaViva != null && telaViva.activeSelf != pcLigado) telaViva.SetActive(pcLigado);   // desligado: tela preta
         }
     }
 

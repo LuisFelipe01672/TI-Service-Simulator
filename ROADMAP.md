@@ -137,13 +137,15 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ⬜ **Toner reserva no cliente** (estoque deixado lá) para evitar visita urgente; controlar quanto sobrou
 
 ## Fase 4 — Computador completo
-- ⬜ Modelo realista (Computador_Mesa) + gabinete que abre (tampa lateral)
+- ✅ Modelo realista no cliente (Computador_Mesa): monitor, teclado e mouse; tela viva "TI OS" que apaga com o PC
+      desligado (película preta cobre a textura original com marca real); peças de mira por âncoras
+- ⬜ Gabinete separado que abre (tampa lateral) — o modelo atual não tem torre
 - ⬜ Peças internas animáveis: memória, SSD/HD, fonte, cooler, placa de vídeo, bateria da placa-mãe
 - ⬜ **Limpeza satisfatória**: poeira saindo com ar comprimido e pincel (antes/depois); cooler sujo = superaquecimento
 - ⬜ **Pasta térmica** (tirar a velha, aplicar a nova) e **organização de cabos** dentro do gabinete
 - ⬜ Cabos atrás: rede, energia, vídeo (monitor sem imagem por cabo solto)
 - ⬜ Monitor mostrando o "Windows" do jogo na própria tela 3D (o computador simulado que já existe) — a textura
-      original do Computador_Mesa mostra um Windows real: trocar pela tela do jogo (marca real)
+      original do Computador_Mesa mostra um Windows real: ✅ coberta pela tela do jogo (TelaComputador)
 - ⬜ **Ferramentas de diagnóstico**: testador de fonte, multímetro, **placa POST**, pendrive de diagnóstico (teste
       de memória, saúde do disco, antivírus), testador de cabo
 - ⬜ **Check-up completo** (serviço vendável): inspeção de todas as peças com laudo de saúde em %

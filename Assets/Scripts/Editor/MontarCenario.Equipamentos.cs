@@ -81,6 +81,23 @@ public static partial class MontarCenario
         }
     }
 
+    // Computador do cliente: monitor, teclado e mouse realistas, tela viva (apaga com o PC desligado) e âncoras
+    // da tela, do botão liga/desliga (embaixo, à direita do monitor) e da traseira (cabos).
+    static void VisualComputadorReal(Transform v)
+    {
+        var pc = ModeloReal(SF("Computador_Mesa"), v, Vector3.zero, 0.85f, 180f, Colisao.Nenhuma);
+        if (pc == null) { Modelo("computerScreen", v, Vector3.zero, 0, Colisao.Nenhuma); return; }
+        var tela = TelaNoMonitor(pc, out var bMundo);
+        tela.name = "TelaViva";
+
+        // limites do monitor no espaço do Visual (o Visual ainda está na origem, sem giro)
+        var bMon = new Bounds(v.InverseTransformPoint(bMundo.center), bMundo.size);
+        float zFrente = bMon.min.z, zTras = bMon.max.z;   // a tela olha para -Z
+        Ancora(v, "Ancora_Tela", new Vector3(bMon.center.x, bMon.center.y, zFrente), new Vector3(bMon.size.x * 0.92f, bMon.size.y * 0.85f, 0.06f));
+        Ancora(v, "Ancora_Energia", new Vector3(bMon.max.x - 0.04f, bMon.min.y + 0.02f, zFrente), new Vector3(0.08f, 0.06f, 0.06f));
+        Ancora(v, "Ancora_Traseira", new Vector3(bMon.center.x, bMon.center.y + 0.12f, zTras + 0.03f), new Vector3(bMon.size.x, bMon.size.y + 0.25f, 0.1f));
+    }
+
     static void Ancora(Transform pai, string nome, Vector3 pos, Vector3 tam)
     {
         var a = new GameObject(nome).transform;

@@ -268,27 +268,48 @@ public static partial class MontarCenario
     // PC de casa: tela viva do jogo sobre o monitor e o ponto de vista de quem está sentado na cadeira
     static void ConfigurarPcDeCasa(GameObject pc, Transform casa)
     {
-        Renderer monitor = pc.GetComponentsInChildren<Renderer>()
-            .FirstOrDefault(r => r.transform.parent != null && r.transform.parent.name.Contains("Computer"));
-        if (monitor == null) monitor = pc.GetComponentsInChildren<Renderer>().OrderByDescending(r => r.bounds.size.y).First();
-        var b = monitor.bounds;   // mundo; o monitor está virado para o sul (-Z da casa)
-        Vector3 fora = -casa.forward;
-
-        var tela = new GameObject("TelaPC").transform;
-        tela.SetParent(pc.transform, true);
-        tela.position = new Vector3(b.center.x, b.center.y + b.size.y * 0.03f, b.min.z - 0.004f);
-        tela.rotation = Quaternion.LookRotation(fora);
-        var t = tela.gameObject.AddComponent<TelaComputador>();
-        t.tamanho = new Vector2(b.size.x * 0.9f, b.size.y * 0.8f);
-
+        var tela = TelaNoMonitor(pc, out var b);
         var pose = new GameObject("PoseSentado").transform;
         pose.SetParent(pc.transform, true);
-        pose.position = new Vector3(b.center.x + 0.05f, b.center.y + 0.05f, b.min.z - 0.62f);
+        pose.position = b.center + Vector3.up * 0.05f + pc.transform.right * -0.05f + tela.forward * 0.62f;
         pose.rotation = Quaternion.LookRotation(tela.position - pose.position);
 
         var uso = pc.AddComponent<ComputadorCasa>();
         uso.poseSentado = pose;
-        Debug.Log($"[Cenário] PC de casa: monitor {monitor.transform.parent?.name} {b.size.x:0.00} x {b.size.y:0.00} m");
+    }
+
+    // Monitor do modelo Computador_Mesa: acha a malha da tela e põe por cima a tela viva do jogo (TelaComputador).
+    // A tela fica virada para a frente do suporte do modelo (pc.transform.forward). 'b' = limites do monitor (mundo).
+    static Transform TelaNoMonitor(GameObject pc, out Bounds b)
+    {
+        Renderer monitor = pc.GetComponentsInChildren<Renderer>()
+            .FirstOrDefault(r => r.transform.parent != null && r.transform.parent.name.Contains("Computer"));
+        if (monitor == null) monitor = pc.GetComponentsInChildren<Renderer>().OrderByDescending(r => r.bounds.size.y).First();
+        b = monitor.bounds;
+        Vector3 fora = pc.transform.forward;
+        float profundidade = Mathf.Abs(Vector3.Dot(b.extents, new Vector3(Mathf.Abs(fora.x), Mathf.Abs(fora.y), Mathf.Abs(fora.z))));
+        float largura = Mathf.Abs(Vector3.Dot(b.size, new Vector3(Mathf.Abs(pc.transform.right.x), 0, Mathf.Abs(pc.transform.right.z))));
+
+        var tela = new GameObject("TelaPC").transform;
+        tela.SetParent(pc.transform, true);
+        tela.position = b.center + Vector3.up * b.size.y * 0.03f + fora * (profundidade + 0.004f);
+        tela.rotation = Quaternion.LookRotation(fora);
+        var t = tela.gameObject.AddComponent<TelaComputador>();
+        t.tamanho = new Vector2(largura * 0.93f, b.size.y * 0.84f);
+
+        // Película preta sempre visível: com o PC desligado (tela viva escondida) a tela fica preta,
+        // e a textura original do modelo (com marca real) nunca aparece
+        var preta = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        preta.name = "TelaDesligada";
+        Object.DestroyImmediate(preta.GetComponent<Collider>());
+        preta.transform.SetParent(pc.transform, true);
+        preta.transform.position = b.center + fora * (profundidade + 0.0025f);
+        preta.transform.rotation = Quaternion.LookRotation(-fora);   // o lado visível do Quad olha para -Z local
+        preta.transform.localScale = Vector3.one;
+        preta.transform.localScale = new Vector3(largura * 0.985f / preta.transform.lossyScale.x, b.size.y * 0.93f / preta.transform.lossyScale.y, 1f);
+        preta.GetComponent<Renderer>().sharedMaterial = Mat("Tela_Desligada", new Color(0.015f, 0.015f, 0.02f), 0.85f);
+        Debug.Log($"[Cenário] Tela no monitor de {pc.name}: {largura:0.00} x {b.size.y:0.00} m");
+        return tela;
     }
 
     // Persiana horizontal por dentro de cada janela (mesmas posições do Sala(...) da casa), feita de lâminas.

@@ -278,7 +278,7 @@ public static class AtalhosTeste
         if (mm.chamadoAtivo != null) mm.AbandonarChamado();
         Problema p = null;
         foreach (var lista in new[] { CatalogoProblemas.Faceis, CatalogoProblemas.Medios, CatalogoProblemas.Dificeis })
-            foreach (var x in lista) if (x.solucao == solucao && x.equipamento == TipoEquipamento.Impressora) p = x;
+            foreach (var x in lista) if (x.solucao == solucao && (p == null || x.equipamento == TipoEquipamento.Impressora)) p = x;
         if (p == null || mm.chamadosDisponiveis.Count == 0) { Debug.LogWarning("[Teste] Sem problema/chamado para " + solucao); return; }
         foreach (var c in new System.Collections.Generic.List<Chamado>(mm.chamadosDisponiveis))
         {
@@ -290,7 +290,7 @@ public static class AtalhosTeste
             if (mm.chamadoAtivo != null) break;
         }
         Debug.Log($"[Teste] Chamado de teste aceito: {solucao}. Visor: {mm.Estado?.VisorImpressora()}");
-        Impressora();
+        IrAoEquipamento(p.equipamento);
     }
 
     [MenuItem(Menu + "Impressora: chamado de teste — papel atolado", false, 126)]
@@ -307,7 +307,7 @@ public static class AtalhosTeste
     {
         var mm = MissionManager.Instance;
         if (mm?.Estado == null) { Debug.LogWarning("[Teste] Aceite um chamado de impressora antes."); return; }
-        foreach (var a in AcoesFisicas.Para(TipoEquipamento.Impressora, mm.Estado))
+        foreach (var a in AcoesFisicas.Para(mm.chamadoAtivo.equipamento, mm.Estado))
             if (a.rotulo.StartsWith(inicio)) { string r = a.executar(); Debug.Log($"[Teste] {a.rotulo} → {r} | Visor: {mm.Estado?.VisorImpressora() ?? "(chamado concluído)"}"); return; }
         Debug.LogWarning("[Teste] Ação não disponível agora: " + inicio);
     }
@@ -336,6 +336,27 @@ public static class AtalhosTeste
     static void AcaoCilindro() => AcaoImpressora("Trocar o cilindro");
     [MenuItem(Menu + "Impressora: puxar o papel atolado", false, 136)]
     static void AcaoAtolado() => AcaoImpressora("Abrir a tampa traseira e puxar");
+
+    [MenuItem(Menu + "PC: chamado de teste — poeira", false, 140)]
+    static void TestePoeira() => ChamadoTeste("Limpar por dentro");
+    [MenuItem(Menu + "PC: chamado de teste — memória", false, 141)]
+    static void TesteMemoria() => ChamadoTeste("Trocar memória");
+    [MenuItem(Menu + "PC: chamado de teste — fonte", false, 142)]
+    static void TesteFonte() => ChamadoTeste("Trocar fonte");
+    [MenuItem(Menu + "PC: ligar ou desligar", false, 143)]
+    static void PcLigar() { var e = MissionManager.Instance?.Estado; AcaoImpressora(e != null && e.pcLigado ? "Desligar no botão" : "Ligar o computador"); }
+    [MenuItem(Menu + "PC: abrir o gabinete", false, 144)]
+    static void PcAbrir() => AcaoImpressora("Virar o gabinete");
+    [MenuItem(Menu + "PC: olhar por dentro", false, 145)]
+    static void PcOlhar() => AcaoImpressora("Olhar por dentro");
+    [MenuItem(Menu + "PC: limpar a poeira", false, 146)]
+    static void PcLimpar() => AcaoImpressora("Limpar com pincel");
+    [MenuItem(Menu + "PC: trocar a memória", false, 147)]
+    static void PcMemoria() => AcaoImpressora("Trocar o pente");
+    [MenuItem(Menu + "PC: trocar a fonte", false, 148)]
+    static void PcFonte() => AcaoImpressora("Trocar a fonte");
+    [MenuItem(Menu + "PC: fechar o gabinete", false, 149)]
+    static void PcFechar() => AcaoImpressora("Colocar a tampa");
 
     [MenuItem(Menu + "Cliente: roteador", false, 121)]
     static void Roteador() => IrAoEquipamento(TipoEquipamento.Roteador);

@@ -210,6 +210,7 @@ public static class AcoesFisicas
             if (e.pcMemoriaRuim) return "Ligou, a ventoinha girou... e três bipes compridos. A tela continua preta.";
             e.pcLigado = true;
             e.ReiniciarPc();
+            if (e.PcHardwareOk) MM?.Verificar();   // o Windows subiu: o cliente confere na hora
             return e.PcSuperaquecendo
                 ? "O computador ligou, mas a ventoinha já está berrando e sai ar muito quente pelas grades."
                 : "O computador ligou e o Windows iniciou.";

@@ -163,9 +163,12 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 ## Fase 4 — Computador completo
 - ✅ Modelo realista no cliente (Computador_Mesa): monitor, teclado e mouse; tela viva "TI OS" que apaga com o PC
       desligado (película preta cobre a textura original com marca real); peças de mira por âncoras
-- ⬜ Gabinete separado que abre (tampa lateral) — o modelo atual não tem torre
-- ⬜ Peças internas animáveis: memória, SSD/HD, fonte, cooler, placa de vídeo, bateria da placa-mãe
-- ⬜ **Limpeza satisfatória**: poeira saindo com ar comprimido e pincel (antes/depois); cooler sujo = superaquecimento
+- ✅ Gabinete (torre) ao lado do monitor: o técnico vira o gabinete, tira a tampa lateral e vê placa-mãe, pentes,
+      cooler, fonte, HD e a poeira; só abre com o PC desligado
+- ✅ Peças internas animadas: o pente de memória e a fonte saem e voltam na troca
+- ⬜ SSD/HD e placa de vídeo trocáveis, bateria da placa-mãe
+- ✅ **Limpeza**: manta de poeira visível por dentro; pincel e ar comprimido (ferramenta) limpam; poeira = superaquecimento
+- ⬜ Nuvem de poeira saindo e PC que desliga sozinho de verdade quando superaquece
 - ⬜ **Pasta térmica** (tirar a velha, aplicar a nova) e **organização de cabos** dentro do gabinete
 - ⬜ Cabos atrás: rede, energia, vídeo (monitor sem imagem por cabo solto)
 - ⬜ Monitor mostrando o "Windows" do jogo na própria tela 3D (o computador simulado que já existe) — a textura
@@ -174,7 +177,8 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
       de memória, saúde do disco, antivírus), testador de cabo
 - ⬜ **Check-up completo** (serviço vendável): inspeção de todas as peças com laudo de saúde em %
 - ⬜ **Compatibilidade de peças**: memória do tipo errado não encaixa, fonte fraca desliga sob carga
-- ⬜ Problemas: lentidão, vírus/ransomware, Windows não inicia, memória ruim (bipes), fonte queimada, HD com setor
+- ✅ Problemas de hardware: superaquecimento por poeira, memória ruim (3 bipes, sem vídeo), fonte queimada (não liga)
+- ⬜ Problemas: lentidão, vírus/ransomware, Windows não inicia, HD com setor
       ruim (backup antes de trocar), atualização do Windows quebrou o sistema da contabilidade
 - ⬜ Peças trocadas fisicamente; peça velha volta para a mochila (sucata ou RMA)
 - ⬜ Montagem de PC sob encomenda (orçamento → peças → montagem → teste de desempenho)

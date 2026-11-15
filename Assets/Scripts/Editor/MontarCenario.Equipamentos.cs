@@ -100,6 +100,67 @@ public static partial class MontarCenario
         Ancora(v, "Ancora_Tela", new Vector3(bMon.center.x, bMon.center.y, zFrente), new Vector3(bMon.size.x * 0.92f, bMon.size.y * 0.85f, 0.06f));
         Ancora(v, "Ancora_Energia", new Vector3(bMon.max.x - 0.04f, bMon.min.y + 0.02f, zFrente), new Vector3(0.08f, 0.06f, 0.06f));
         Ancora(v, "Ancora_Traseira", new Vector3(bMon.center.x, bMon.center.y + 0.12f, zTras + 0.03f), new Vector3(bMon.size.x, bMon.size.y + 0.25f, 0.1f));
+        MontarGabinete(v, new Vector3(bMon.max.x + 0.2f, 0f, bMon.center.z + 0.05f));
+    }
+
+    // Gabinete (torre) ao lado do monitor, feito de peças: carcaça, tampa lateral que sai, placa-mãe, dois
+    // pentes de memória, cooler com dissipador, fonte, HD e a poeira. Frente em -Z; a tampa removível fica em -X
+    // (o jogo vira o gabinete para ela ficar de frente para o técnico). Origem na base, no centro.
+    static void MontarGabinete(Transform v, Vector3 pos)
+    {
+        const float W = 0.2f, Hh = 0.42f, D = 0.42f, e = 0.008f;
+        var preto = Mat("Gabinete_Preto", new Color(0.07f, 0.07f, 0.08f), 0.4f);
+        var chapa = Mat("Gabinete_Chapa", new Color(0.5f, 0.52f, 0.55f), 0.5f, 0.6f);
+        var placa = Mat("PlacaMae", new Color(0.05f, 0.25f, 0.12f), 0.3f);
+        var pente = Mat("Pente_Memoria", new Color(0.08f, 0.32f, 0.16f), 0.35f);
+        var escuro = Mat("Cooler_Preto", new Color(0.13f, 0.13f, 0.15f), 0.3f);
+        var metal = Mat("Fonte_PC", new Color(0.32f, 0.32f, 0.34f), 0.5f, 0.5f);
+        var prata = Mat("HD_Prata", new Color(0.62f, 0.64f, 0.67f), 0.6f, 0.7f);
+        var po = Mat("Poeira", new Color(0.45f, 0.42f, 0.38f), 0.02f);
+
+        var g = new GameObject("Gabinete").transform;
+        g.SetParent(v, false);
+        g.localPosition = pos;
+
+        Cubo(g, "Base", new Vector3(0, e / 2, 0), new Vector3(W, e, D), chapa);
+        Cubo(g, "Topo", new Vector3(0, Hh - e / 2, 0), new Vector3(W, e, D), preto);
+        Cubo(g, "Frente", new Vector3(0, Hh / 2, -D / 2 + e / 2), new Vector3(W, Hh, e), preto);
+        Cubo(g, "Tras", new Vector3(0, Hh / 2, D / 2 - e / 2), new Vector3(W, Hh, e), chapa);
+        Cubo(g, "LadoFixo", new Vector3(W / 2 - e / 2, Hh / 2, 0), new Vector3(e, Hh, D), preto);
+        Cubo(g, "TampaLateral", new Vector3(-W / 2 + e / 2, Hh / 2, 0), new Vector3(e, Hh - 0.004f, D - 0.004f), preto);
+        // frente: baia do leitor, botão e LED
+        Cubo(g, "Baia", new Vector3(0, Hh - 0.05f, -D / 2 - 0.001f), new Vector3(W * 0.8f, 0.035f, 0.002f), escuro);
+        Cubo(g, "BotaoPower", new Vector3(-0.04f, Hh - 0.11f, -D / 2 - 0.002f), new Vector3(0.022f, 0.022f, 0.004f), chapa);
+        Cubo(g, "LedGabinete", new Vector3(0.0f, Hh - 0.11f, -D / 2 - 0.002f), new Vector3(0.008f, 0.008f, 0.004f), escuro);
+
+        // por dentro (presos no lado fixo, +X)
+        float xPlaca = W / 2 - e - 0.004f;
+        Cubo(g, "PlacaMae", new Vector3(xPlaca, 0.2f, 0.02f), new Vector3(0.004f, 0.32f, 0.3f), placa);
+        Cubo(g, "Pente1", new Vector3(xPlaca - 0.018f, 0.27f, -0.075f), new Vector3(0.03f, 0.13f, 0.006f), pente);
+        Cubo(g, "Pente2", new Vector3(xPlaca - 0.018f, 0.27f, -0.058f), new Vector3(0.03f, 0.13f, 0.006f), pente);
+        Cubo(g, "Dissipador", new Vector3(xPlaca - 0.02f, 0.27f, 0.05f), new Vector3(0.035f, 0.085f, 0.085f), chapa);
+        var cooler = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        Object.DestroyImmediate(cooler.GetComponent<Collider>());
+        cooler.name = "Cooler";
+        cooler.transform.SetParent(g, false);
+        cooler.transform.localPosition = new Vector3(xPlaca - 0.045f, 0.27f, 0.05f);
+        cooler.transform.localRotation = Quaternion.Euler(0, 0, 90);
+        cooler.transform.localScale = new Vector3(0.085f, 0.008f, 0.085f);
+        cooler.GetComponent<Renderer>().sharedMaterial = escuro;
+        Cubo(g, "Fonte", new Vector3(0.005f, Hh - e - 0.047f, D / 2 - e - 0.078f), new Vector3(W - 0.04f, 0.09f, 0.15f), metal);
+        Cubo(g, "HD", new Vector3(0.01f, 0.07f, -D / 2 + 0.1f), new Vector3(0.1f, 0.026f, 0.146f), prata);
+        Cubo(g, "CabosInternos", new Vector3(0.02f, 0.17f, 0.12f), new Vector3(0.02f, 0.2f, 0.03f), escuro);
+
+        // poeira: manta no fundo, tufos no cooler, na fonte e nos pentes
+        var poeira = new GameObject("Poeira").transform;
+        poeira.SetParent(g, false);
+        Cubo(poeira, "Manta", new Vector3(0, e + 0.004f, 0), new Vector3(W - 0.03f, 0.008f, D - 0.04f), po);
+        Cubo(poeira, "NoCooler", new Vector3(xPlaca - 0.052f, 0.27f, 0.05f), new Vector3(0.006f, 0.08f, 0.08f), po);
+        Cubo(poeira, "NaFonte", new Vector3(0.005f, Hh - e - 0.096f, D / 2 - 0.09f), new Vector3(W - 0.05f, 0.006f, 0.14f), po);
+        Cubo(poeira, "NosPentes", new Vector3(xPlaca - 0.036f, 0.27f, -0.066f), new Vector3(0.006f, 0.12f, 0.03f), po);
+        Cubo(poeira, "NoHD", new Vector3(0.01f, 0.086f, -D / 2 + 0.1f), new Vector3(0.098f, 0.006f, 0.14f), po);
+
+        Ancora(v, "Ancora_Gabinete", pos + new Vector3(0, Hh / 2, 0), new Vector3(W + 0.03f, Hh + 0.03f, D + 0.03f));
     }
 
     // Roteador realista: corpo do modelo + 4 LEDs na frente (o jogo acende conforme o estado), com âncoras da

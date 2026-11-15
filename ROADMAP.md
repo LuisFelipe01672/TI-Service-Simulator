@@ -108,7 +108,9 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 ## Fase 1B — Casa completa (cenário)
 - ✅ Sala realista: sofá de couro, mesa de centro, tapete, rack de madeira com TV de tela plana (feita por código),
       planta, mesa redonda de jantar com cadeiras estofadas (Poly Haven)
-- ⬜ Cozinha realista (cozinha compacta, geladeira, micro-ondas do Sketchfab — precisa do login no Sketchfab) e banheiro
+- ✅ Cozinha realista: bancada compacta com pia, cooktop e forno sob a janela, geladeira inox (comer), micro-ondas em
+      cima dela e cafeteira espresso (café) — Sketchfab CC-BY
+- ⬜ Banheiro
 - ⬜ Pisos/azulejos/paredes PBR em todos os cômodos
 - ✅ Comer na geladeira: café da manhã/almoço/lanche conforme a hora, +30 de energia, R$ 12 (Alimentação no
       livro-caixa), intervalo de 3 h, até 3 por dia

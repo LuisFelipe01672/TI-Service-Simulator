@@ -133,12 +133,7 @@ public static partial class MontarCenario
 
         MontarSala(casa);
 
-        // Cozinha na parede leste, entre a janela e a porta — Kenney por enquanto (Fase 1B)
-        var geladeira = Modelo("kitchenFridge", casa, new Vector3(3.55f, 0f, 2.55f), -90);
-        if (geladeira != null) geladeira.AddComponent<Geladeira>();   // comer recupera energia
-        Modelo("kitchenSink", casa, new Vector3(3.6f, 0f, 1.7f), -90);
-        Modelo("kitchenStove", casa, new Vector3(3.6f, 0f, 1.0f), -90);
-        MontarCafeteira(casa);
+        MontarCozinha(casa);
         Modelo("coatRackStanding", casa, new Vector3(2.45f, 0f, 2.6f), 0);
 
         // Onde o jogador acorda (o DiaManager procura "SpawnCasa"): ao lado da cama, olhando para a porta
@@ -246,18 +241,34 @@ public static partial class MontarCenario
     }
 
     // Balcão sob a janela leste com a cafeteira (café = energia) e a xícara que aparece quando fica pronto
-    static void MontarCafeteira(Transform casa)
+    // Cozinha realista na parede leste (Fase 1B): bancada compacta (pia, cooktop e forno) sob a janela, geladeira
+    // ao lado da porta, micro-ondas e cafeteira espresso em cima da bancada. Frentes viradas para oeste (-X).
+    const float RotCozinha = -90f;
+    static void MontarCozinha(Transform casa)
     {
-        var balcao = Modelo("kitchenCabinet", casa, new Vector3(3.6f, 0f, 0.2f), -90);
-        float topo = Altura(balcao);
-        var maquina = Modelo("kitchenCoffeeMachine", casa, new Vector3(3.68f, topo, 0.05f), -90, Colisao.Nenhuma);
+        var bancada = ModeloReal(SF("Cozinha_Compacta"), casa, new Vector3(3.68f, 0f, 0.95f), 1.61f, RotCozinha);
+        float topo = bancada != null ? Altura(bancada) * 0.9f : 0.9f;   // tampo (sem o espelho de trás)
+
+        var geladeira = ModeloReal(SF("Eletrodomesticos"), casa, new Vector3(3.55f, 0f, 2.45f), 2.02f, RotCozinha,
+            soAPeca: "Refridgerator");
+        if (geladeira != null) geladeira.AddComponent<Geladeira>();   // comer recupera energia
+
+        // micro-ondas em cima da geladeira (cozinha pequena), cafeteira na ponta da bancada perto dela
+        float topoGeladeira = geladeira != null ? Altura(geladeira) : 2f;
+        ModeloReal(SF("Micro_Ondas"), casa, new Vector3(3.62f, topoGeladeira, 2.45f), 0.48f, RotCozinha, Colisao.Nenhuma);
+        MontarCafeteira(casa, new Vector3(3.78f, topo, 1.62f), topo);
+    }
+
+    static void MontarCafeteira(Transform casa, Vector3 pos, float topo)
+    {
+        var maquina = ModeloReal(SF("Eletrodomesticos"), casa, pos, 0.32f, RotCozinha, Colisao.Nenhuma, soAPeca: "Coffeemachine");
         if (maquina == null) return;
 
         var mXicara = Mat("Xicara_Branca", new Color(0.96f, 0.95f, 0.92f), 0.7f);
         var mCafe = Mat("Cafe", new Color(0.18f, 0.1f, 0.05f), 0.85f);
         var xicara = new GameObject("Xicara").transform;
         xicara.SetParent(casa, false);
-        xicara.localPosition = new Vector3(3.55f, topo, 0.42f);
+        xicara.localPosition = new Vector3(3.55f, topo, pos.z - 0.2f);
         var corpo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         Object.DestroyImmediate(corpo.GetComponent<Collider>());
         corpo.transform.SetParent(xicara, false);
@@ -385,7 +396,7 @@ public static partial class MontarCenario
     // (metros), apoia a base em 'pos' (local do pai), centraliza e gira 'rotY'.
     // manterMetade: -1/+1 apaga as peças do outro lado do eixo horizontal mais comprido (arquivos com dois modelos)
     static GameObject ModeloReal(string caminho, Transform pai, Vector3 pos, float maiorLado, float rotY,
-        Colisao colisao = Colisao.Caixa, int manterMetade = 0)
+        Colisao colisao = Colisao.Caixa, int manterMetade = 0, string soAPeca = null)
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(caminho);
         if (prefab == null) { Debug.LogError("[Cenário] Modelo não encontrado: " + caminho); return null; }
@@ -395,6 +406,18 @@ public static partial class MontarCenario
         modelo.transform.SetParent(suporte, false);
 
         var b = Limites(modelo);
+        // soAPeca: arquivos com vários objetos (ex.: conjunto de eletrodomésticos) — fica só o que tem esse nome
+        if (!string.IsNullOrEmpty(soAPeca))
+        {
+            PrefabUtility.UnpackPrefabInstance(modelo, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+            foreach (var r in modelo.GetComponentsInChildren<Renderer>())
+            {
+                bool fica = false;
+                for (var t = r.transform; t != null && t != modelo.transform; t = t.parent) if (t.name.Contains(soAPeca)) { fica = true; break; }
+                if (!fica) Object.DestroyImmediate(r.gameObject);
+            }
+            b = Limites(modelo);
+        }
         if (manterMetade != 0)
         {
             PrefabUtility.UnpackPrefabInstance(modelo, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);

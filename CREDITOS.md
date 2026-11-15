@@ -18,6 +18,9 @@
 | `Assets/Models/Sketchfab/Guarda_Roupa.glb` | [Modern Closet / Wardrobe / Dresser Cabinet](https://sketchfab.com/3d-models/modern-closet-wardrobe-dresser-cabinet-0999a8a70ed040c6afa8388ee4ffe923) | [alyxyuu](https://sketchfab.com/alyxyuu) | Texturas em 1024 px |
 | `Assets/Models/Sketchfab/Cadeira_Escritorio.glb` | [Office Chair](https://sketchfab.com/3d-models/office-chair-5cd859cd7b9a430db0195af2ba89949b) | [crow.bite](https://sketchfab.com/crow.bite) | Texturas em 1024 px |
 | `Assets/Models/Sketchfab/Mochila.glb` | [Grey backpack](https://sketchfab.com/3d-models/grey-backpack-e00d974c4e994e76a8f69e7e3fdf0a30) | [kj3987](https://sketchfab.com/kj3987) | Texturas em 1024 px |
+| `Assets/Models/Sketchfab/Cozinha_Compacta.glb` | [Small Kitchen with Oven](https://sketchfab.com/3d-models/small-kitchen-with-oven-e783d6d64f8c453ab534bdde715b210d) | [AleixoAlonso](https://sketchfab.com/AleixoAlonso) | Texturas em 1024 px |
+| `Assets/Models/Sketchfab/Eletrodomesticos.glb` | [Kitchen Appliances](https://sketchfab.com/3d-models/kitchen-appliances-0b01a398fe1649aaacd6ebdf85bf5d6c) | [nkilstrup](https://sketchfab.com/nkilstrup) | Usada só a geladeira |
+| `Assets/Models/Sketchfab/Micro_Ondas.glb` | [Microwave Oven](https://sketchfab.com/3d-models/microwave-oven-3421e492257f40959859104f46128304) | [Mustafa97](https://sketchfab.com/Mustafa97) | — |
 | `Assets/Models/Sketchfab/Telefone_Escritorio.glb` | [Office Phone](https://sketchfab.com/3d-models/office-phone-4176a01b6d0b4d13ad165c0df278a6b5) | [maxdragonn](https://sketchfab.com/maxdragon) | — |
 
 ## Modelos e texturas CC0 (domínio público, crédito opcional)

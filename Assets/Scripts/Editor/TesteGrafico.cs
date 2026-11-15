@@ -196,7 +196,8 @@ public static class TesteGrafico
     [MenuItem("TI Service/Teste gráfico/5. Listar peças dos modelos de equipamento", priority = 1320)]
     public static void ListarPecas()
     {
-        foreach (var caminho in new[] { Sketchfab + "Impressora_MFP_Compacta.fbx", Sketchfab + "Impressora_MFP_Escritorio.glb",
+        foreach (var caminho in new[] { Sketchfab + "Eletrodomesticos.glb", Sketchfab + "Cozinha_Compacta.glb", Sketchfab + "Micro_Ondas.glb",
+                                        Sketchfab + "Impressora_MFP_Compacta.fbx", Sketchfab + "Impressora_MFP_Escritorio.glb",
                                         Sketchfab + "Impressora_Interior.glb", Sketchfab + "Cartucho_Toner.glb" })
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(caminho);
@@ -246,6 +247,7 @@ public static class TesteGrafico
         Foto("Cliente_Impressora_Perto", new Vector3(43.75f, 1.35f, 0.75f), new Vector3(44.45f, 0.95f, 0.8f));
         Foto("Casa_Sala", c + new Vector3(2.4f, 1.6f, 1.6f), c + new Vector3(2.4f, 0.5f, -2.3f));
         Foto("Casa_TV", c + new Vector3(2.4f, 1.3f, -2.2f), c + new Vector3(2.4f, 0.9f, -0.2f));
+        Foto("Casa_Cozinha", c + new Vector3(1.4f, 1.6f, 1.2f), c + new Vector3(3.6f, 0.8f, 1.4f));
         Foto("Casa_Geral", c + new Vector3(3.6f, 2.5f, 2.6f), c + new Vector3(-1.5f, 0.5f, -0.8f));
         Debug.Log("[TesteGrafico] Fotos da casa salvas em Builds/Capturas");
     }

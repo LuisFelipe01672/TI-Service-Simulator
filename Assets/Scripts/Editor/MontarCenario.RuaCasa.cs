@@ -131,14 +131,11 @@ public static partial class MontarCenario
         MontarHomeOffice(casa);
         Persianas(casa);
 
-        // Sala (canto sudeste): sofá olhando para a TV — Kenney por enquanto (Fase 1B)
-        Modelo("loungeSofa", casa, new Vector3(2.4f, 0f, -2.45f), 0);
-        var rack = Modelo("cabinetTelevision", casa, new Vector3(2.4f, 0f, -0.3f), 180);
-        Modelo("televisionModern", casa, new Vector3(2.4f, Altura(rack), -0.3f), 180, Colisao.Nenhuma);
-        Modelo("rugRectangle", casa, new Vector3(2.4f, 0.012f, -1.4f), 0, Colisao.Nenhuma);
+        MontarSala(casa);
 
         // Cozinha na parede leste, entre a janela e a porta — Kenney por enquanto (Fase 1B)
-        Modelo("kitchenFridge", casa, new Vector3(3.55f, 0f, 2.55f), -90);
+        var geladeira = Modelo("kitchenFridge", casa, new Vector3(3.55f, 0f, 2.55f), -90);
+        if (geladeira != null) geladeira.AddComponent<Geladeira>();   // comer recupera energia
         Modelo("kitchenSink", casa, new Vector3(3.6f, 0f, 1.7f), -90);
         Modelo("kitchenStove", casa, new Vector3(3.6f, 0f, 1.0f), -90);
         MontarCafeteira(casa);
@@ -209,6 +206,43 @@ public static partial class MontarCenario
             casa.Find("Luz_Teto_Quarto"), lustreQuarto);
         CriarInterruptor(casa, "Interruptor_Sala", "da sala", new Vector3(0.85f, 1.15f, 3f), 180f,
             casa.Find("Luz_Teto_Sala"), lustreSala);
+    }
+
+    // Sala (canto sudeste, Fase 1B): sofá de couro na parede sul olhando para a TV no rack (que divide os ambientes),
+    // mesa de centro com tapete, planta; mesa redonda de jantar com duas cadeiras perto da cozinha
+    const float RotSofa = 0f, RotRack = 180f;
+    static void MontarSala(Transform casa)
+    {
+        ModeloReal(PH("sofa_02"), casa, new Vector3(2.4f, 0f, -2.5f), 2.0f, RotSofa);
+        Caixa(casa, "Tapete_Sala", new Vector3(2.4f, 0.006f, -1.45f), new Vector3(2.2f, 0.012f, 1.5f), mCarpete, 1.5f, false);
+        ModeloReal(PH("modern_coffee_table_01"), casa, new Vector3(2.4f, 0.012f, -1.5f), 1.0f, 0);
+        ModeloReal(PH("throw_pillows_01"), casa, new Vector3(2.0f, 0.45f, -2.55f), 0.5f, 0, Colisao.Nenhuma);
+        ModeloReal(PH("potted_plant_01"), casa, new Vector3(3.6f, 0f, -2.6f), 0.9f, 0);
+
+        var rack = ModeloReal(PH("modern_wooden_cabinet"), casa, new Vector3(2.4f, 0f, -0.25f), 1.6f, RotRack);
+        CriarTV(casa, new Vector3(2.4f, Altura(rack), -0.2f), 180f);
+
+        // Jantar: mesa redonda e duas cadeiras viradas para ela
+        ModeloReal(PH("round_wooden_table_01"), casa, new Vector3(1.65f, 0f, 1.25f), 0.95f, 0);
+        ModeloReal(PH("dining_chair_02"), casa, new Vector3(1.0f, 0f, 1.25f), 0.95f, 90);
+        ModeloReal(PH("dining_chair_02"), casa, new Vector3(2.3f, 0f, 1.25f), 0.95f, -90);
+    }
+
+    // TV de tela plana 50": painel preto brilhante (desligada reflete o ambiente), moldura fina e pé central.
+    // 'rotY' 180 = tela virada para o sul (sofá).
+    static void CriarTV(Transform casa, Vector3 base_, float rotY)
+    {
+        var mPainel = Mat("TV_Tela", new Color(0.02f, 0.02f, 0.025f), 0.92f, 0.1f);
+        var mCorpo = Mat("TV_Corpo", new Color(0.06f, 0.06f, 0.07f), 0.45f);
+        var tv = new GameObject("TV").transform;
+        tv.SetParent(casa, false);
+        tv.localPosition = base_;
+        tv.localRotation = Quaternion.Euler(0, rotY, 0);
+        const float w = 1.12f, h = 0.65f;
+        Caixa(tv, "Pe", new Vector3(0, 0.008f, 0), new Vector3(0.36f, 0.016f, 0.2f), mCorpo, 1f, false);
+        Caixa(tv, "Haste", new Vector3(0, 0.06f, 0.02f), new Vector3(0.06f, 0.1f, 0.03f), mCorpo, 1f, false);
+        Caixa(tv, "Corpo", new Vector3(0, 0.1f + h / 2f, 0.015f), new Vector3(w, h, 0.035f), mCorpo, 1f, false);
+        Caixa(tv, "Tela", new Vector3(0, 0.1f + h / 2f + 0.005f, -0.004f), new Vector3(w - 0.02f, h - 0.03f, 0.004f), mPainel, 1f, false);
     }
 
     // Balcão sob a janela leste com a cafeteira (café = energia) e a xícara que aparece quando fica pronto

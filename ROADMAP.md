@@ -102,13 +102,16 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ⬜ Celular: ligações de triagem (perguntas por telefone), orçamentos, GPS (Fase 6), fotos do problema
 - ✅ **Energia do técnico** no HUD: cai com as horas e o trabalho; cansado anda/trabalha mais devagar; dormir cedo
       recupera tudo (tarde ou no escritório, menos); café na cozinha (+20, até 3 por dia) — salva no save
-- ⬜ Comer (geladeira/fogão) como outra forma de recuperar energia (Fase 1B, com a cozinha realista)
+- ✅ Comer (geladeira) como outra forma de recuperar energia
 - ⬜ Rotina da manhã: acordar → café (bônus de energia) → ver chamados no celular/PC → sair de casa
 
 ## Fase 1B — Casa completa (cenário)
-- ⬜ Sala (sofá, TV, rack, quadros), cozinha (geladeira, fogão, pia, micro-ondas, cafeteira) e banheiro realistas
+- ✅ Sala realista: sofá de couro, mesa de centro, tapete, rack de madeira com TV de tela plana (feita por código),
+      planta, mesa redonda de jantar com cadeiras estofadas (Poly Haven)
+- ⬜ Cozinha realista (cozinha compacta, geladeira, micro-ondas do Sketchfab — precisa do login no Sketchfab) e banheiro
 - ⬜ Pisos/azulejos/paredes PBR em todos os cômodos
-- ⬜ Comer de verdade na cozinha (geladeira com compras do mercado) — liga com a energia
+- ✅ Comer na geladeira: café da manhã/almoço/lanche conforme a hora, +30 de energia, R$ 12 (Alimentação no
+      livro-caixa), intervalo de 3 h, até 3 por dia
 - ❓ Fontes: Poly Haven (CC0) primeiro; Sketchfab CC-BY para o que faltar
 
 ## Fase 2 — Compras físicas, estoque e fornecedores

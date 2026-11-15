@@ -61,6 +61,17 @@ public static class AtalhosTeste
         }
     }
 
+    [MenuItem(Menu + "Casa: comer (geladeira)", false, 115)]
+    static void Comer()
+    {
+        var g = Object.FindAnyObjectByType<Geladeira>();
+        if (g == null) { Debug.LogWarning("[Teste] Sem geladeira (rode o menu 3)."); return; }
+        Ir(g.transform.position + new Vector3(-1.3f, 1.1f, 0f), g.transform.position + Vector3.up);
+        Debug.Log($"[Teste] {g.TextoPrompt}");
+        g.Interagir();
+        Debug.Log($"[Teste] Energia agora: {EnergiaTecnico.Instance?.energia:0}, saldo {GameEconomy.Instance?.saldo:0}");
+    }
+
     [MenuItem(Menu + "Celular: abrir", false, 114)]
     static void AbrirCelular()
     {

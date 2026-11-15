@@ -25,7 +25,8 @@
 - Modelos 3D: **Poly Haven** (https://polyhaven.com) — em `Assets/Models/PolyHaven/`: Metal Office Desk,
   Steel Frame Shelves 03, Metal Toolbox, Desk Lamp Arm 01, Office Notepads, Cardboard Box 01,
   Classic Nightstand 01, Alarm Clock 01, Wall Clock, Throw Pillows 01, Potted Plant 02 e 04,
-  Modern Ceiling Lamp 01, Hanging Picture Frame 01, Standing Picture Frame 01, Lightbulb LED
+  Modern Ceiling Lamp 01, Hanging Picture Frame 01, Standing Picture Frame 01, Lightbulb LED, Sofa 02,
+  Modern Coffee Table 01, Round Wooden Table 01, Dining Chair 02, Potted Plant 01, Modern Wooden Cabinet
 
 - Móveis e objetos: **Kenney** — Furniture Kit (https://kenney.nl)
 - Texturas PBR: **ambientCG** (https://ambientcg.com)

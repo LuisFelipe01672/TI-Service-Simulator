@@ -124,6 +124,66 @@ public static partial class MontarCenario
         Debug.Log($"[Cenário] Roteador real: {b.size * 100f} cm");
     }
 
+    // Estante de aço de estoque na parede oeste do escritório + caixa de logística reversa (Fase 2).
+    // As prateleiras são medidas por raio (de cima para baixo, em 3 pontos da largura) e viram "vagas" onde o
+    // EstoqueVisual mostra o que há na mochila/estoque.
+    static void MontarEstoque(Transform sala)
+    {
+        var estante = ModeloReal(PH("steel_frame_shelves_03"), sala, new Vector3(-2.68f, 0f, 0.6f), 1.8f, 90f);
+        if (estante == null) { Modelo("bookcaseOpen", sala, new Vector3(-2.7f, 0, 0.6f), 90); return; }
+        estante.name = "Estoque";
+
+        var temporarios = new System.Collections.Generic.List<MeshCollider>();
+        foreach (var mf in estante.GetComponentsInChildren<MeshFilter>())
+        {
+            var mc = mf.gameObject.AddComponent<MeshCollider>();
+            mc.sharedMesh = mf.sharedMesh;
+            temporarios.Add(mc);
+        }
+        var caixaColisor = estante.GetComponent<BoxCollider>();
+        if (caixaColisor != null) caixaColisor.enabled = false;
+        Physics.SyncTransforms();
+
+        var achadas = new System.Collections.Generic.List<Vector3>();
+        // um raio por coluna da estante, descendo de prateleira em prateleira (cada raio só acha a primeira
+        // superfície de um colisor, então recomeça logo abaixo de cada acerto)
+        foreach (float dz in new[] { -0.45f, 0.45f })
+        {
+            Vector3 origem = sala.TransformPoint(new Vector3(-2.68f, 2.6f, 0.6f + dz));
+            for (int passo = 0; passo < 12; passo++)
+            {
+                if (!Physics.Raycast(origem, Vector3.down, out var hit, 3f)) break;
+                origem = hit.point + Vector3.down * 0.03f;
+                if (hit.normal.y < 0.7f || !temporarios.Contains(hit.collider as MeshCollider)) continue;
+                float y = hit.point.y - sala.position.y;
+                if (y < 0.15f || y > 1.55f) continue;   // nem o chão, nem alto demais para ver
+                if (achadas.Exists(p => Mathf.Abs(p.y - hit.point.y) < 0.2f && Mathf.Abs(p.z - hit.point.z) < 0.1f)) continue;
+                achadas.Add(hit.point);
+            }
+        }
+        foreach (var mc in temporarios) Object.DestroyImmediate(mc);
+        if (caixaColisor != null) caixaColisor.enabled = true;
+
+        // mais altas primeiro (altura dos olhos), da esquerda para a direita
+        achadas.Sort((a, b) => Mathf.Abs(a.y - b.y) > 0.06f ? b.y.CompareTo(a.y) : a.z.CompareTo(b.z));
+        for (int i = 0; i < achadas.Count; i++)
+        {
+            var v = new GameObject($"Vaga_{i:00}").transform;
+            v.SetParent(estante.transform, true);
+            v.position = achadas[i] + Vector3.up * 0.002f;
+            v.rotation = Quaternion.LookRotation(-sala.right);   // -Z da vaga (frente das etiquetas) para dentro da sala
+        }
+        estante.AddComponent<EstoqueVisual>();
+        Debug.Log($"[Cenário] Estoque: {achadas.Count} vagas na estante.");
+
+        // Logística reversa: caixa no chão, perto da porta
+        var descarte = new GameObject("LogisticaReversa");
+        descarte.transform.SetParent(sala, false);
+        descarte.transform.localPosition = new Vector3(-2.6f, 0f, -1.75f);
+        descarte.transform.localRotation = Quaternion.LookRotation(-Vector3.right);
+        descarte.AddComponent<DescarteEletronico>();
+    }
+
     static void Ancora(Transform pai, string nome, Vector3 pos, Vector3 tam)
     {
         var a = new GameObject(nome).transform;

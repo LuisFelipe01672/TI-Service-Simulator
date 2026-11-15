@@ -125,8 +125,7 @@ public static partial class MontarCenario
         PosicionarEquipamento("Notebook", sala, new Vector3(-0.1f, alturaMesa, 2.3f), 180,
             v => Modelo("laptop", v, Vector3.zero, 0, Colisao.Nenhuma));
 
-        var estante = Modelo("bookcaseOpen", sala, new Vector3(-2.7f, 0, 0.6f), 90);
-        Modelo("books", sala, new Vector3(-2.7f, Altura(estante), 0.6f), 90, Colisao.Nenhuma);
+        MontarEstoque(sala);
         Modelo("lampSquareFloor", sala, new Vector3(-2.5f, 0, 2.5f), 0);
 
         var caixa = Modelo("cardboardBoxClosed", sala, new Vector3(2.45f, 0, 2.45f), 10);

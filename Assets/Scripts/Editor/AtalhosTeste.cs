@@ -155,6 +155,24 @@ public static class AtalhosTeste
         if (porta != null) { Ir(porta.transform.position + new Vector3(0.3f, 0f, 1.0f), porta.transform.position + new Vector3(3f, 0f, 3f)); Debug.Log("[Teste] Perto da porta do cliente, olhando para o lado: " + (Interactable.MaisProximoEmAlcance()?.TextoPrompt ?? "(nada)")); Jogador().OlharPara(porta.transform.position); Debug.Log("[Teste] Olhando a porta: " + Interactable.MaisProximoEmAlcance()?.TextoPrompt); }
     }
 
+    [MenuItem(Menu + "Estoque: olhar a estante do escritório", false, 122)]
+    static void OlharEstoque()
+    {
+        var e = Object.FindAnyObjectByType<EstoqueVisual>();
+        if (e == null) { Debug.LogWarning("[Teste] Sem estoque (rode o menu 3)."); return; }
+        Ir(e.transform.position + new Vector3(1.9f, 1.1f, 0f), e.transform.position + Vector3.up * 0.9f);
+    }
+
+    [MenuItem(Menu + "Estoque: descartar toner usado", false, 123)]
+    static void Descartar()
+    {
+        var d = Object.FindAnyObjectByType<DescarteEletronico>();
+        if (d == null) return;
+        Debug.Log("[Teste] " + d.TextoPrompt);
+        d.Interagir();
+        Debug.Log($"[Teste] Toner usado restante: {Mochila.Instance?.Quantidade(Item.TonerUsado)}, saldo {GameEconomy.Instance?.saldo:0}");
+    }
+
     [MenuItem(Menu + "Casa: pegar a mochila", false, 112)]
     static void PegarMochila()
     {

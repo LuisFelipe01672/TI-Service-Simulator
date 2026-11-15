@@ -121,16 +121,18 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
       buscar; E abre e guarda na mochila
 - ✅ **Caixa de cabo de rede 305 m** realista: etiqueta "Cat6 · 305 m · 23 AWG", cabo azul saindo pelo furo; vai
       para a bancada do escritório e mostra quantos metros restam
-- ⬜ Saquinho de RJ45, caixa de toner, ferramentas e equipamentos de locação como objetos
-- ⬜ Cabos prontos enrolados (com o tamanho escrito) na mochila/bancada
-- ⬜ **Prateleiras de estoque** na sede: guardar cada item e ver o que está acabando (ligado ao estoque do sistema)
+- ✅ Saquinho de RJ45, caixas de toner e de cilindro como objetos na estante de estoque
+- ⬜ Ferramentas e equipamentos de locação como objetos
+- ✅ Cabos prontos enrolados na estante, cada rolo com o tamanho na etiqueta (ponta ruim em laranja)
+- ✅ **Estante de estoque** no escritório ligada ao estoque do sistema: mostra o que você tem e esvazia ao usar
 - ✅ 3 fornecedores fictícios (Distribuidora Centro TI, Loja do Bairro, MegaShop Online) com preço, prazo, expressa e
       confiabilidade diferentes: **entrega atrasada** (o fornecedor avisa), **peça errada**, **peça com defeito**
 - ✅ **Preço de mercado oscilando** por dia e por item (−15% a +25%), mostrado na loja ("+8% hoje")
 - ✅ **Garantia/RMA**: peça errada ou com defeito descoberta ao abrir a caixa; troca automática sem custo, chega dias depois
 - ⬜ **Peças usadas e recondicionadas**: lote de equipamentos de empresa que fechou (leilão) e equipamentos
       descartados para testar, recuperar e revender ou colocar em locação
-- ⬜ **Descarte correto**: apagar dados de verdade (LGPD) antes de revender; lixo eletrônico para o ponto de coleta
+- ✅ **Logística reversa**: caixa no escritório recebe os toners usados (R$ 8 cada da recicladora + reputação)
+- ⬜ Descarte de equipamentos: apagar dados de verdade (LGPD) antes de revender; lixo eletrônico no ponto de coleta
 
 ## Fase 3 — Impressora completa e locação  (detalhe em `PLANO_FASE_IMPRESSORA.md`)
 - ✅ Peças com mira + E, tampa animada, crimpagem animada em 3D

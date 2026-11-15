@@ -173,6 +173,25 @@ public static class AtalhosTeste
         Debug.Log($"[Teste] Toner usado restante: {Mochila.Instance?.Quantidade(Item.TonerUsado)}, saldo {GameEconomy.Instance?.saldo:0}");
     }
 
+    [MenuItem(Menu + "Usados: comprar lote e processar tudo (log)", false, 124)]
+    static void TestarUsados()
+    {
+        if (!Application.isPlaying) return;
+        GameEconomy.Instance?.ReceberPagamento(1500f);
+        bool tem = EquipamentosUsados.LoteDisponivel(out int n, out float preco, out string origem);
+        Debug.Log($"[Teste] Dia {DiaManager.Instance?.dia}: lote disponível {tem} — {n} itens, {preco:0}, {origem}");
+        if (tem) Debug.Log("[Teste] " + EquipamentosUsados.ComprarLote());
+        foreach (var e in new System.Collections.Generic.List<EquipUsado>(EquipamentosUsados.Estoque))
+        {
+            Debug.Log("[Teste] " + EquipamentosUsados.Testar(e));
+            if (e.condicao == CondicaoUsado.DefeitoLeve) Debug.Log("[Teste] " + EquipamentosUsados.Recuperar(e));
+            if (e.condicao == CondicaoUsado.Sucata) { Debug.Log("[Teste] " + EquipamentosUsados.Descartar(e)); continue; }
+            if (e.temDados) Debug.Log("[Teste] " + EquipamentosUsados.ApagarDados(e));
+            Debug.Log("[Teste] " + EquipamentosUsados.Vender(e));
+        }
+        Debug.Log($"[Teste] Saldo final {GameEconomy.Instance?.saldo:0}, usados restantes {EquipamentosUsados.Estoque.Count}");
+    }
+
     [MenuItem(Menu + "Casa: pegar a mochila", false, 112)]
     static void PegarMochila()
     {

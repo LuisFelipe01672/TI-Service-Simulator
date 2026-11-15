@@ -26,6 +26,7 @@ public class SaveData
     public Licitacoes.Dados licitacoes;
     public LivroCaixa.Dados caixa;
     public EventosAleatorios.Dados eventos;
+    public EquipamentosUsados.Dados usados;
     public float saldo;
     public float energia = -1f;   // energia do técnico (-1 = save antigo, começa cheia)
     public float reputacao;
@@ -109,6 +110,7 @@ public class SaveManager : MonoBehaviour
             licitacoes = Licitacoes.Exportar(),
             caixa = LivroCaixa.Exportar(),
             eventos = EventosAleatorios.Exportar(),
+            usados = EquipamentosUsados.Exportar(),
             dia = DiaManager.Instance != null ? DiaManager.Instance.dia : Mathf.Max(1, DiaManager.DiaSalvo),
             equipe = FuncionarioManager.Instance != null
                      ? new List<Funcionario>(FuncionarioManager.Instance.equipe)
@@ -159,6 +161,7 @@ public class SaveManager : MonoBehaviour
         Licitacoes.Iniciar();
         LivroCaixa.Iniciar();
         EventosAleatorios.Iniciar();
+        EquipamentosUsados.Iniciar();
         GameEconomy.Instance?.DefinirSaldo(saldoInicial);
         Debug.Log($"[Save] Jogo novo: R${saldoInicial:F0} para começar.");
     }
@@ -214,6 +217,7 @@ public class SaveManager : MonoBehaviour
         Licitacoes.Carregar(data.licitacoes);
         LivroCaixa.Carregar(data.caixa);
         EventosAleatorios.Carregar(data.eventos);
+        EquipamentosUsados.Carregar(data.usados);
         if (data.parcerias == null || data.parcerias.estados == null || data.parcerias.estados.Count == 0) MigrarParcerias(data);
         if (DiaManager.Instance != null) DiaManager.Instance.dia = DiaManager.DiaSalvo;
 

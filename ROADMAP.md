@@ -129,7 +129,9 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
       confiabilidade diferentes: **entrega atrasada** (o fornecedor avisa), **peça errada**, **peça com defeito**
 - ✅ **Preço de mercado oscilando** por dia e por item (−15% a +25%), mostrado na loja ("+8% hoje")
 - ✅ **Garantia/RMA**: peça errada ou com defeito descoberta ao abrir a caixa; troca automática sem custo, chega dias depois
-- ⬜ **Peças usadas e recondicionadas**: lote de equipamentos de empresa que fechou (leilão) e equipamentos
+- ✅ **Equipamentos usados**: a cada 4 dias aparece um lote de empresa que fechou (aba Loja); testar, recuperar,
+      apagar os dados (LGPD: vender sem apagar pode dar multa), vender ou levar a sucata ao ponto de coleta
+- ⬜ Usados como objetos no escritório e opção de colocar em locação — antes: lote de empresa que fechou e equipamentos
       descartados para testar, recuperar e revender ou colocar em locação
 - ✅ **Logística reversa**: caixa no escritório recebe os toners usados (R$ 8 cada da recicladora + reputação)
 - ⬜ Descarte de equipamentos: apagar dados de verdade (LGPD) antes de revender; lixo eletrônico no ponto de coleta

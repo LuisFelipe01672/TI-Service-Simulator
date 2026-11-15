@@ -26,6 +26,8 @@ public partial class GameUI
             UIFactory.Texto(c, "<color=#F5B83F>A caminho:</color> " + string.Join(", ", nomes), 19, UIFactory.CorTexto);
         }
 
+        MontarUsados();
+
         Secao("FORNECEDORES");
         var abas = LinhaBotoes(tabletConteudo);
         for (int i = 0; i < Mercado.Fornecedores.Length; i++)

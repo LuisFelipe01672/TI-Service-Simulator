@@ -149,7 +149,7 @@ public partial class GameUI
         float t = 0f;
         while (t < a.segurar)
         {
-            t += Time.unscaledDeltaTime;
+            t += Time.unscaledDeltaTime * EnergiaTecnico.Ritmo;   // cansado demora mais
             int barras = Mathf.RoundToInt(20f * t / a.segurar);
             txtSegurando.text = $"{a.rotulo}...  [{new string('|', barras)}{new string('.', 20 - barras)}]";
             yield return null;

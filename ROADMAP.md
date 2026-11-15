@@ -87,12 +87,17 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ⬜ Abajur no criado-mudo e luz pré-calculada (baked) na casa
 - ✅ Home office (visual): mesa de metal, cadeira presidente, PC, luminária, blocos de notas, relógio, estante de aço
       com caixa de ferramentas e caixas, mochila
-- ⬜ **PC do jogador** funcionando (sentar e usar: chamados, loja, banco) e mochila física ligada ao inventário
-- ⬜ Interruptores que acendem luzes, relógio de parede com a hora do jogo, sol pela janela
+- ✅ **PC do jogador** funcionando: E senta na cadeira (câmera desliza até o monitor) e abre o sistema "TI OS";
+      o monitor mostra a tela do jogo (papel de parede, ícones, relógio) no lugar da textura original
+- ⬜ Mochila física ligada ao inventário (pegar a mochila antes de sair)
+- ✅ Interruptores (quarto e sala) que apagam/acendem as luzes, relógio de parede com a hora do jogo
+      (ponteiros de verdade; segundos em tempo real), sol entrando pelas persianas
 - ⬜ **Atendimento remoto** pelo PC de casa (programa fictício): resolver de longe senha, impressora padrão, driver,
       e-mail — mais rápido e barato, mas nem tudo dá; o cliente precisa estar no computador e aceitar a conexão
 - ⬜ **Celular do técnico** (primeira versão: mensagens, ligações de triagem, orçamentos, GPS)
-- ⬜ **Energia do técnico** + dormir/comer (primeira versão do personagem)
+- ✅ **Energia do técnico** no HUD: cai com as horas e o trabalho; cansado anda/trabalha mais devagar; dormir cedo
+      recupera tudo (tarde ou no escritório, menos); café na cozinha (+20, até 3 por dia) — salva no save
+- ⬜ Comer (geladeira/fogão) como outra forma de recuperar energia (Fase 1B, com a cozinha realista)
 - ⬜ Rotina da manhã: acordar → café (bônus de energia) → ver chamados no celular/PC → sair de casa
 
 ## Fase 1B — Casa completa (cenário)

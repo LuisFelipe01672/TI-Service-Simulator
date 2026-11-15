@@ -27,6 +27,7 @@ public class SaveData
     public LivroCaixa.Dados caixa;
     public EventosAleatorios.Dados eventos;
     public float saldo;
+    public float energia = -1f;   // energia do técnico (-1 = save antigo, começa cheia)
     public float reputacao;
     public int fase;
     public int chamadosConcluidos;
@@ -89,6 +90,7 @@ public class SaveManager : MonoBehaviour
         var data = new SaveData
         {
             saldo = GameEconomy.Instance != null ? GameEconomy.Instance.saldo : 0f,
+            energia = EnergiaTecnico.Instance != null ? EnergiaTecnico.Instance.energia : -1f,
             reputacao = ReputationManager.Instance != null ? ReputationManager.Instance.GetReputacao() : 50f,
             fase = ReputationManager.Instance != null ? ReputationManager.Instance.FaseAtual : 1,
             chamadosConcluidos = chamadosConcluidos,
@@ -132,6 +134,8 @@ public class SaveManager : MonoBehaviour
     void NovoJogo()
     {
         DiaManager.DiaSalvo = 0;
+        EnergiaTecnico.energiaSalva = -1f;
+        if (EnergiaTecnico.Instance != null) EnergiaTecnico.Instance.energia = 100f;
         Mochila.dadosSalvos = null;
         if (Mochila.Instance != null) Mochila.Instance.Inicial();
         EmpresaManager.dadosSalvos = null;
@@ -179,6 +183,7 @@ public class SaveManager : MonoBehaviour
         if (data == null) return false;
 
         if (GameEconomy.Instance != null) GameEconomy.Instance.DefinirSaldo(data.saldo);
+        if (data.energia >= 0f) { if (EnergiaTecnico.Instance != null) EnergiaTecnico.Instance.energia = data.energia; else EnergiaTecnico.energiaSalva = data.energia; }
         if (ReputationManager.Instance != null) ReputationManager.Instance.DefinirEstado(data.reputacao, data.fase);
         if (FuncionarioManager.Instance != null)
         {

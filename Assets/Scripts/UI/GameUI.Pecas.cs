@@ -128,7 +128,7 @@ public partial class GameUI
         if (acaoSegurandoPeca != null)
         {
             if (!Input.GetKey(KeyCode.E)) { acaoSegurandoPeca = null; return; }   // soltou antes: cancela
-            progressoPeca += Time.deltaTime;
+            progressoPeca += Time.deltaTime * EnergiaTecnico.Ritmo;   // cansado demora mais
             if (progressoPeca >= acaoSegurandoPeca.segurar)
             {
                 var a = acaoSegurandoPeca;

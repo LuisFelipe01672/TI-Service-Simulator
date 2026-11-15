@@ -27,6 +27,58 @@ public static class AtalhosTeste
         Ir(cama.transform.position + new Vector3(1.6f, 1.1f, 0.3f), cama.transform.position + Vector3.up * 0.4f);
     }
 
+    [MenuItem(Menu + "Casa: sentar e usar o PC", false, 106)]
+    static void UsarPc()
+    {
+        var pc = Object.FindAnyObjectByType<ComputadorCasa>();
+        if (pc == null || pc.poseSentado == null) { Debug.LogWarning("[Teste] Sem PC de casa (rode o menu 3)."); return; }
+        var p = pc.poseSentado.position;
+        Ir(new Vector3(p.x, p.y - 0.2f, p.z - 0.5f), pc.transform.position);
+        pc.Interagir();
+    }
+
+    [MenuItem(Menu + "Casa: cafeteira (tomar café)", false, 110)]
+    static void TomarCafe()
+    {
+        var c = Object.FindAnyObjectByType<Cafeteira>();
+        if (c == null) { Debug.LogWarning("[Teste] Sem cafeteira (rode o menu 3)."); return; }
+        Ir(c.transform.position + new Vector3(-1.2f, 1.1f, 0f), c.transform.position + Vector3.up * 0.2f);
+        c.Interagir();
+        Debug.Log($"[Teste] Energia agora: {EnergiaTecnico.Instance?.energia:0}");
+    }
+
+    [MenuItem(Menu + "Energia: cansar (-50)", false, 111)]
+    static void Cansar()
+    {
+        if (!Application.isPlaying || EnergiaTecnico.Instance == null) return;
+        EnergiaTecnico.Instance.Gastar(50f);
+        Debug.Log($"[Teste] Energia agora: {EnergiaTecnico.Instance.energia:0}");
+    }
+
+    [MenuItem(Menu + "Fechar o painel aberto (tablet/PC)", false, 109)]
+    static void FecharPainel()
+    {
+        if (!Application.isPlaying || GameUI.Instance == null) return;
+        GameUI.Instance.FecharModal();
+        FocarJogo();
+    }
+
+    [MenuItem(Menu + "Casa: interruptor da sala (apagar/acender)", false, 107)]
+    static void InterruptorSala()
+    {
+        foreach (var i in Object.FindObjectsByType<Interruptor>())
+            if (i.name == "Interruptor_Sala") { Ir(i.transform.position + i.transform.forward * 1.2f, i.transform.position); i.Interagir(); return; }
+        Debug.LogWarning("[Teste] Sem interruptor (rode o menu 3).");
+    }
+
+    [MenuItem(Menu + "Casa: relógio de parede", false, 108)]
+    static void RelogioParede()
+    {
+        var r = Object.FindAnyObjectByType<RelogioAnalogico>();
+        if (r == null) { Debug.LogWarning("[Teste] Sem relógio (rode o menu 3)."); return; }
+        Ir(r.transform.position + r.frente.normalized * 1.3f + Vector3.down * 0.6f, r.transform.position + Vector3.up * 0.15f);
+    }
+
     [MenuItem(Menu + "Cliente: impressora", false, 120)]
     static void Impressora() => IrAoEquipamento(TipoEquipamento.Impressora);
 

@@ -37,7 +37,7 @@ public class PlayerController : MonoBehaviour
 
         Vector3 movimento = transform.right * x + transform.forward * z;
         if (movimento.sqrMagnitude > 1f) movimento.Normalize();
-        float vel = Input.GetKey(KeyCode.LeftShift) ? velocidade * multiplicadorCorrida : velocidade;
+        float vel = (Input.GetKey(KeyCode.LeftShift) ? velocidade * multiplicadorCorrida : velocidade) * EnergiaTecnico.RitmoAndar;
 
         // Gravidade: mantém o jogador no chão (degraus, calçadas, rampas)
         if (controller.isGrounded && velocidadeVertical < 0f) velocidadeVertical = -2f;

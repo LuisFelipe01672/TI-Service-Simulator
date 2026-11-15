@@ -142,6 +142,7 @@ public partial class GameUI : MonoBehaviour
 
     void Update()
     {
+        AtualizarEnergia();
         if (Input.GetKeyDown(KeyCode.Tab))
         {
             if (modal == Modal.Tablet) FecharModal();
@@ -234,6 +235,7 @@ public partial class GameUI : MonoBehaviour
         barraReputacao.anchorMax = new Vector2(0.5f, 1f);
         barraReputacao.offsetMin = barraReputacao.offsetMax = Vector2.zero;
 
+        ConstruirEnergia(hud);
         txtFase = UIFactory.Texto(hud, "Fase 1 · Técnico solo", 18, UIFactory.CorSuave);
         ConstruirRelogio(hud);
         ConstruirObjetivos(raiz);
@@ -284,6 +286,7 @@ public partial class GameUI : MonoBehaviour
         cab.offsetMin = new Vector2(32, -84); cab.offsetMax = new Vector2(-32, -24);
         UIFactory.Horizontal(cab, 16);
         var titulo = UIFactory.Texto(cab, "TABLET · TI Service", 34, UIFactory.CorTexto, FontStyles.Bold);
+        tituloTablet = titulo;
         titulo.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
         txtTabletInfo = UIFactory.Texto(cab, "", 20, UIFactory.CorSuave, FontStyles.Normal, TextAlignmentOptions.Right);
         txtTabletInfo.gameObject.AddComponent<LayoutElement>().preferredWidth = 360;
@@ -532,8 +535,14 @@ public partial class GameUI : MonoBehaviour
 
     public void AbrirPausa() => AbrirModal(Modal.Pausa, pausa);
 
-    public void AbrirTablet()
+    TMPro.TextMeshProUGUI tituloTablet;
+
+    // O mesmo sistema abre no tablet (Tab) ou no PC de casa (ComputadorCasa), só muda o título
+    public void AbrirTablet() => AbrirTablet("TABLET · TI Service");
+
+    public void AbrirTablet(string titulo)
     {
+        if (tituloTablet != null) tituloTablet.text = titulo;
         AbrirModal(Modal.Tablet, tablet);
         FuncionarioManager.Instance?.GerarCandidatosSeVazio();
         AtualizarTablet();

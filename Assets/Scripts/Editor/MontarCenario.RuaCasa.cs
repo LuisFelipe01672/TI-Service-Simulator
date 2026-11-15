@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -140,6 +141,7 @@ public static partial class MontarCenario
         Modelo("kitchenFridge", casa, new Vector3(3.55f, 0f, 2.55f), -90);
         Modelo("kitchenSink", casa, new Vector3(3.6f, 0f, 1.7f), -90);
         Modelo("kitchenStove", casa, new Vector3(3.6f, 0f, 1.0f), -90);
+        MontarCafeteira(casa);
         Modelo("coatRackStanding", casa, new Vector3(2.45f, 0f, 2.6f), 0);
 
         // Onde o jogador acorda (o DiaManager procura "SpawnCasa"): ao lado da cama, olhando para a porta
@@ -182,11 +184,13 @@ public static partial class MontarCenario
         var mesa = ModeloReal(PH("metal_office_desk"), casa, new Vector3(-3.0f, 0f, 2.55f), 1.5f, RotMesa);
         float tampo = Altura(mesa);
         ModeloReal(SF("Cadeira_Escritorio"), casa, new Vector3(-3.0f, 0f, 1.75f), 1.15f, RotCadeira);
-        ModeloReal(SF("Computador_Mesa"), casa, new Vector3(-3.1f, tampo, 2.6f), 0.85f, 180, Colisao.Nenhuma);
-        ModeloReal(PH("desk_lamp_arm_01"), casa, new Vector3(-3.6f, tampo, 2.7f), 0.5f, 135, Colisao.Nenhuma);
+        var pc = ModeloReal(SF("Computador_Mesa"), casa, new Vector3(-3.1f, tampo, 2.6f), 0.85f, 180, Colisao.Nenhuma);
+        if (pc != null) ConfigurarPcDeCasa(pc, casa);
+        ModeloReal(PH("desk_lamp_arm_01"), casa, new Vector3(-3.42f, tampo, 2.72f), 0.5f, 135, Colisao.Nenhuma);
         ModeloReal(PH("office_notepads"), casa, new Vector3(-2.45f, tampo, 2.35f), 0.3f, 20, Colisao.Nenhuma);
         ModeloReal(PH("potted_plant_04"), casa, new Vector3(-2.35f, tampo, 2.75f), 0.25f, 0, Colisao.Nenhuma);
-        ModeloReal(PH("wall_clock"), casa, new Vector3(-3.0f, 2.15f, 2.97f), 0.32f, RotRelogio, Colisao.Nenhuma);
+        var relogio = ModeloReal(PH("wall_clock"), casa, new Vector3(-3.0f, 2.15f, 2.97f), 0.32f, RotRelogio, Colisao.Nenhuma);
+        if (relogio != null) relogio.AddComponent<RelogioAnalogico>().frente = -casa.forward;   // mostrador para o sul
         ModeloReal(SF("Mochila"), casa, new Vector3(-2.2f, 0f, 2.4f), 0.5f, 200);
 
         // Estante de aço com as ferramentas, na parede norte entre a janela e a porta
@@ -196,8 +200,95 @@ public static partial class MontarCenario
         if (estante != null) ModeloReal(PH("cardboard_box_01"), casa, new Vector3(-0.35f, Altura(estante) * 0.55f, 2.7f), 0.4f, -8, Colisao.Nenhuma);
 
         // Luminárias de teto (só o visual; as luzes são as LuzTeto)
-        ModeloReal(PH("modern_ceiling_lamp_01"), casa, new Vector3(-2f, H - 0.35f, -1f), 0.45f, 0, Colisao.Nenhuma);
-        ModeloReal(PH("modern_ceiling_lamp_01"), casa, new Vector3(2f, H - 0.35f, 0.5f), 0.45f, 0, Colisao.Nenhuma);
+        var lustreQuarto = ModeloReal(PH("modern_ceiling_lamp_01"), casa, new Vector3(-2f, H - 0.35f, -1f), 0.45f, 0, Colisao.Nenhuma);
+        var lustreSala = ModeloReal(PH("modern_ceiling_lamp_01"), casa, new Vector3(2f, H - 0.35f, 0.5f), 0.45f, 0, Colisao.Nenhuma);
+
+        // Interruptores: quarto (parede sul, ao lado do criado-mudo) e sala (ao lado da porta)
+        CriarInterruptor(casa, "Interruptor_Quarto", "do quarto", new Vector3(-0.6f, 1.15f, -3f), 0f,
+            casa.Find("Luz_Teto_Quarto"), lustreQuarto);
+        CriarInterruptor(casa, "Interruptor_Sala", "da sala", new Vector3(0.85f, 1.15f, 3f), 180f,
+            casa.Find("Luz_Teto_Sala"), lustreSala);
+    }
+
+    // Balcão sob a janela leste com a cafeteira (café = energia) e a xícara que aparece quando fica pronto
+    static void MontarCafeteira(Transform casa)
+    {
+        var balcao = Modelo("kitchenCabinet", casa, new Vector3(3.6f, 0f, 0.2f), -90);
+        float topo = Altura(balcao);
+        var maquina = Modelo("kitchenCoffeeMachine", casa, new Vector3(3.68f, topo, 0.05f), -90, Colisao.Nenhuma);
+        if (maquina == null) return;
+
+        var mXicara = Mat("Xicara_Branca", new Color(0.96f, 0.95f, 0.92f), 0.7f);
+        var mCafe = Mat("Cafe", new Color(0.18f, 0.1f, 0.05f), 0.85f);
+        var xicara = new GameObject("Xicara").transform;
+        xicara.SetParent(casa, false);
+        xicara.localPosition = new Vector3(3.55f, topo, 0.42f);
+        var corpo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        Object.DestroyImmediate(corpo.GetComponent<Collider>());
+        corpo.transform.SetParent(xicara, false);
+        corpo.transform.localPosition = new Vector3(0, 0.045f, 0);
+        corpo.transform.localScale = new Vector3(0.08f, 0.045f, 0.08f);
+        corpo.GetComponent<Renderer>().sharedMaterial = mXicara;
+        var cafe = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        Object.DestroyImmediate(cafe.GetComponent<Collider>());
+        cafe.transform.SetParent(xicara, false);
+        cafe.transform.localPosition = new Vector3(0, 0.086f, 0);
+        cafe.transform.localScale = new Vector3(0.068f, 0.002f, 0.068f);
+        cafe.GetComponent<Renderer>().sharedMaterial = mCafe;
+        xicara.gameObject.SetActive(false);
+
+        var c = maquina.AddComponent<Cafeteira>();
+        c.xicara = xicara;
+    }
+
+    // Espelho branco de interruptor com a tecla; 'parede' é o ponto na face interna da parede,
+    // rotY gira o espelho para ficar de frente para dentro do cômodo.
+    static void CriarInterruptor(Transform casa, string nome, string comodo, Vector3 parede, float rotY,
+        Transform luz, GameObject lustre)
+    {
+        var mBranco = Mat("Interruptor_Branco", new Color(0.95f, 0.95f, 0.93f), 0.35f);
+        var go = new GameObject(nome);
+        go.transform.SetParent(casa, false);
+        go.transform.localPosition = parede;
+        go.transform.localRotation = Quaternion.Euler(0, rotY, 0);
+        Caixa(go.transform, "Espelho", new Vector3(0, 0, 0.004f), new Vector3(0.08f, 0.12f, 0.008f), mBranco, 1f, false, false);
+        var tecla = new GameObject("Tecla").transform;
+        tecla.SetParent(go.transform, false);
+        tecla.localPosition = new Vector3(0, 0, 0.009f);
+        tecla.localRotation = Quaternion.Euler(-12f, 0, 0);
+        Caixa(tecla, "Tecla_Visual", Vector3.zero, new Vector3(0.032f, 0.055f, 0.01f), mBranco, 1f, false, false);
+
+        var i = go.AddComponent<Interruptor>();
+        i.comodo = comodo;
+        i.tecla = tecla;
+        if (luz != null && luz.GetComponent<Light>() != null) i.luzes.Add(luz.GetComponent<Light>());
+        if (lustre != null) i.lampadas.AddRange(lustre.GetComponentsInChildren<Renderer>());
+    }
+
+    // PC de casa: tela viva do jogo sobre o monitor e o ponto de vista de quem está sentado na cadeira
+    static void ConfigurarPcDeCasa(GameObject pc, Transform casa)
+    {
+        Renderer monitor = pc.GetComponentsInChildren<Renderer>()
+            .FirstOrDefault(r => r.transform.parent != null && r.transform.parent.name.Contains("Computer"));
+        if (monitor == null) monitor = pc.GetComponentsInChildren<Renderer>().OrderByDescending(r => r.bounds.size.y).First();
+        var b = monitor.bounds;   // mundo; o monitor está virado para o sul (-Z da casa)
+        Vector3 fora = -casa.forward;
+
+        var tela = new GameObject("TelaPC").transform;
+        tela.SetParent(pc.transform, true);
+        tela.position = new Vector3(b.center.x, b.center.y + b.size.y * 0.03f, b.min.z - 0.004f);
+        tela.rotation = Quaternion.LookRotation(fora);
+        var t = tela.gameObject.AddComponent<TelaComputador>();
+        t.tamanho = new Vector2(b.size.x * 0.9f, b.size.y * 0.8f);
+
+        var pose = new GameObject("PoseSentado").transform;
+        pose.SetParent(pc.transform, true);
+        pose.position = new Vector3(b.center.x + 0.05f, b.center.y + 0.05f, b.min.z - 0.62f);
+        pose.rotation = Quaternion.LookRotation(tela.position - pose.position);
+
+        var uso = pc.AddComponent<ComputadorCasa>();
+        uso.poseSentado = pose;
+        Debug.Log($"[Cenário] PC de casa: monitor {monitor.transform.parent?.name} {b.size.x:0.00} x {b.size.y:0.00} m");
     }
 
     // Persiana horizontal por dentro de cada janela (mesmas posições do Sala(...) da casa), feita de lâminas.

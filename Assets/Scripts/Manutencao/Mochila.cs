@@ -51,6 +51,7 @@ public class Entrega
     public int quantidade;
     public int dia;          // dia em que chega
     public float minuto;     // minuto do dia em que chega
+    public bool naPorta;     // já chegou: está na porta de casa esperando o jogador abrir a caixa
 }
 
 // Mochila do técnico: começa só com o notebook. O resto se compra pelo tablet.
@@ -129,7 +130,11 @@ public class Mochila : MonoBehaviour
 
     void OnDisable() => EventBus<DiaIniciadoEvent>.Deregister(bDia);
 
-    void Update() => VerificarEntregas();
+    void Update()
+    {
+        VerificarEntregas();
+        EncomendaFisica.Sincronizar(entregas);   // caixas na porta (inclusive as de um jogo carregado)
+    }
 
     // ---------- Itens ----------
 
@@ -249,8 +254,17 @@ public class Mochila : MonoBehaviour
         for (int i = entregas.Count - 1; i >= 0; i--)
         {
             var e = entregas[i];
+            if (e.naPorta) continue;   // já está na porta esperando
             bool chegou = d == null || d.dia > e.dia || (d.dia == e.dia && d.minutoAtual >= e.minuto);
             if (!chegou) continue;
+            // Com casa: a encomenda fica na porta como caixa, até o jogador ir buscar (EncomendaFisica)
+            if (EncomendaFisica.TemPontoDeEntrega)
+            {
+                e.naPorta = true;
+                SomManager.Tocar("bip", 0.5f, 0.8f);
+                GameUI.Instance?.Toast($"Interfone: entregaram <b>{Info(e.item).nome}</b> na porta de casa. Vá buscar.", UIFactory.Destaque, 4f);
+                continue;
+            }
             entregas.RemoveAt(i);
             Adicionar(e.item, e.quantidade);
             GameUI.Instance?.Toast($"Entrega chegou: <b>{Info(e.item).nome}</b> já está na sua mochila.", UIFactory.Sucesso, 3f);

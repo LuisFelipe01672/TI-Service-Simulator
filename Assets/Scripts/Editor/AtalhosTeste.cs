@@ -72,6 +72,35 @@ public static class AtalhosTeste
         Debug.Log($"[Teste] Energia agora: {EnergiaTecnico.Instance?.energia:0}, saldo {GameEconomy.Instance?.saldo:0}");
     }
 
+    [MenuItem(Menu + "Encomendas: comprar cabo 305 m + conectores e chegar agora", false, 116)]
+    static void EncomendasChegar()
+    {
+        var m = Mochila.Instance;
+        if (!Application.isPlaying || m == null) return;
+        GameEconomy.Instance?.ReceberPagamento(600f);
+        Debug.Log("[Teste] " + m.Comprar(Item.CaixaCabo, true));
+        Debug.Log("[Teste] " + m.Comprar(Item.ConectorRJ45, true));
+        foreach (var e in m.entregas) e.minuto = 0f;   // chegam já
+    }
+
+    [MenuItem(Menu + "Encomendas: olhar as caixas na porta", false, 118)]
+    static void EncomendasOlhar()
+    {
+        var caixas = Object.FindObjectsByType<EncomendaFisica>();
+        if (caixas.Length == 0) { Debug.LogWarning("[Teste] Nenhuma encomenda na porta."); return; }
+        Ir(caixas[0].transform.position + caixas[0].transform.forward * -1.3f + Vector3.up * 0.9f, caixas[0].transform.position + Vector3.up * 0.2f);
+    }
+
+    [MenuItem(Menu + "Encomendas: abrir todas as da porta", false, 117)]
+    static void EncomendasAbrir()
+    {
+        if (!Application.isPlaying) return;
+        var caixas = Object.FindObjectsByType<EncomendaFisica>();
+        if (caixas.Length > 0) Ir(caixas[0].transform.position + new Vector3(0f, 1.1f, 1.4f), caixas[0].transform.position);
+        foreach (var c in caixas) if (c.enabled) c.Interagir();
+        Debug.Log($"[Teste] {caixas.Length} encomenda(s) aberta(s). Cabo na caixa: {Mochila.Instance?.MetrosNaCaixa} m");
+    }
+
     [MenuItem(Menu + "Celular: abrir", false, 114)]
     static void AbrirCelular()
     {

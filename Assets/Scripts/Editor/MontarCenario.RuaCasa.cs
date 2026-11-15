@@ -136,6 +136,10 @@ public static partial class MontarCenario
         MontarCozinha(casa);
         Modelo("coatRackStanding", casa, new Vector3(2.45f, 0f, 2.6f), 0);
 
+        // Encomendas (Fase 2): chegam como caixas na frente de casa, ao lado da porta (EncomendaFisica)
+        Ponto("PontoEntrega", casa, new Vector3(2.55f, 0f, 3.55f), 180);
+        CriarPrefabCaixa();
+
         // Onde o jogador acorda (o DiaManager procura "SpawnCasa"): ao lado da cama, olhando para a porta
         Ponto("SpawnCasa", casa, new Vector3(0.2f, 1f, -1.2f), 0);
     }
@@ -238,6 +242,28 @@ public static partial class MontarCenario
         Caixa(tv, "Haste", new Vector3(0, 0.06f, 0.02f), new Vector3(0.06f, 0.1f, 0.03f), mCorpo, 1f, false);
         Caixa(tv, "Corpo", new Vector3(0, 0.1f + h / 2f, 0.015f), new Vector3(w, h, 0.035f), mCorpo, 1f, false);
         Caixa(tv, "Tela", new Vector3(0, 0.1f + h / 2f + 0.005f, -0.004f), new Vector3(w - 0.02f, h - 0.03f, 0.004f), mPainel, 1f, false);
+    }
+
+    // Prefab da caixa de papelão realista (Poly Haven) com 1 m em cada eixo e base em y = 0, em Resources, para o
+    // jogo criar encomendas e a caixa de cabo em qualquer tamanho (EncomendaFisica.CriarCaixa)
+    static void CriarPrefabCaixa()
+    {
+        const string pasta = "Assets/Resources/Encomendas";
+        if (!AssetDatabase.IsValidFolder(pasta)) AssetDatabase.CreateFolder("Assets/Resources", "Encomendas");
+        var modelo = AssetDatabase.LoadAssetAtPath<GameObject>(PH("cardboard_box_01"));
+        if (modelo == null) { Debug.LogWarning("[Cenário] cardboard_box_01 não encontrado."); return; }
+
+        var raiz = new GameObject("Caixa");
+        var inst = (GameObject)PrefabUtility.InstantiatePrefab(modelo);
+        PrefabUtility.UnpackPrefabInstance(inst, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+        inst.transform.SetParent(raiz.transform, false);
+        var b = Limites(inst);
+        inst.transform.localScale = Vector3.Scale(inst.transform.localScale, new Vector3(1f / b.size.x, 1f / b.size.y, 1f / b.size.z));
+        b = Limites(inst);
+        inst.transform.localPosition -= new Vector3(b.center.x, b.min.y, b.center.z);
+        foreach (var c in raiz.GetComponentsInChildren<Collider>()) Object.DestroyImmediate(c);
+        PrefabUtility.SaveAsPrefabAsset(raiz, pasta + "/Caixa.prefab");
+        Object.DestroyImmediate(raiz);
     }
 
     // Balcão sob a janela leste com a cafeteira (café = energia) e a xícara que aparece quando fica pronto

@@ -117,9 +117,10 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ❓ Fontes: Poly Haven (CC0) primeiro; Sketchfab CC-BY para o que faltar
 
 ## Fase 2 — Compras físicas, estoque e fornecedores
-- ⬜ Tudo que é comprado chega como **caixa na porta** (casa ou sede), no horário de entrega; pegar e levar
-- ⬜ **Caixa de cabo de rede 305 m** realista (marca fictícia, "Cat6 · 305 m"), com o cabo saindo pelo furo;
-      na bancada o cabo sai da caixa ao fazer um cabo
+- ✅ Tudo que é comprado chega como **caixa de papelão na porta de casa** (interfone avisa), fica salvo até você
+      buscar; E abre e guarda na mochila
+- ✅ **Caixa de cabo de rede 305 m** realista: etiqueta "Cat6 · 305 m · 23 AWG", cabo azul saindo pelo furo; vai
+      para a bancada do escritório e mostra quantos metros restam
 - ⬜ Saquinho de RJ45, caixa de toner, ferramentas e equipamentos de locação como objetos
 - ⬜ Cabos prontos enrolados (com o tamanho escrito) na mochila/bancada
 - ⬜ **Prateleiras de estoque** na sede: guardar cada item e ver o que está acabando (ligado ao estoque do sistema)

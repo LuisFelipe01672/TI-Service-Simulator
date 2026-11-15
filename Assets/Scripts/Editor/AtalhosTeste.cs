@@ -61,6 +61,14 @@ public static class AtalhosTeste
         }
     }
 
+    [MenuItem(Menu + "Celular: abrir", false, 114)]
+    static void AbrirCelular()
+    {
+        if (!Application.isPlaying || GameUI.Instance == null) return;
+        GameUI.Instance.AbrirCelular();
+        FocarJogo();
+    }
+
     [MenuItem(Menu + "Casa: pegar a mochila", false, 112)]
     static void PegarMochila()
     {

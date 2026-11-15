@@ -97,7 +97,9 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
       cliente, conecta e resolve software (spooler, fila, driver, IP do PC, reiniciar, config. do roteador); físico
       (cabo, toner, roteador fora = sem internet) pede visita; cliente às vezes ausente; paga 75%, gasta 30 min
 - ⬜ Remoto: mais casos de software (senha, e-mail, impressora padrão) quando entrarem no catálogo
-- ⬜ **Celular do técnico** (primeira versão: mensagens, ligações de triagem, orçamentos, GPS)
+- ✅ **Celular do técnico** (tecla C): barra de status, relógio, Mensagens (cada chamado chega como conversa do
+      contato, com "Vou aí!" que aceita), Banco (saldo e movimentações), aviso de mensagem nova
+- ⬜ Celular: ligações de triagem (perguntas por telefone), orçamentos, GPS (Fase 6), fotos do problema
 - ✅ **Energia do técnico** no HUD: cai com as horas e o trabalho; cansado anda/trabalha mais devagar; dormir cedo
       recupera tudo (tarde ou no escritório, menos); café na cozinha (+20, até 3 por dia) — salva no save
 - ⬜ Comer (geladeira/fogão) como outra forma de recuperar energia (Fase 1B, com a cozinha realista)

@@ -57,6 +57,10 @@ public static partial class MontarCenario
         Ancora(v, "Ancora_Traseira", new Vector3(0f, bTudo.center.y + 0.1f, bTudo.max.z + 0.02f), new Vector3(bTudo.size.x, bTudo.size.y + 0.2f, 0.1f));
         Ancora(v, "Ancora_Cartucho", new Vector3(0f, bSup.min.y - 0.035f, bTudo.center.z), new Vector3(bTudo.size.x * 0.75f, 0.09f, 0.16f));
         Ancora(v, "Ancora_Tampa", new Vector3(0f, bSup.center.y, bSup.center.z), new Vector3(bSup.size.x, bSup.size.y, bSup.size.z));
+        // gaveta de papel na frente, embaixo; saída do papel entre o corpo e o scanner; porta de rede atrás, embaixo
+        Ancora(v, "Ancora_Gaveta", new Vector3(0f, bInf.min.y + bInf.size.y * 0.3f, bInf.min.z), new Vector3(bInf.size.x * 0.8f, 0.09f, 0.08f));
+        Ancora(v, "Ancora_Saida", new Vector3(0f, bSup.min.y - 0.012f, bInf.min.z + 0.02f), Vector3.one);
+        Ancora(v, "Ancora_PortaRede", new Vector3(bTudo.size.x * 0.25f, bInf.min.y + 0.05f, bTudo.max.z), Vector3.one);
 
         // Toner realista (aparece com a tampa aberta): o EquipamentoPecas procura "Cartucho"
         var toner = AssetDatabase.LoadAssetAtPath<GameObject>(PastaSketchfab + "Cartucho_Toner.glb");

@@ -105,6 +105,16 @@ public static class CatalogoProblemas
             case "Impressora:Trocar toner":
                 e.impToner = Random.Range(0.01f, 0.06f);
                 break;
+            case "Impressora:Retirar papel atolado":
+                e.impPapelAtolado = true;
+                break;
+            case "Impressora:Colocar papel":
+                e.impSemPapel = true;
+                break;
+            case "Impressora:Trocar cilindro":
+                e.impCilindroRiscado = true;
+                e.impToner = Random.Range(0.4f, 0.9f);   // toner está bom: a listra é do cilindro
+                break;
             case "Computador:Verificar cabo de rede":
                 SortearDefeitoCabo(e.pcCabo);
                 break;
@@ -153,6 +163,7 @@ public static class CatalogoProblemas
         {
             case TipoEquipamento.Impressora:
                 return e.impLigada && !e.impTampaAberta && e.impCartuchoPresente && !e.impCartuchoComLacre && e.impToner >= 0.1f &&
+                       !e.impPapelAtolado && !e.impSemPapel && !e.impGavetaAberta && !e.impCilindroRiscado &&
                        e.spoolerRodando && !e.FilaTravada && e.ImpressoraOnline && e.PcNaRede;
             case TipoEquipamento.Computador:
                 return e.PcNaInternet && e.memoria < 0.8f;
@@ -198,6 +209,28 @@ public static class CatalogoProblemas
                 "Não, achei melhor não mexer." },
             Pergunta.DesdeQuando, "Sei lá, parou do nada."),
 
+        new Problema(TipoEquipamento.Impressora, "Retirar papel atolado",
+            "A impressora puxa a folha e trava no meio.",
+            "Ela come o papel e para, faz um barulho feio.",
+            new[] {
+                "Desde hoje de manhã, quando imprimi umas etiquetas.",
+                "Coloquei umas folhas que estavam meio úmidas, só isso.",
+                "Aparece \"Atolamento de papel\" no visorzinho.",
+                "Ninguém consegue imprimir, a impressora é uma só.",
+                "Desliguei e liguei, ela volta a reclamar do papel." },
+            Pergunta.MexeramEmAlgo, "Não mexi em nada, ela que é ruim."),
+
+        new Problema(TipoEquipamento.Impressora, "Colocar papel",
+            "A impressora não imprime e fica piscando.",
+            "Ela fica com uma luz piscando e não sai nada.",
+            new[] {
+                "Desde depois do almoço, imprimimos muita nota fiscal hoje.",
+                "Não, só usamos bastante.",
+                "No visor diz alguma coisa de \"bandeja\".",
+                "Todo mundo, a impressora é a mesma.",
+                "Reiniciei duas vezes e continua igual." },
+            Pergunta.MensagemErro, "Não tem mensagem, só pisca."),
+
         new Problema(TipoEquipamento.Impressora, "Trocar toner",
             "A impressão está saindo clara e falhada.",
             "As folhas estão saindo meio... fantasma?",
@@ -211,6 +244,17 @@ public static class CatalogoProblemas
     };
 
     public static readonly Problema[] Medios = {
+        new Problema(TipoEquipamento.Impressora, "Trocar cilindro",
+            "Todas as folhas saem com uma risca preta.",
+            "Tem um risco estranho em tudo que imprime.",
+            new[] {
+                "Faz uns dias, foi aparecendo e ficou.",
+                "Trocamos o toner semana passada e a risca continuou.",
+                "Não aparece mensagem, só a risca na folha.",
+                "Sai assim para todo mundo, sempre no mesmo lugar da folha.",
+                "Desliguei, chacoalhei o toner, nada resolve." },
+            Pergunta.MexeramEmAlgo, "Não mexemos em nada."),
+
         new Problema(TipoEquipamento.Computador, "Verificar cabo de rede",
             "Computador sem acesso à rede.",
             "A internet do meu computador acabou.",

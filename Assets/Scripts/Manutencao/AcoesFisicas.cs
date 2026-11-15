@@ -54,9 +54,41 @@ public static class AcoesFisicas
         l.Add(new AcaoFisica("Olhar atrás da impressora", () => DescreverCabo(e.impCabo, e.impLigada, "impressora")) { observacao = true });
         AcoesCabo(e.impCabo, "da impressora", l);
 
+        // Atolamento: a folha amassada sai pela tampa de trás
+        if (e.impPapelAtolado)
+        {
+            PecaAtual = "traseira";
+            l.Add(new AcaoFisica("Abrir a tampa traseira e puxar o papel atolado (devagar)", () =>
+            {
+                e.impPapelAtolado = false;
+                Sujeira.Espalhar(MM != null ? MM.PosicaoEquipamentoAtual : UnityEngine.Vector3.zero, 1, "folha amassada");
+                return "Você abriu a tampa de trás e puxou devagar, com as duas mãos, uma folha toda amassada. Saiu inteira.";
+            }, 2.5f));
+        }
+
+        // Gaveta de papel
+        PecaAtual = "gaveta";
+        if (!e.impGavetaAberta)
+            l.Add(new AcaoFisica("Abrir a gaveta de papel", () =>
+            {
+                e.impGavetaAberta = true;
+                return e.impSemPapel ? "Gaveta aberta: está VAZIA, sem nenhuma folha." : "Gaveta aberta: tem papel A4 até a marca.";
+            }));
+        else
+        {
+            if (e.impSemPapel)
+                l.Add(new AcaoFisica("Colocar papel (meia resma do cliente) e ajustar a guia", () =>
+                {
+                    e.impSemPapel = false;
+                    return "Você ventilou as folhas, colocou na gaveta e encostou a guia no papel.";
+                }, 2f));
+            l.Add(new AcaoFisica("Fechar a gaveta (até o fim)", () => { e.impGavetaAberta = false; return "Gaveta fechada, encaixou certinho."; }));
+        }
+
+        // Tampa e toner: a parte de cima (scanner) levanta para acessar o cartucho
         PecaAtual = "tampa";
         if (!e.impTampaAberta)
-            l.Add(new AcaoFisica("Abrir a tampa frontal", () => { e.impTampaAberta = true; return "Tampa aberta. Dá para ver o cartucho de toner."; }));
+            l.Add(new AcaoFisica("Levantar o scanner (abrir a tampa)", () => { e.impTampaAberta = true; return "Você levantou o scanner. Dá para ver o cartucho de toner."; }));
         else
         {
             PecaAtual = "cartucho";
@@ -64,36 +96,79 @@ public static class AcoesFisicas
                 l.Add(new AcaoFisica("Retirar o cartucho", () =>
                 {
                     e.impCartuchoPresente = false;
-                    return e.impToner < 0.1f ? "Você tirou o cartucho. Está levinho: o toner acabou." : "Você tirou o cartucho. Ainda tem toner.";
+                    e.cartuchoNaMao = true;
+                    e.cartuchoNaMaoUsado = true;
+                    e.cartuchoNaMaoToner = e.impToner;
+                    e.cartuchoNaMaoComLacre = e.impCartuchoComLacre;
+                    e.cartuchoNaMaoChacoalhado = false;
+                    return "Você puxou o cartucho pela alça. Ele está na sua mão.";
                 }, 1f));
-            else if (!e.cartuchoNaMao)
+
+            if (e.cartuchoNaMao)
+            {
+                l.Add(new AcaoFisica("Olhar o cartucho na mão", () =>
+                {
+                    string peso = e.cartuchoNaMaoToner < 0.1f ? "levinho: o toner ACABOU" : e.cartuchoNaMaoToner < 0.3f ? "meio leve: pouco toner" : "pesado: tem toner";
+                    return $"Cartucho {(e.cartuchoNaMaoUsado ? "que estava na impressora" : "novo")}: {peso}." +
+                           (e.cartuchoNaMaoComLacre ? " <color=#F5B83F>O lacre (fita) ainda está nele!</color>" : " Sem lacre.") +
+                           (e.impCilindroRiscado && e.cartuchoNaMaoUsado ? " O cilindro verde tem um risco fino de ponta a ponta." : "");
+                }) { observacao = true });
+                if (!e.cartuchoNaMaoChacoalhado)
+                    l.Add(new AcaoFisica("Chacoalhar o cartucho (de lado a lado)", () =>
+                    {
+                        e.cartuchoNaMaoChacoalhado = true;
+                        // toner no fim: chacoalhar espalha o resto e rende mais algumas páginas
+                        if (e.cartuchoNaMaoUsado && e.cartuchoNaMaoToner < 0.08f) e.cartuchoNaMaoToner = 0.08f;   // melhora um pouco, mas não resolve
+                        return "Você chacoalhou de lado a lado para espalhar o toner por igual.";
+                    }, 1.5f));
+                if (e.cartuchoNaMaoComLacre)
+                    l.Add(new AcaoFisica("Puxar o lacre (fita de ~70 cm)", () => { e.cartuchoNaMaoComLacre = false; return "Você puxou o lacre inteiro, em linha reta."; }, 2f));
+                l.Add(new AcaoFisica(e.cartuchoNaMaoUsado ? "Recolocar o mesmo cartucho" : "Encaixar o cartucho novo", () =>
+                {
+                    e.cartuchoNaMao = false;
+                    e.impCartuchoPresente = true;
+                    e.impCartuchoComLacre = e.cartuchoNaMaoComLacre;
+                    e.impToner = e.cartuchoNaMaoUsado ? e.cartuchoNaMaoToner : e.cartuchoNaMaoChacoalhado ? 1f : 0.85f;
+                    return "Cartucho encaixado até o fim (clique).";
+                }, 1f));
+                if (e.cartuchoNaMaoUsado)
+                    l.Add(new AcaoFisica("Guardar este cartucho na mochila (descarte)", () =>
+                    {
+                        e.cartuchoNaMao = false;
+                        Mochila.Instance?.Adicionar(Item.TonerUsado, 1);
+                        return "Cartucho usado guardado num saco na mochila (logística reversa).";
+                    }));
+            }
+            else if (!e.impCartuchoPresente)
                 l.Add(new AcaoFisica("Pegar um toner novo da mochila", () =>
                 {
                     if (!Mochila.Instance.Usar(Item.Toner)) return "Você não tem toner.";
                     e.cartuchoNaMao = true;
+                    e.cartuchoNaMaoUsado = false;
+                    e.cartuchoNaMaoToner = 1f;
                     e.cartuchoNaMaoComLacre = true;
                     e.cartuchoNaMaoChacoalhado = false;
                     MM?.CobrarPeca(Mochila.Info(Item.Toner).preco);
                     return "Você tirou o cartucho novo da embalagem.";
                 }, 0f, Item.Toner));
 
-            if (e.cartuchoNaMao)
-            {
-                if (!e.cartuchoNaMaoChacoalhado)
-                    l.Add(new AcaoFisica("Chacoalhar o cartucho", () => { e.cartuchoNaMaoChacoalhado = true; return "Você chacoalhou para espalhar o toner por igual."; }, 1.5f));
-                if (e.cartuchoNaMaoComLacre)
-                    l.Add(new AcaoFisica("Puxar o lacre (fita de ~70 cm)", () => { e.cartuchoNaMaoComLacre = false; return "Você puxou o lacre inteiro, em linha reta."; }, 2f));
-                l.Add(new AcaoFisica("Encaixar o cartucho", () =>
+            // Cilindro riscado: troca a unidade de imagem (com o cartucho fora)
+            if (e.impCilindroRiscado && !e.impCartuchoPresente)   // com o cartucho fora (pode estar na mão)
+                l.Add(new AcaoFisica("Trocar o cilindro (unidade de imagem)", () =>
                 {
-                    e.cartuchoNaMao = false;
-                    e.impCartuchoPresente = true;
-                    e.impCartuchoComLacre = e.cartuchoNaMaoComLacre;
-                    e.impToner = e.cartuchoNaMaoChacoalhado ? 1f : 0.85f;
-                    return "Cartucho encaixado até o fim.";
-                }, 1f));
-            }
+                    if (!Mochila.Instance.Usar(Item.Cilindro)) return "Você não tem cilindro novo.";
+                    e.impCilindroRiscado = false;
+                    MM?.CobrarPeca(Mochila.Info(Item.Cilindro).preco);
+                    return "Você soltou as travas, tirou o cilindro riscado e encaixou o novo, sem tocar na superfície verde.";
+                }, 3f, Item.Cilindro));
+
             PecaAtual = "tampa";
-            l.Add(new AcaoFisica("Fechar a tampa", () => { e.impTampaAberta = false; return "Tampa fechada."; }));
+            l.Add(new AcaoFisica("Baixar o scanner (fechar a tampa)", () =>
+            {
+                if (e.cartuchoNaMao) return "Encaixe ou guarde o cartucho que está na sua mão antes de fechar.";
+                e.impTampaAberta = false;
+                return "Tampa fechada.";
+            }));
         }
 
         PecaAtual = "botao";

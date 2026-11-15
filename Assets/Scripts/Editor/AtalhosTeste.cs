@@ -199,6 +199,73 @@ public static class AtalhosTeste
         Ir(lcd.transform.position + frente * 0.45f, lcd.transform.position);
     }
 
+    // Aceita um chamado de teste com um problema escolhido do catálogo (pela solução)
+    static void ChamadoTeste(string solucao)
+    {
+        var mm = MissionManager.Instance;
+        if (!Application.isPlaying || mm == null) return;
+        if (mm.chamadoAtivo != null) mm.AbandonarChamado();
+        Problema p = null;
+        foreach (var lista in new[] { CatalogoProblemas.Faceis, CatalogoProblemas.Medios, CatalogoProblemas.Dificeis })
+            foreach (var x in lista) if (x.solucao == solucao && x.equipamento == TipoEquipamento.Impressora) p = x;
+        if (p == null || mm.chamadosDisponiveis.Count == 0) { Debug.LogWarning("[Teste] Sem problema/chamado para " + solucao); return; }
+        foreach (var c in new System.Collections.Generic.List<Chamado>(mm.chamadosDisponiveis))
+        {
+            c.exigeNota = false;   // teste: qualquer chamado serve
+        c.problema = p;
+        c.equipamento = p.equipamento;
+        c.descricaoProblema = p.descricao;
+            mm.AceitarChamado(c);
+            if (mm.chamadoAtivo != null) break;
+        }
+        Debug.Log($"[Teste] Chamado de teste aceito: {solucao}. Visor: {mm.Estado?.VisorImpressora()}");
+        Impressora();
+    }
+
+    [MenuItem(Menu + "Impressora: chamado de teste — papel atolado", false, 126)]
+    static void TestePapelAtolado() => ChamadoTeste("Retirar papel atolado");
+    [MenuItem(Menu + "Impressora: chamado de teste — sem papel", false, 127)]
+    static void TesteSemPapel() => ChamadoTeste("Colocar papel");
+    [MenuItem(Menu + "Impressora: chamado de teste — cilindro riscado", false, 128)]
+    static void TesteCilindro() => ChamadoTeste("Trocar cilindro");
+    [MenuItem(Menu + "Impressora: chamado de teste — toner", false, 129)]
+    static void TesteToner() => ChamadoTeste("Trocar toner");
+
+    // Executa uma ação física da impressora pelo nome (começo do rótulo), como se o jogador tivesse feito
+    static void AcaoImpressora(string inicio)
+    {
+        var mm = MissionManager.Instance;
+        if (mm?.Estado == null) { Debug.LogWarning("[Teste] Aceite um chamado de impressora antes."); return; }
+        foreach (var a in AcoesFisicas.Para(TipoEquipamento.Impressora, mm.Estado))
+            if (a.rotulo.StartsWith(inicio)) { string r = a.executar(); Debug.Log($"[Teste] {a.rotulo} → {r} | Visor: {mm.Estado?.VisorImpressora() ?? "(chamado concluído)"}"); return; }
+        Debug.LogWarning("[Teste] Ação não disponível agora: " + inicio);
+    }
+
+    [MenuItem(Menu + "Impressora: imprimir página de teste", false, 130)]
+    static void AcaoImprimir() => AcaoImpressora("Imprimir página de teste");
+    [MenuItem(Menu + "Impressora: levantar/baixar scanner", false, 131)]
+    static void AcaoTampa()
+    {
+        var e = MissionManager.Instance?.Estado;
+        AcaoImpressora(e != null && e.impTampaAberta ? "Baixar o scanner" : "Levantar o scanner");
+    }
+    [MenuItem(Menu + "Impressora: retirar o cartucho", false, 132)]
+    static void AcaoRetirar() => AcaoImpressora("Retirar o cartucho");
+    [MenuItem(Menu + "Impressora: chacoalhar o cartucho", false, 133)]
+    static void AcaoChacoalhar() => AcaoImpressora("Chacoalhar");
+    [MenuItem(Menu + "Impressora: recolocar o cartucho", false, 134)]
+    static void AcaoRecolocar() => AcaoImpressora("Recolocar o mesmo cartucho");
+    [MenuItem(Menu + "Impressora: desconectar/conectar o cabo de rede", false, 135)]
+    static void AcaoCabo()
+    {
+        var e = MissionManager.Instance?.Estado;
+        AcaoImpressora(e != null && e.impCabo.conectado ? "Desconectar o cabo" : "Conectar o cabo");
+    }
+    [MenuItem(Menu + "Impressora: trocar o cilindro", false, 137)]
+    static void AcaoCilindro() => AcaoImpressora("Trocar o cilindro");
+    [MenuItem(Menu + "Impressora: puxar o papel atolado", false, 136)]
+    static void AcaoAtolado() => AcaoImpressora("Abrir a tampa traseira e puxar");
+
     [MenuItem(Menu + "Cliente: roteador", false, 121)]
     static void Roteador() => IrAoEquipamento(TipoEquipamento.Roteador);
 

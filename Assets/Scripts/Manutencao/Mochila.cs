@@ -12,7 +12,9 @@ public enum Item
     Clipe,
     Toner,
     PendriveDrivers,
-    CaixaCabo
+    CaixaCabo,
+    Cilindro,
+    TonerUsado
 }
 
 // Um cabo de rede já feito, guardado na mochila
@@ -77,11 +79,13 @@ public class Mochila : MonoBehaviour
         new InfoItem(Item.Clipe, "Ferramenta de reset (clipe)", "Para apertar o botão de reset escondido do roteador.", 5f, 1, true),
         new InfoItem(Item.Toner, "Cartucho de toner", "Para impressora a laser. O cliente reembolsa a peça usada.", 180f, 1, false),
         new InfoItem(Item.PendriveDrivers, "Pendrive com drivers", "Instala drivers de rede mesmo sem internet.", 40f, 1, true),
+        new InfoItem(Item.Cilindro, "Cilindro (unidade de imagem)", "Peça da impressora a laser que dura milhares de páginas. Riscado = listra vertical na folha.", 150f, 1, false),
     };
 
     public static InfoItem Info(Item item)
     {
         foreach (var i in Catalogo) if (i.item == item) return i;
+        if (item == Item.TonerUsado) return new InfoItem(Item.TonerUsado, "Toner usado (para descarte)", "Cartucho vazio retirado de um cliente: vai para a logística reversa.", 0f, 1, false);
         return new InfoItem(Item.Notebook, "Notebook", "Seu notebook com o sistema de chamados.", 0f, 1, true);
     }
 

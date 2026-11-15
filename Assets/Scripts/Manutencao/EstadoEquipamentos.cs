@@ -39,6 +39,9 @@ public class CaboRede
 // cada problema começa quebrando alguma coisa aqui, e o jogador conserta mexendo nas peças e no PC.
 // Tudo é calculado a partir desse estado (LEDs, mensagens, ping, impressão), como num equipamento de verdade.
 [System.Serializable]
+public enum ResultadoPagina { Nenhuma, Perfeita, Branca, Clara, Listra }
+
+[System.Serializable]
 public class EstadoEquipamentos
 {
     // ---------- Impressora ----------
@@ -51,6 +54,15 @@ public class EstadoEquipamentos
     public bool cartuchoNaMao;
     public bool cartuchoNaMaoComLacre;
     public bool cartuchoNaMaoChacoalhado;
+    public float cartuchoNaMaoToner = 1f;     // quanto toner tem o cartucho que está na mão
+    public bool cartuchoNaMaoUsado;           // é o que estava na impressora (não um novo da mochila)
+    // Papel e cilindro (Fase 3)
+    public bool impPapelAtolado;
+    public bool impSemPapel;
+    public bool impCilindroRiscado;           // listra vertical sempre no mesmo lugar (não é o toner)
+    public bool impGavetaAberta;
+    public ResultadoPagina ultimaPagina = ResultadoPagina.Nenhuma;
+    public int paginasImpressas;              // conta as folhas que saíram (o visual cria uma folha a cada uma)
     public float impToner = 0.8f;             // 0 a 1
     public bool spoolerRodando = true;
     public List<TrabalhoImpressao> fila = new List<TrabalhoImpressao>();
@@ -112,6 +124,9 @@ public class EstadoEquipamentos
         if (!impLigada) return "(desligada)";
         if (impTampaAberta) return "Tampa aberta";
         if (!impCartuchoPresente) return "Instale o cartucho de toner";
+        if (impPapelAtolado) return "Atolamento de papel";
+        if (impGavetaAberta) return "Feche a gaveta";
+        if (impSemPapel) return "Sem papel - bandeja 1";
         if (!impCabo.Funciona) return "Rede desconectada";
         if (impToner < 0.1f) return $"Toner baixo - {Mathf.RoundToInt(impToner * 100)}%";
         if (FilaTravada) return "Erro - imprimindo";
@@ -146,9 +161,16 @@ public class EstadoEquipamentos
             if (!ImpressoraOnline) return "Impressora offline. O documento ficou na fila.";
             if (FilaTravada) return "O documento entrou na fila atrás de um trabalho travado e não sai.";
         }
-        if (impCartuchoComLacre) return "A folha saiu em branco! (o lacre do toner ainda está no cartucho)";
-        if (impToner < 0.1f) return "A folha saiu clarinha, cheia de faixas brancas.";
+        if (impGavetaAberta) return "A gaveta de papel está aberta. Visor: \"Feche a gaveta\".";
+        if (impSemPapel) return "A impressora puxou e não achou folha: a bandeja está vazia.";
+        if (impPapelAtolado) return "A folha entrou e travou lá dentro! Visor: \"Atolamento de papel\".";
+        // A folha sai: o visual mostra o resultado na bandeja (é a pista)
+        paginasImpressas++;
+        if (impCartuchoComLacre) { ultimaPagina = ResultadoPagina.Branca; return "A folha saiu em branco! (o lacre do toner ainda está no cartucho)"; }
+        if (impToner < 0.1f) { ultimaPagina = ResultadoPagina.Clara; return "A folha saiu clarinha, cheia de faixas brancas."; }
+        if (impCilindroRiscado) { ultimaPagina = ResultadoPagina.Listra; return "Saiu com uma listra preta vertical, sempre no mesmo lugar da folha."; }
         impToner = Mathf.Max(0f, impToner - 0.002f);
+        ultimaPagina = ResultadoPagina.Perfeita;
         saiuBoa = true;
         return "A página saiu perfeita!";
     }

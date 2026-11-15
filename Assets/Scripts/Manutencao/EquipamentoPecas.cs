@@ -149,6 +149,8 @@ public partial class EquipamentoPecas : MonoBehaviour
         PecaEquipamento.Criar(visual, eq, "energia", "Botão liga/desliga", P("Energia"), S("Energia"));
         PecaEquipamento.Criar(visual, eq, "traseira", "Parte de trás (cabo de rede)", P("Traseira"), S("Traseira"));
         PecaEquipamento.Criar(visual, eq, "cartucho", "Cartucho de toner", P("Cartucho"), S("Cartucho"));
+        if (A("Gaveta") != null) PecaEquipamento.Criar(visual, eq, "gaveta", "Gaveta de papel", P("Gaveta"), S("Gaveta"));
+        MontarDetalhesImpressora();
         // A peça da tampa acompanha a parte de cima quando ela levanta
         PecaEquipamento.Criar(dobradica, eq, "tampa", "Tampa (levantar o scanner)",
             P("Tampa") - P("Dobradica"), S("Tampa") + new Vector3(0.01f, 0.02f, 0.01f));
@@ -243,7 +245,7 @@ public partial class EquipamentoPecas : MonoBehaviour
         {
             // Sem o visual esperado: uma peça só, com todas as ações do equipamento numa lista
             foreach (var id in eq.tipoEquipamento == TipoEquipamento.Impressora
-                         ? new[] { "visor", "traseira", "tampa", "cartucho", "botao", "energia" }
+                         ? new[] { "visor", "traseira", "tampa", "cartucho", "botao", "energia", "gaveta" }
                          : new[] { "luzes", "etiqueta", "fonte", "reset" })
                 PecaEquipamento.Criar(transform, eq, id, eq.Nome, c + Vector3.up * 0.001f * id.Length, s * 1.02f);
         }
@@ -277,6 +279,7 @@ public partial class EquipamentoPecas : MonoBehaviour
             Pintar(botaoLiga, ligada ? mVerde : mApagado);
             Pintar(painel, ligada ? (e != null && e.impCartuchoPresente && e.impToner > 0.1f ? mVerde : mLaranja) : mApagado);
             AtualizarLcd(e, ligada);
+            AtualizarDetalhesImpressora(e, ligada);
         }
         else if (eq.tipoEquipamento == TipoEquipamento.Roteador)
         {

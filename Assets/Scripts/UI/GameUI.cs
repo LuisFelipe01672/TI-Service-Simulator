@@ -13,7 +13,7 @@ public partial class GameUI : MonoBehaviour
 {
     public static GameUI Instance;
 
-    enum Modal { Nenhum, Tablet, Manutencao, Pausa, Conversa, Resumo, Computador, Crimpagem, Bancada, Falencia, Configuracoes, Celular }
+    enum Modal { Nenhum, Tablet, Manutencao, Pausa, Conversa, Resumo, Computador, Crimpagem, Bancada, Falencia, Configuracoes, Celular, Inventario }
     Modal modal = Modal.Nenhum;
     public bool PainelAberto => modal != Modal.Nenhum;
 
@@ -144,6 +144,11 @@ public partial class GameUI : MonoBehaviour
     {
         AtualizarEnergia();
         AtualizarCelularFundo();
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            if (modal == Modal.Inventario) FecharModal();
+            else if (modal == Modal.Nenhum) AbrirInventario();
+        }
         if (Input.GetKeyDown(KeyCode.C))
         {
             if (modal == Modal.Celular) FecharModal();
@@ -210,6 +215,7 @@ public partial class GameUI : MonoBehaviour
 
         ConstruirTablet(overlay);
         ConstruirCelular(overlay);
+        ConstruirInventario(overlay);
         ConstruirManutencao(overlay);
         ConstruirComputador(overlay);
         ConstruirPausa(overlay);

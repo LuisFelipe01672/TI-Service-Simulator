@@ -434,8 +434,8 @@ public partial class GameUI
         {
             IniciarCrimpagem($"Cabo de {metros:0} m — ponta 2 de 2", origemSujeira, pontaB =>
             {
-                m.cabos.Add(new CaboPronto(metros, pontaA, pontaB));
-                Toast($"Cabo de {metros:0} m pronto e guardado na mochila." + (pontaA && pontaB ? "" : " (teste antes de usar...)"), UIFactory.Sucesso, 3f);
+                bool naMochila = m.ReceberCabo(new CaboPronto(metros, pontaA, pontaB));
+                Toast($"Cabo de {metros:0} m pronto e guardado {(naMochila ? "na mochila" : "na estante (a mochila está cheia)")}." + (pontaA && pontaB ? "" : " (teste antes de usar...)"), UIFactory.Sucesso, 3f);
                 AbrirBancada(origemSujeira);
             }, () => AbrirBancada(origemSujeira));
         }, () => AbrirBancada(origemSujeira));

@@ -192,6 +192,21 @@ public static class AtalhosTeste
         Debug.Log($"[Teste] Saldo final {GameEconomy.Instance?.saldo:0}, usados restantes {EquipamentosUsados.Estoque.Count}");
     }
 
+    [MenuItem(Menu + "Inventário: abrir", false, 125)]
+    static void AbrirInv() { if (Application.isPlaying) { GameUI.Instance?.AbrirInventario(); FocarJogo(); } }
+
+    [MenuItem(Menu + "Inventário: testar limite (log)", false, 126)]
+    static void TestarLimite()
+    {
+        var m = Mochila.Instance;
+        if (!Application.isPlaying || m == null) return;
+        Debug.Log($"[Teste] Peso {m.PesoAtual:0.00}/{Mochila.CapacidadeKg} kg, livres {m.KgLivres:0.00}");
+        int n = 0; while (m.Cabe(Item.Toner, 1) && n < 30) { m.Adicionar(Item.Toner, 1); n++; }
+        Debug.Log($"[Teste] Couberam {n} toners; peso {m.PesoAtual:0.00} kg; cabe mais um? {m.Cabe(Item.Toner, 1)}");
+        Debug.Log($"[Teste] Guardar 3 toners na estante: {m.Guardar(Item.Toner, 3)} → mochila {m.Quantidade(Item.Toner)}, estante {m.NoEstoque(Item.Toner)}, peso {m.PesoAtual:0.00}");
+        Debug.Log($"[Teste] Pegar 1 de volta: {m.Pegar(Item.Toner, 1)} → mochila {m.Quantidade(Item.Toner)}, estante {m.NoEstoque(Item.Toner)}");
+    }
+
     [MenuItem(Menu + "Casa: pegar a mochila", false, 112)]
     static void PegarMochila()
     {

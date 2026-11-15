@@ -15,6 +15,7 @@ public class EstoqueVisual : MonoBehaviour
     {
         foreach (Transform t in transform) if (t.name.StartsWith("Vaga_")) vagas.Add(t);
         vagas.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+        if (GetComponent<PontoEstoque>() == null) gameObject.AddComponent<PontoEstoque>();   // E na estante abre o inventário
     }
 
     void Update()
@@ -22,8 +23,8 @@ public class EstoqueVisual : MonoBehaviour
         var m = Mochila.Instance;
         if (m == null || vagas.Count == 0) return;
         string cabos = "";
-        foreach (var c in m.cabos) cabos += c.metros.ToString("0.#") + ";";
-        string nova = $"{m.Quantidade(Item.Toner)}|{m.Quantidade(Item.Cilindro)}|{m.Quantidade(Item.ConectorRJ45)}|{m.Quantidade(Item.TonerUsado)}|{cabos}";
+        foreach (var c in m.cabosEstoque) cabos += c.metros.ToString("0.#") + ";";
+        string nova = $"{m.NoEstoque(Item.Toner)}|{m.NoEstoque(Item.Cilindro)}|{m.NoEstoque(Item.ConectorRJ45)}|{m.NoEstoque(Item.TonerUsado)}|{cabos}";
         if (nova == assinatura) return;
         assinatura = nova;
         Remontar(m);
@@ -35,21 +36,21 @@ public class EstoqueVisual : MonoBehaviour
         int i = 0;
         Transform Proxima() => i < vagas.Count ? vagas[i++] : null;
 
-        int toner = m.Quantidade(Item.Toner);
+        int toner = m.NoEstoque(Item.Toner);
         if (toner > 0) Pilha(Proxima(), Mathf.Min(toner, 4), new Vector3(0.36f, 0.11f, 0.15f), $"TONER\nx{toner}");
-        int cil = m.Quantidade(Item.Cilindro);
+        int cil = m.NoEstoque(Item.Cilindro);
         if (cil > 0) Pilha(Proxima(), Mathf.Min(cil, 3), new Vector3(0.38f, 0.1f, 0.12f), $"CILINDRO\nx{cil}");
-        int rj = m.Quantidade(Item.ConectorRJ45);
+        int rj = m.NoEstoque(Item.ConectorRJ45);
         if (rj > 0) Saco(Proxima(), new Color(0.9f, 0.92f, 0.95f), $"RJ45\nx{rj}");
-        int usados = m.Quantidade(Item.TonerUsado);
+        int usados = m.NoEstoque(Item.TonerUsado);
         if (usados > 0) Saco(Proxima(), new Color(0.16f, 0.16f, 0.18f), $"TONER USADO\nx{usados}", true);
         // cabos prontos: até 3 rolos por vaga, cada um com o tamanho na etiqueta
         Transform vagaCabos = null;
-        for (int k = 0; k < m.cabos.Count && k < 6; k++)
+        for (int k = 0; k < m.cabosEstoque.Count && k < 6; k++)
         {
             if (k % 3 == 0) vagaCabos = Proxima();
             if (vagaCabos == null) break;
-            Rolo(vagaCabos, (k % 3 - 1) * 0.17f, m.cabos[k]);
+            Rolo(vagaCabos, (k % 3 - 1) * 0.17f, m.cabosEstoque[k]);
         }
     }
 

@@ -11,7 +11,7 @@ public class DescarteEletronico : Interactable
     {
         get
         {
-            int n = Mochila.Instance != null ? Mochila.Instance.Quantidade(Item.TonerUsado) : 0;
+            int n = Mochila.Instance != null ? Mochila.Instance.Quantidade(Item.TonerUsado) + Mochila.Instance.NoEstoque(Item.TonerUsado) : 0;
             return n > 0 ? $"[E] Descartar {n} toner(es) usado(s) (logística reversa)" : "Caixa de logística reversa (sem toner usado para descartar)";
         }
     }
@@ -28,9 +28,10 @@ public class DescarteEletronico : Interactable
     {
         var m = Mochila.Instance;
         if (m == null) return;
-        int n = m.Quantidade(Item.TonerUsado);
+        int naMochila = m.Quantidade(Item.TonerUsado);
+        int n = naMochila + m.TirarDoEstoque(Item.TonerUsado);
         if (n <= 0) return;
-        for (int i = 0; i < n; i++) m.Usar(Item.TonerUsado);
+        for (int i = 0; i < naMochila; i++) m.Usar(Item.TonerUsado);
         float valor = n * valorPorCartucho;
         GameEconomy.Instance?.ReceberPagamento(valor, LivroCaixa.OutrasReceitas);
         ReputationManager.Instance?.AlterarReputacao(Mathf.Min(1f, n * 0.25f));

@@ -65,7 +65,7 @@ public class Entrega
 
 // Mochila do técnico: começa só com o notebook. O resto se compra pelo tablet.
 // Ferramentas ficam para sempre; consumíveis (conectores, cabos, toner) acabam.
-public class Mochila : MonoBehaviour
+public partial class Mochila : MonoBehaviour
 {
     public static Mochila Instance;
 
@@ -159,6 +159,9 @@ public class Mochila : MonoBehaviour
         quantidades[(int)Item.Notebook] = 1;
         entregas.Clear();
         cabos.Clear();
+        estoque.Clear();
+        cabosEstoque.Clear();
+        GarantirEstoque();
     }
 
     public int Quantidade(Item item) => (int)item < quantidades.Count ? quantidades[(int)item] : 0;
@@ -327,6 +330,8 @@ public class Mochila : MonoBehaviour
         public List<int> quantidades = new List<int>();
         public List<Entrega> entregas = new List<Entrega>();
         public List<CaboPronto> cabos = new List<CaboPronto>();
+        public List<int> estoque = new List<int>();
+        public List<CaboPronto> cabosEstoque = new List<CaboPronto>();
     }
 
     // Preenchido pelo SaveManager se ele carregar antes da mochila existir
@@ -336,7 +341,9 @@ public class Mochila : MonoBehaviour
     {
         quantidades = new List<int>(quantidades),
         entregas = new List<Entrega>(entregas),
-        cabos = new List<CaboPronto>(cabos)
+        cabos = new List<CaboPronto>(cabos),
+        estoque = new List<int>(estoque),
+        cabosEstoque = new List<CaboPronto>(cabosEstoque)
     };
 
     public void Carregar(Dados d)
@@ -347,5 +354,8 @@ public class Mochila : MonoBehaviour
         quantidades[(int)Item.Notebook] = 1;
         entregas = d.entregas ?? new List<Entrega>();
         cabos = d.cabos ?? new List<CaboPronto>();
+        if (d.estoque != null) for (int i = 0; i < d.estoque.Count && i < estoque.Count; i++) estoque[i] = d.estoque[i];
+        cabosEstoque = d.cabosEstoque ?? new List<CaboPronto>();
+        PassarExcessoParaEstante();
     }
 }

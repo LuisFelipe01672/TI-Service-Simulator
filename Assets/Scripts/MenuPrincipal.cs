@@ -83,7 +83,7 @@ public class MenuPrincipal : MonoBehaviour
             UIFactory.CartaoClaro, 380, 64, 28);
         UIFactory.Botao(coluna, "Sair", Application.Quit, UIFactory.CartaoClaro, 380, 64, 28);
 
-        var dica = UIFactory.Texto(fundo, "WASD andar  ·  Mouse olhar  ·  E interagir  ·  Tab tablet  ·  C celular  ·  Esc pausa",
+        var dica = UIFactory.Texto(fundo, "WASD andar  ·  Mouse olhar  ·  E interagir  ·  Tab tablet  ·  C celular  ·  I mochila  ·  Esc pausa",
             20, UIFactory.CorSuave, FontStyles.Normal, TextAlignmentOptions.Center);
         UIFactory.Ancorar(dica.rectTransform, new Vector2(0.5f, 0f), new Vector2(0, 40), new Vector2(1400, 40));
         dica.rectTransform.pivot = new Vector2(0.5f, 0f);

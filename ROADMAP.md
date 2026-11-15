@@ -122,6 +122,8 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ✅ **Caixa de cabo de rede 305 m** realista: etiqueta "Cat6 · 305 m · 23 AWG", cabo azul saindo pelo furo; vai
       para a bancada do escritório e mostra quantos metros restam
 - ✅ Saquinho de RJ45, caixas de toner e de cilindro como objetos na estante de estoque
+- ✅ **Inventário com limite** (tecla I): a mochila carrega até 10 kg, cada item tem peso; o que não cabe fica na
+      estante do escritório (E na estante ou I para guardar/pegar); encomenda que não cabe fica na porta
 - ⬜ Ferramentas e equipamentos de locação como objetos
 - ✅ Cabos prontos enrolados na estante, cada rolo com o tamanho na etiqueta (ponta ruim em laranja)
 - ✅ **Estante de estoque** no escritório ligada ao estoque do sistema: mostra o que você tem e esvazia ao usar

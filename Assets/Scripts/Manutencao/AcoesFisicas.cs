@@ -135,6 +135,7 @@ public static class AcoesFisicas
                     l.Add(new AcaoFisica("Guardar este cartucho na mochila (descarte)", () =>
                     {
                         e.cartuchoNaMao = false;
+                        if (Mochila.Instance != null && !Mochila.Instance.Cabe(Item.TonerUsado, 1)) return "Não cabe na mochila (está cheia). Recoloque o cartucho ou libere espaço.";
                         Mochila.Instance?.Adicionar(Item.TonerUsado, 1);
                         return "Cartucho usado guardado num saco na mochila (logística reversa).";
                     }));

@@ -133,6 +133,13 @@ public class EncomendaFisica : Interactable
         var m = Mochila.Instance;
         if (m == null || entrega == null) return;
         var info = Mochila.Info(entrega.item);
+        // Limite da mochila: se não couber, a caixa fica na porta até você liberar espaço
+        if (!CaixaDeCabo && !m.Cabe(entrega.item, entrega.quantidade))
+        {
+            GameUI.Instance?.Toast($"Não cabe na mochila: <b>{info.nome}</b> pesa {Mochila.Peso(entrega.item) * entrega.quantidade:0.0} kg e você só tem {m.KgLivres:0.0} kg livres. " +
+                "Guarde algo na estante do escritório e volte.", UIFactory.Alerta, 5f);
+            return;
+        }
         m.entregas.Remove(entrega);
         naCena.Remove(entrega);
         SomManager.TocarEm("mexer", transform.position, 0.8f, 0.9f);

@@ -208,21 +208,47 @@ public static class AcoesFisicas
             if (e.pcGabineteAberto) return "Feche a tampa do gabinete antes de ligar.";
             if (e.pcFonteQueimada) return "Você apertou o botão e nada: nem luz, nem ventoinha. Completamente morto.";
             if (e.pcMemoriaRuim) return "Ligou, a ventoinha girou... e três bipes compridos. A tela continua preta.";
+            if (e.pcCoolerFora) return "Não ligue sem o cooler: o processador queima em segundos.";
+            if (e.pcSemSistema) return "Ligou, mas a tela mostra: \"Nenhum dispositivo de inicialização\". O disco novo está vazio.";
             e.pcLigado = true;
+            e.pcSegundosQuente = 0f;
             e.ReiniciarPc();
             if (e.PcHardwareOk) MM?.Verificar();   // o Windows subiu: o cliente confere na hora
-            return e.PcSuperaquecendo
-                ? "O computador ligou, mas a ventoinha já está berrando e sai ar muito quente pelas grades."
-                : "O computador ligou e o Windows iniciou.";
+            return e.PcSuperaquecendo ? "O computador ligou, mas a ventoinha já está berrando e sai ar muito quente pelas grades."
+                 : e.pcHdRuim ? "Ligou... e ficou minutos em \"Verificando o disco\". Dá para ouvir um clique-clique lá dentro."
+                 : "O computador ligou e o Windows iniciou.";
         }, e.pcLigado ? 3f : 0f));
 
         // Gabinete: por dentro (Fase 4)
         PecaAtual = "gabinete";
         l.Add(new AcaoFisica("Olhar o gabinete (grades e ventoinha)", () =>
             e.pcPoeira > 0.7f ? "As grades estão entupidas de poeira e a ventoinha faz um barulhão. Sai ar muito quente."
+            : e.pcPastaSeca ? "As grades estão limpas, mas a ventoinha gira no máximo e sai ar muito quente."
+            : e.pcHdRuim ? "Encostando o ouvido: um clique-clique ritmado. É o HD tentando ler e não conseguindo."
             : e.pcFonteQueimada ? "Nenhuma luz acesa. Perto da fonte, atrás, tem um cheiro leve de queimado."
             : e.pcMemoriaRuim ? "A luz de energia acende ao ligar, a ventoinha gira, mas ele só apita."
             : "Gabinete normal: luz acesa, ventoinha baixinha.") { observacao = true });
+        if (e.pcLigado)
+        {
+            l.Add(new AcaoFisica("Testar a saúde do disco (pendrive de diagnóstico)", () =>
+                e.pcHdRuim ? "<color=#F2545B>Disco em estado CRÍTICO:</color> 1.243 setores realocados e subindo. Vai parar a qualquer momento."
+                           : "Disco saudável: nenhum setor realocado.", 2f, Item.PendriveDrivers) { observacao = true });
+            if (e.pcHdRuim && !e.pcBackupFeito)
+                l.Add(new AcaoFisica("Copiar os arquivos do cliente para o seu notebook (backup)", () =>
+                {
+                    e.pcBackupFeito = true;
+                    MM?.ConsumirTempo(40f);
+                    return "Backup feito: documentos, planilhas e a pasta do sistema copiados e conferidos.";
+                }, 4f));
+        }
+        if (e.pcSemSistema && !e.pcGabineteAberto)
+            l.Add(new AcaoFisica("Instalar o sistema pelo pendrive e restaurar os arquivos", () =>
+            {
+                e.pcSemSistema = false;
+                MM?.ConsumirTempo(60f);
+                return e.pcBackupFeito ? "Windows instalado, drivers no lugar e os arquivos do cliente restaurados do backup."
+                                       : "Windows instalado e drivers no lugar. (Não havia backup para restaurar.)";
+            }, 5f, Item.PendriveDrivers));
         if (!e.pcGabineteAberto)
             l.Add(new AcaoFisica("Virar o gabinete e tirar a tampa lateral (2 parafusos)", () =>
             {
@@ -238,7 +264,11 @@ public static class AcoesFisicas
                               : e.pcPoeira > 0.3f ? "Tem poeira acumulada, mas nada grave." : "Está limpo por dentro.";
                 string fonte = e.pcFonteQueimada ? " A fonte tem um capacitor estufado e marca de queimado." : "";
                 string mem = e.pcMemoriaRuim ? " Os pentes de memória parecem encaixados, mas um deles tem os contatos escurecidos." : "";
-                return poeira + fonte + mem;
+                string pasta = !e.pcCoolerFora ? (e.pcPastaSeca ? " O cooler está limpo e bem preso; só tirando para ver a pasta térmica." : "")
+                             : e.pcPastaNova ? " O processador está com um grão de pasta nova no centro."
+                             : e.pcPastaLimpa ? " O processador está limpo, brilhando, sem pasta."
+                             : e.pcPastaSeca ? " <color=#F5B83F>A pasta térmica virou uma crosta seca e esfarelada.</color>" : " A pasta térmica está em bom estado.";
+                return poeira + fonte + mem + pasta;
             }) { observacao = true });
             if (e.pcPoeira > 0.3f)
                 l.Add(new AcaoFisica("Limpar com pincel e ar comprimido", () =>
@@ -272,7 +302,64 @@ public static class AcoesFisicas
                     MM?.CobrarPeca(Mochila.Info(Item.Fonte).preco);
                     return "Você soltou os 4 parafusos, desligou os conectores da placa e dos discos, e instalou a fonte nova.";
                 }, 4f, Item.Fonte));
-            l.Add(new AcaoFisica("Colocar a tampa e voltar o gabinete no lugar", () => { e.pcGabineteAberto = false; return "Tampa parafusada e gabinete de volta no lugar."; }, 1f));
+            // Cooler e pasta térmica
+            if (!e.pcCoolerFora)
+                l.Add(new AcaoFisica("Tirar o cooler do processador (soltar em X)", () =>
+                {
+                    e.pcCoolerFora = true;
+                    e.pcPastaLimpa = e.pcPastaNova = false;
+                    return e.pcPastaSeca ? "Você soltou os quatro parafusos em X e girou o cooler. A pasta velha é uma crosta seca."
+                                         : "Você soltou os quatro parafusos em X e tirou o cooler. A pasta ainda está boa.";
+                }, 2f));
+            else
+            {
+                if (!e.pcPastaLimpa)
+                    l.Add(new AcaoFisica("Limpar a pasta velha (álcool isopropílico e pano)", () =>
+                    {
+                        e.pcPastaLimpa = true;
+                        e.pcPastaNova = false;
+                        return "Você limpou o processador e a base do cooler até brilharem.";
+                    }, 2f));
+                else if (!e.pcPastaNova)
+                    l.Add(new AcaoFisica("Aplicar pasta térmica nova (um grão no centro)", () =>
+                    {
+                        if (!Mochila.Instance.Usar(Item.PastaTermica)) return "Você não tem pasta térmica.";
+                        e.pcPastaNova = true;
+                        MM?.CobrarPeca(10f);
+                        return "Um grão de pasta do tamanho de uma ervilha, bem no centro do processador.";
+                    }, 1.5f, Item.PastaTermica));
+                l.Add(new AcaoFisica("Recolocar o cooler (apertar em X)", () =>
+                {
+                    e.pcCoolerFora = false;
+                    if (e.pcPastaLimpa && !e.pcPastaNova)
+                    {
+                        e.pcPastaSeca = true;   // sem pasta nenhuma: esquenta ainda mais
+                        return "Você recolocou o cooler SEM pasta térmica. Vai esquentar mais do que antes.";
+                    }
+                    if (e.pcPastaNova) e.pcPastaSeca = false;
+                    return e.pcPastaNova ? "Cooler assentado na pasta nova e apertado em X, conector da ventoinha no lugar."
+                                         : "Cooler de volta no lugar, com a mesma pasta de antes.";
+                }, 2f));
+            }
+            // HD com setores ruins → SSD novo
+            if (e.pcHdRuim)
+                l.Add(new AcaoFisica("Trocar o HD por um SSD novo", () =>
+                {
+                    if (!Mochila.Instance.Usar(Item.SSD)) return "Você não tem SSD.";
+                    e.pcHdRuim = false;
+                    e.pcSemSistema = true;
+                    e.pcTrocasHd++;
+                    MM?.CobrarPeca(Mochila.Info(Item.SSD).preco);
+                    if (!e.pcBackupFeito) MM?.RegistrarErro("Trocou o disco SEM fazer backup: o cliente perdeu todos os arquivos!", 6f);
+                    return e.pcBackupFeito ? "HD velho fora, SSD novo parafusado e com os cabos de dados e energia ligados."
+                                           : "SSD novo instalado... mas os arquivos do cliente ficaram no HD que morreu.";
+                }, 3f, Item.SSD));
+            l.Add(new AcaoFisica("Colocar a tampa e voltar o gabinete no lugar", () =>
+            {
+                if (e.pcCoolerFora) return "Recoloque o cooler do processador antes de fechar.";
+                e.pcGabineteAberto = false;
+                return "Tampa parafusada e gabinete de volta no lugar.";
+            }, 1f));
         }
     }
 

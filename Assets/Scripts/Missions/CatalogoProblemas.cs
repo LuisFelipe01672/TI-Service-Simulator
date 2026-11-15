@@ -125,6 +125,13 @@ public static class CatalogoProblemas
             case "Computador:Limpar por dentro":
                 e.pcPoeira = Random.Range(0.85f, 1f);
                 break;
+            case "Computador:Trocar pasta térmica":
+                e.pcPastaSeca = true;
+                e.pcPoeira = Random.Range(0.05f, 0.25f);   // está limpo: não é poeira
+                break;
+            case "Computador:Trocar HD":
+                e.pcHdRuim = true;
+                break;
             case "Computador:Trocar memória":
                 e.pcMemoriaRuim = true;
                 e.pcLigado = false;
@@ -345,6 +352,28 @@ public static class CatalogoProblemas
     };
 
     public static readonly Problema[] Dificeis = {
+        new Problema(TipoEquipamento.Computador, "Trocar pasta térmica",
+            "O computador esquenta muito e desliga sozinho.",
+            "Ele fica pelando e apaga, mesmo depois da limpeza.",
+            new[] {
+                "Faz uns meses, foi piorando aos poucos.",
+                "Outro técnico limpou por dentro mês passado e não adiantou.",
+                "Não aparece mensagem, ele simplesmente apaga.",
+                "Só esse; é o mais antigo, tem uns oito anos.",
+                "Liga de novo depois de uns minutos, e apaga outra vez." },
+            Pergunta.MexeramEmAlgo, "Ninguém nunca abriu esse computador."),
+
+        new Problema(TipoEquipamento.Computador, "Trocar HD",
+            "O computador está muito lento e travando.",
+            "Demora uns dez minutos pra ligar e fica travando tudo.",
+            new[] {
+                "Faz umas duas semanas, e cada dia pior.",
+                "Não mexemos; ele caiu da mesa uma vez, mas faz tempo.",
+                "Às vezes aparece \"Verificando o disco\" quando liga.",
+                "Só esse computador. E dá para ouvir um clique-clique vindo dele.",
+                "Reiniciar não ajuda, demora o mesmo tanto." },
+            Pergunta.MexeramEmAlgo, "Nunca aconteceu nada com ele."),
+
         new Problema(TipoEquipamento.Roteador, "Resetar para padrão",
             "Roteador desconfigurado, ninguém acessa a internet.",
             "A internet do escritório inteiro morreu.",

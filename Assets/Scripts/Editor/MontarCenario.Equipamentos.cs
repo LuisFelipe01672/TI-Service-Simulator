@@ -138,7 +138,10 @@ public static partial class MontarCenario
         Cubo(g, "PlacaMae", new Vector3(xPlaca, 0.2f, 0.02f), new Vector3(0.004f, 0.32f, 0.3f), placa);
         Cubo(g, "Pente1", new Vector3(xPlaca - 0.018f, 0.27f, -0.075f), new Vector3(0.03f, 0.13f, 0.006f), pente);
         Cubo(g, "Pente2", new Vector3(xPlaca - 0.018f, 0.27f, -0.058f), new Vector3(0.03f, 0.13f, 0.006f), pente);
-        Cubo(g, "Dissipador", new Vector3(xPlaca - 0.02f, 0.27f, 0.05f), new Vector3(0.035f, 0.085f, 0.085f), chapa);
+        // processador e a pasta térmica ficam embaixo do dissipador (aparecem quando o cooler sai)
+        Cubo(g, "Processador", new Vector3(xPlaca - 0.004f, 0.27f, 0.05f), new Vector3(0.004f, 0.04f, 0.04f), prata);
+        Cubo(g, "Pasta", new Vector3(xPlaca - 0.007f, 0.27f, 0.05f), new Vector3(0.002f, 0.034f, 0.034f), po);
+        Cubo(g, "Dissipador", new Vector3(xPlaca - 0.026f, 0.27f, 0.05f), new Vector3(0.035f, 0.085f, 0.085f), chapa);
         var cooler = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         Object.DestroyImmediate(cooler.GetComponent<Collider>());
         cooler.name = "Cooler";

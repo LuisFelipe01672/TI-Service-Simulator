@@ -355,6 +355,26 @@ public static class AtalhosTeste
     static void PcMemoria() => AcaoImpressora("Trocar o pente");
     [MenuItem(Menu + "PC: trocar a fonte", false, 148)]
     static void PcFonte() => AcaoImpressora("Trocar a fonte");
+    [MenuItem(Menu + "PC: chamado de teste — pasta térmica", false, 150)]
+    static void TestePasta() => ChamadoTeste("Trocar pasta térmica");
+    [MenuItem(Menu + "PC: chamado de teste — HD", false, 151)]
+    static void TesteHd() => ChamadoTeste("Trocar HD");
+    [MenuItem(Menu + "PC: tirar o cooler", false, 152)]
+    static void PcCooler() => AcaoImpressora("Tirar o cooler");
+    [MenuItem(Menu + "PC: limpar a pasta velha", false, 153)]
+    static void PcLimparPasta() => AcaoImpressora("Limpar a pasta velha");
+    [MenuItem(Menu + "PC: aplicar pasta nova", false, 154)]
+    static void PcPasta() => AcaoImpressora("Aplicar pasta térmica");
+    [MenuItem(Menu + "PC: recolocar o cooler", false, 155)]
+    static void PcRecolocar() => AcaoImpressora("Recolocar o cooler");
+    [MenuItem(Menu + "PC: testar o disco", false, 156)]
+    static void PcDisco() => AcaoImpressora("Testar a saúde do disco");
+    [MenuItem(Menu + "PC: fazer backup", false, 157)]
+    static void PcBackup() => AcaoImpressora("Copiar os arquivos");
+    [MenuItem(Menu + "PC: trocar o HD", false, 158)]
+    static void PcHd() => AcaoImpressora("Trocar o HD");
+    [MenuItem(Menu + "PC: instalar o sistema", false, 159)]
+    static void PcInstalar() => AcaoImpressora("Instalar o sistema");
     [MenuItem(Menu + "PC: fechar o gabinete", false, 149)]
     static void PcFechar() => AcaoImpressora("Colocar a tampa");
 

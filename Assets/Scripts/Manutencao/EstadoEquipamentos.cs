@@ -76,8 +76,18 @@ public class EstadoEquipamentos
     public bool pcMemoriaRuim;                // liga, dá 3 bipes e não dá vídeo
     public bool pcFonteQueimada;              // não liga: nem luz, nem ventoinha
     public int pcTrocasMemoria, pcTrocasFonte, pcLimpezas;   // o visual anima a cada troca/limpeza
-    public bool PcSuperaquecendo => pcPoeira > 0.7f;
-    public bool PcHardwareOk => !pcMemoriaRuim && !pcFonteQueimada && !PcSuperaquecendo && !pcGabineteAberto;
+    public bool pcPastaSeca;                  // pasta térmica velha e esfarelada: esquenta mesmo limpo
+    public bool pcCoolerFora;                 // cooler do processador desmontado
+    public bool pcPastaLimpa, pcPastaNova;    // etapas da troca da pasta
+    public bool pcHdRuim;                     // setores ruins: lento, trava, faz clique
+    public bool pcBackupFeito;                // arquivos do cliente copiados antes de trocar o disco
+    public bool pcSemSistema;                 // disco novo, ainda sem Windows
+    public int pcTrocasHd;
+    public float pcSegundosQuente;            // há quanto tempo está ligado superaquecendo
+    public const float SegundosAteDesligarPorCalor = 25f;
+    public bool PcSuperaquecendo => pcPoeira > 0.7f || pcPastaSeca;
+    public bool PcHardwareOk => !pcMemoriaRuim && !pcFonteQueimada && !PcSuperaquecendo && !pcGabineteAberto &&
+                                !pcCoolerFora && !pcHdRuim && !pcSemSistema;
     public CaboRede pcCabo = new CaboRede();
     public bool pcIpFixo;
     public string pcIp = "192.168.0.23";

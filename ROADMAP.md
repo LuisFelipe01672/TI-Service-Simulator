@@ -166,10 +166,15 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ✅ Gabinete (torre) ao lado do monitor: o técnico vira o gabinete, tira a tampa lateral e vê placa-mãe, pentes,
       cooler, fonte, HD e a poeira; só abre com o PC desligado
 - ✅ Peças internas animadas: o pente de memória e a fonte saem e voltam na troca
-- ⬜ SSD/HD e placa de vídeo trocáveis, bateria da placa-mãe
+- ✅ HD com setores ruins: teste de saúde do disco (pendrive), backup antes, troca por SSD (o disco sai e entra o
+      SSD), instalar o sistema e restaurar; trocar sem backup = cliente perde os arquivos (erro grave)
+- ⬜ Placa de vídeo trocável, bateria da placa-mãe
 - ✅ **Limpeza**: manta de poeira visível por dentro; pincel e ar comprimido (ferramenta) limpam; poeira = superaquecimento
-- ⬜ Nuvem de poeira saindo e PC que desliga sozinho de verdade quando superaquece
-- ⬜ **Pasta térmica** (tirar a velha, aplicar a nova) e **organização de cabos** dentro do gabinete
+- ✅ PC superaquecendo desliga sozinho depois de ~25 s ligado; a ventoinha gira mais rápido
+- ⬜ Nuvem de poeira saindo na limpeza
+- ✅ **Pasta térmica**: tirar o cooler (ele sai e mostra a pasta seca), limpar com álcool isopropílico, aplicar um grão
+      de pasta nova, recolocar; recolocar sem pasta piora; superaquecimento com o gabinete limpo = pasta
+- ⬜ Organização de cabos dentro do gabinete
 - ⬜ Cabos atrás: rede, energia, vídeo (monitor sem imagem por cabo solto)
 - ⬜ Monitor mostrando o "Windows" do jogo na própria tela 3D (o computador simulado que já existe) — a textura
       original do Computador_Mesa mostra um Windows real: ✅ coberta pela tela do jogo (TelaComputador)

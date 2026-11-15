@@ -6,7 +6,11 @@ using UnityEngine;
 // de memória e a fonte saem e voltam quando são trocados; o LED da frente acende com o PC ligado.
 public partial class EquipamentoPecas
 {
-    Transform gabinete, tampaLateral, poeiraGab, pente1, fontePc;
+    Transform gabinete, tampaLateral, poeiraGab, pente1, fontePc, coolerPc, dissipadorPc, hdPc, pastaPc;
+    Vector3 coolerPos, dissipadorPos, hdPos;
+    float coolerFora;
+    int hdVistas;
+    static Material mPastaSeca, mPastaNova, mSsd;
     Renderer ledGabinete;
     Vector3 gabPos, tampaPos, pentePos, fontePos;
     float aberturaGab;
@@ -28,6 +32,16 @@ public partial class EquipamentoPecas
         if (tampaLateral != null) tampaPos = tampaLateral.localPosition;
         if (pente1 != null) pentePos = pente1.localPosition;
         if (fontePc != null) fontePos = fontePc.localPosition;
+        coolerPc = gabinete.Find("Cooler");
+        dissipadorPc = gabinete.Find("Dissipador");
+        hdPc = gabinete.Find("HD");
+        pastaPc = gabinete.Find("Pasta");
+        if (coolerPc != null) coolerPos = coolerPc.localPosition;
+        if (dissipadorPc != null) dissipadorPos = dissipadorPc.localPosition;
+        if (hdPc != null) hdPos = hdPc.localPosition;
+        mPastaSeca ??= Mat(new Color(0.5f, 0.47f, 0.4f));
+        mPastaNova ??= Mat(new Color(0.93f, 0.93f, 0.95f));
+        mSsd ??= Mat(new Color(0.1f, 0.1f, 0.12f));
     }
 
     void AtualizarGabinete(EstadoEquipamentos e)
@@ -41,6 +55,7 @@ public partial class EquipamentoPecas
             memVistas = e != null ? e.pcTrocasMemoria : 0;
             fonteVistas = e != null ? e.pcTrocasFonte : 0;
             limpezasVistas = e != null ? e.pcLimpezas : 0;
+            hdVistas = e != null ? e.pcTrocasHd : 0;
             poeiraSumindo = false;
             if (poeiraGab != null) poeiraGab.localScale = Vector3.one;
         }
@@ -99,6 +114,65 @@ public partial class EquipamentoPecas
                 .Chain(Tween.LocalPosition(fontePc, fontePos, 0.6f, Ease.InCubic));
             SomManager.TocarEm("mexer", transform.position, 0.8f, 0.7f);
         }
+
+        // Cooler do processador: sai para o lado (fica apoiado na base do gabinete) e mostra a pasta térmica
+        if (coolerPc != null && dissipadorPc != null)
+        {
+            coolerFora = Mathf.MoveTowards(coolerFora, e != null && e.pcCoolerFora ? 1f : 0f, 1.6f * Time.deltaTime);
+            float c = Mathf.SmoothStep(0f, 1f, coolerFora);
+            Vector3 desloc = new Vector3(-0.1f, -0.2f, 0.02f) * c;
+            coolerPc.localPosition = coolerPos + desloc;
+            dissipadorPc.localPosition = dissipadorPos + desloc;
+            // ligado, a ventoinha gira (mais rápido quando está esquentando)
+            if (e != null && e.pcLigado) coolerPc.Rotate(0f, (e.PcSuperaquecendo ? 1400f : 500f) * Time.deltaTime, 0f, Space.Self);
+        }
+        if (pastaPc != null)
+        {
+            bool mostra = e != null && !(e.pcCoolerFora && e.pcPastaLimpa && !e.pcPastaNova);
+            if (pastaPc.gameObject.activeSelf != mostra) pastaPc.gameObject.SetActive(mostra);
+            if (e != null)
+            {
+                bool nova = e.pcPastaNova || !e.pcPastaSeca;
+                Pintar(pastaPc.GetComponent<Renderer>(), nova ? mPastaNova : mPastaSeca);
+                // pasta nova recém-aplicada: só um grão no centro
+                float lado = e.pcCoolerFora && e.pcPastaNova ? 0.012f : 0.034f;
+                pastaPc.localScale = new Vector3(pastaPc.localScale.x, lado, lado);
+            }
+        }
+
+        // Troca do HD por SSD: o disco velho sai e entra um SSD (menor e preto)
+        if (e != null && e.pcTrocasHd > hdVistas && hdPc != null)
+        {
+            hdVistas = e.pcTrocasHd;
+            Tween.StopAll(hdPc);
+            hdPc.localPosition = hdPos;
+            var hd = hdPc;
+            Sequence.Create()
+                .Chain(Tween.LocalPosition(hdPc, hdPos + new Vector3(-0.26f, 0.02f, 0f), 0.6f, Ease.OutCubic))
+                .ChainCallback(() =>
+                {
+                    if (hd == null) return;
+                    hd.localScale = new Vector3(0.07f, 0.008f, 0.1f);   // SSD de 2,5"
+                    hd.GetComponent<Renderer>().sharedMaterial = mSsd;
+                })
+                .ChainDelay(0.4f)
+                .Chain(Tween.LocalPosition(hdPc, hdPos, 0.55f, Ease.InCubic));
+            SomManager.TocarEm("mexer", transform.position, 0.8f, 0.9f);
+        }
+
+        // Superaquecimento de verdade: ligado e quente por tempo demais, desliga sozinho
+        if (e != null && e.pcLigado && e.PcSuperaquecendo)
+        {
+            e.pcSegundosQuente += Time.deltaTime;
+            if (e.pcSegundosQuente >= EstadoEquipamentos.SegundosAteDesligarPorCalor)
+            {
+                e.pcLigado = false;
+                e.pcSegundosQuente = 0f;
+                SomManager.TocarEm("erro", transform.position, 0.6f, 0.7f);
+                GameUI.Instance?.Toast("O computador <b>desligou sozinho</b>: proteção contra superaquecimento.", UIFactory.Alerta, 4f);
+            }
+        }
+        else if (e != null) e.pcSegundosQuente = 0f;
 
         Pintar(ledGabinete, e == null || e.pcLigado ? mVerde : mApagado);
     }

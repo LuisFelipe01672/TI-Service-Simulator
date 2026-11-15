@@ -505,6 +505,24 @@ public static class AtalhosTeste
         Debug.Log($"[Teste] Contrato {c.empresa}: franquia {c.franquia}, mês {c.paginasNoMes}. Chamado: {mm.chamadoAtivo?.solucao}");
         IrAoEquipamento(TipoEquipamento.Impressora);
     }
+    // Simula dias de uso num contrato de teste: reserva de toner e vida da unidade de imagem
+    [MenuItem(Menu + "Locação: peças e reserva (simular 25 dias)", false, 182)]
+    static void LocacaoPecas()
+    {
+        var cm = ContratosManager.Instance; var mm = MissionManager.Instance;
+        if (cm == null || mm == null) return;
+        var c = cm.contratos.Find(x => x.ativo && x.Instalado);
+        if (c == null) { Debug.LogWarning("[Teste] Rode antes o contrato de teste."); return; }
+        if (mm.chamadoAtivo != null) mm.AbandonarChamado();
+        c.chamadoAberto = false; c.suprimento = 0.05f; c.paginasPeca = ContratosManager.VidaUnidadeImagem - 800;
+        Debug.Log("[Teste] " + cm.DeixarReserva(c));
+        Debug.Log("[Teste] Preventiva sem/como cilindro: " + cm.TrocaPreventiva(c));
+        c.paginasPeca = ContratosManager.VidaUnidadeImagem - 800;
+        var sim = typeof(ContratosManager).GetMethod("SimularDia", Privado);
+        for (int i = 0; i < 25 && !c.chamadoAberto; i++) sim.Invoke(cm, new object[] { c });
+        string ch = mm.chamadosDisponiveis.Count > 0 ? mm.chamadosDisponiveis[0].solucao : "nenhum";
+        Debug.Log($"[Teste] Depois: suprimento {c.suprimento:F2}, reserva {c.reserva}, peça {c.UsoPeca * 100f:F0}%, chamado aberto {c.chamadoAberto} ({ch}), satisfação {c.satisfacao:F0}");
+    }
     [MenuItem(Menu + "Locação: ler o contador no visor", false, 182)]
     static void LocacaoLer() => AcaoImpressora("Ler o contador");
     [MenuItem(Menu + "Locação: faturar o mês agora", false, 182)]

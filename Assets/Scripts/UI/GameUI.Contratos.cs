@@ -57,6 +57,14 @@ public partial class GameUI
             string sup = c.suprimento <= 0f ? "<color=#F2545B>SEM TINTA</color>" : c.suprimento < 0.15f ? $"<color=#F5B83F>{c.suprimento * 100:F0}%</color>" : $"{c.suprimento * 100:F0}%";
             UIFactory.Texto(card, $"Tinta/toner: {sup}  ·  Páginas este mês: {c.paginasNoMes} de {c.franquia} da franquia{(c.paginasNoMes > c.franquia ? $" <color=#F5B83F>(+{c.paginasNoMes - c.franquia} excedentes ≈ {UIFactory.Dinheiro(ContratosManager.ValorExcedente(c, c.paginasNoMes))})</color>" : "")}  ·  Contador lido este mês: {(c.bilhetagem ? "automático" : c.mesLeitura == mes ? "sim" : "<color=#F5B83F>não</color>")}" +
                 (c.chamadoAberto ? "  ·  <color=#F2545B>chamado aberto</color>" : ""), 18, UIFactory.CorTexto);
+            string corPeca = c.UsoPeca >= 1f ? "#F2545B" : c.UsoPeca >= 0.85f ? "#F5B83F" : "#9AA6B8";
+            UIFactory.Texto(card, $"<color={corPeca}>Unidade de imagem: {c.UsoPeca * 100f:F0}% da vida útil ({c.paginasPeca:N0} de {ContratosManager.VidaUnidadeImagem:N0} páginas)</color>" +
+                $"  ·  Reserva no cliente: {(c.reserva > 0 ? c.reserva.ToString() : "<color=#F5B83F>nenhuma</color>")}", 18, UIFactory.CorTexto);
+            var linhaP = LinhaBotoes(card);
+            if (c.reserva < ContratosManager.MaxReserva)
+                UIFactory.Botao(linhaP, $"Deixar toner reserva ({UIFactory.Dinheiro(cm.CustoReserva(c))}, 30 min)", () => { Toast(cm.DeixarReserva(contrato), UIFactory.Destaque, 4.5f); AtualizarTablet(); }, UIFactory.CartaoClaro, 430, 46, 18);
+            if (c.UsoPeca >= 0.7f)
+                UIFactory.Botao(linhaP, "Troca preventiva da unidade de imagem (1 cilindro, 1 h)", () => { Toast(cm.TrocaPreventiva(contrato), UIFactory.Destaque, 4.5f); AtualizarTablet(); }, c.UsoPeca >= 0.85f ? UIFactory.Destaque : UIFactory.CartaoClaro, 520, 46, 18);
             var linhaC = LinhaBotoes(card);
             UIFactory.Botao(linhaC, "Visitar: ler contador e repor tinta (1 h 30)", () => { Toast(cm.Visitar(contrato), UIFactory.Destaque, 4f); AtualizarTablet(); }, UIFactory.CartaoClaro, 480, 46, 19);
             if (!c.bilhetagem && Parcerias.Ativa(Parcerias.ControleImpressao))

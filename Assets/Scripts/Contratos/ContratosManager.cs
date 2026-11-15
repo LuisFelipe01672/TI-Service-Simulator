@@ -62,6 +62,10 @@ public class ContratoLocacao
 
     public bool bilhetagem;             // controle de impressão instalado (lê o contador sozinho)
 
+    public int paginasPeca;             // páginas desde a última troca da unidade de imagem (cilindro)
+    public int reserva;                 // toner/tinta reserva deixado no cliente (ele mesmo troca quando acaba)
+    public float UsoPeca => paginasPeca / (float)ContratosManager.VidaUnidadeImagem;
+
     public bool Instalado => diaInstalacao > 0;
 }
 
@@ -310,6 +314,49 @@ public class ContratosManager : MonoBehaviour
                (custo > 0f ? $" Suprimento reposto: {UIFactory.Dinheiro(custo)}." : "");
     }
 
+    // ---------- Peças por tempo de uso e toner reserva ----------
+
+    public const int VidaUnidadeImagem = 12000;   // páginas que a unidade de imagem aguenta
+    public const int MaxReserva = 2;
+    const float MinutosPreventiva = 60f, MinutosReserva = 30f;
+
+    public float CustoReserva(ContratoLocacao c)
+    {
+        var e = Equip(c.equipamentoId);
+        var t = e != null ? e.Tipo : CatalogoLocacao.Equipamentos[0];
+        return Mathf.Round(t.rendimentoRefil * CatalogoLocacao.CustoPorPagina(t, c.fracCor, CatalogoLocacao.Fornecedor(c.fornecedorSuprimento)) * FocoEmpresa.MultSuprimento * 100f) / 100f;
+    }
+
+    // Deixa um toner/tinta reserva no cliente: quando acabar, ele mesmo troca e você não precisa correr
+    public string DeixarReserva(ContratoLocacao c)
+    {
+        if (!c.Instalado) return "Instale o equipamento primeiro.";
+        if (c.reserva >= MaxReserva) return $"A {c.empresa} já tem {c.reserva} de reserva: mais que isso fica parado e some.";
+        float custo = CustoReserva(c);
+        if (GameEconomy.Instance != null && GameEconomy.Instance.saldo < custo) return $"Sem saldo para o suprimento reserva ({UIFactory.Dinheiro(custo)}).";
+        if (!GastarTempo(MinutosReserva, out string motivo)) return motivo;
+        GameEconomy.Instance?.Gastar(custo, LivroCaixa.Suprimentos);
+        c.reserva++;
+        return $"Você deixou um toner/tinta reserva na <b>{c.empresa}</b> ({UIFactory.Dinheiro(custo)}) e mostrou como trocar. Reserva lá: {c.reserva}.";
+    }
+
+    // Troca preventiva da unidade de imagem (antes de riscar): gasta um cilindro da mochila
+    public string TrocaPreventiva(ContratoLocacao c)
+    {
+        if (!c.Instalado) return "Instale o equipamento primeiro.";
+        if (Mochila.Instance == null || Mochila.Instance.Quantidade(Item.Cilindro) <= 0) return "Você precisa de um cilindro (unidade de imagem) na mochila. Compre na Loja.";
+        if (!Mochila.Instance.Tem(Item.Cilindro)) return "O cilindro está na mochila, e a mochila não está com você.";
+        if (!GastarTempo(MinutosPreventiva, out string motivo)) return motivo;
+        if (!Mochila.Instance.Usar(Item.Cilindro)) return "Você não tem cilindro com você.";
+        int rodou = c.paginasPeca;
+        PecaTrocada(c);
+        c.satisfacao = Mathf.Min(100f, c.satisfacao + 2f);
+        return $"Unidade de imagem trocada na <b>{c.empresa}</b> depois de {rodou:N0} páginas, antes de dar defeito.";
+    }
+
+    // A unidade de imagem foi trocada (preventiva ou durante um chamado): zera a contagem
+    public void PecaTrocada(ContratoLocacao c) { if (c != null) c.paginasPeca = 0; }
+
     // Leitura do contador (na visita de rotina ou no visor, durante um chamado): sem ela o excedente não é cobrado
     void RegistrarLeitura(ContratoLocacao c)
     {
@@ -333,7 +380,10 @@ public class ContratosManager : MonoBehaviour
         string franquia = exc > 0
             ? $"<color=#F5B83F>{exc} páginas acima da franquia de {c.franquia}</color> (≈ {UIFactory.Dinheiro(ValorExcedente(c, c.paginasNoMes))} de excedente até agora)"
             : $"dentro da franquia de {c.franquia} (faltam {c.franquia - c.paginasNoMes})";
-        return $"Contador total: <b>{c.contadorTotal:N0}</b> páginas. Neste mês: {c.paginasNoMes:N0}, {franquia}." +
+        string peca = c.UsoPeca >= 1f ? $" <color=#F2545B>Unidade de imagem: {c.paginasPeca:N0} páginas, passou da vida útil ({VidaUnidadeImagem:N0}).</color>"
+                    : c.UsoPeca >= 0.85f ? $" <color=#F5B83F>Unidade de imagem em {c.UsoPeca * 100f:F0}% da vida útil: troque logo.</color>"
+                    : $" Unidade de imagem em {c.UsoPeca * 100f:F0}% da vida útil.";
+        return $"Contador total: <b>{c.contadorTotal:N0}</b> páginas. Neste mês: {c.paginasNoMes:N0}, {franquia}." + peca +
                (jaLido ? "" : " Leitura anotada para a fatura do mês.");
     }
 
@@ -389,6 +439,28 @@ public class ContratosManager : MonoBehaviour
         c.paginasNoMes += paginas;
         c.contadorTotal += paginas;
         c.suprimento = Mathf.Max(0f, c.suprimento - paginas / (float)t.rendimentoRefil);
+
+        // Acabou, mas tinha reserva no cliente: ele mesmo troca e continua imprimindo
+        if (c.suprimento <= 0f && c.reserva > 0)
+        {
+            c.reserva--;
+            c.suprimento = 1f;
+            Avisar($"<b>{c.empresa}</b> trocou o toner/tinta pelo reserva" + (c.reserva > 0 ? $" (ainda tem {c.reserva} lá)." : ". <color=#F5B83F>Não sobrou reserva: leve outro na próxima visita.</color>"),
+                   c.reserva > 0 ? UIFactory.Destaque : UIFactory.Alerta, 4.5f);
+        }
+
+        // Unidade de imagem: dura um certo número de páginas; passou disso, risca e vira chamado
+        float usoAntes = c.UsoPeca;
+        c.paginasPeca += paginas;
+        if (usoAntes < 0.85f && c.UsoPeca >= 0.85f)
+            Avisar($"Unidade de imagem da <b>{c.empresa}</b> em 85% da vida útil. Troque na próxima visita para não virar chamado.", UIFactory.Alerta, 4.5f);
+        if (c.UsoPeca >= 1f && !c.chamadoAberto && paginas > 0 && Random.value < 0.2f + (c.UsoPeca - 1f))
+        {
+            c.chamadoAberto = true;
+            c.satisfacao = Mathf.Max(0f, c.satisfacao - 5f);
+            MissionManager.Instance?.AdicionarChamadoDeContrato(c.id, c.empresa, DificuldadeChamado.Facil, "Trocar cilindro");
+            Avisar($"A impressora da <b>{c.empresa}</b> começou a sair com listra: a unidade de imagem passou da vida útil ({c.paginasPeca:N0} páginas). Cliente irritado, chamado aberto.", UIFactory.Perigo, 5f);
+        }
 
         if (c.suprimento <= 0f)
         {

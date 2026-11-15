@@ -194,6 +194,7 @@ public static class AcoesFisicas
                     if (!Mochila.Instance.Usar(Item.Cilindro)) return "Você não tem cilindro novo.";
                     e.impCilindroRiscado = false;
                     MM?.CobrarPeca(Mochila.Info(Item.Cilindro).preco);
+                    ContratosManager.Instance?.PecaTrocada(ContratosManager.Instance.DoChamado(MM != null ? MM.chamadoAtivo : null));
                     return "Você soltou as travas, tirou o cilindro riscado e encaixou o novo, sem tocar na superfície verde.";
                 }, 3f, Item.Cilindro));
 

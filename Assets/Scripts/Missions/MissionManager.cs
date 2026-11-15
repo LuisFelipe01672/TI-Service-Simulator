@@ -99,9 +99,13 @@ public partial class MissionManager : MonoBehaviour
 
     // Defeito num equipamento alugado: vira um chamado incluso no contrato (não paga, mas o cliente espera rapidez)
     // dif Fácil = problemas de impressora; Médio = problemas de computador
-    public void AdicionarChamadoDeContrato(int contratoId, string empresa, DificuldadeChamado dif = DificuldadeChamado.Facil)
+    public void AdicionarChamadoDeContrato(int contratoId, string empresa, DificuldadeChamado dif = DificuldadeChamado.Facil, string solucao = null)
     {
         var p = CatalogoProblemas.Sortear(dif);
+        // defeito já conhecido (ex.: peça que passou da vida útil)
+        if (solucao != null)
+            foreach (var lista in new[] { CatalogoProblemas.Faceis, CatalogoProblemas.Medios, CatalogoProblemas.Dificeis })
+                foreach (var x in lista) if (x.solucao == solucao && x.equipamento == TipoEquipamento.Impressora) p = x;
         var ch = new Chamado(empresa, p.descricao, p.equipamento == TipoEquipamento.Impressora ? TipoChamado.Impressora : TipoChamado.Notebook, dif, 0f, 240f)
         {
             equipamento = p.equipamento, solucao = p.solucao, problema = p, contratoId = contratoId,

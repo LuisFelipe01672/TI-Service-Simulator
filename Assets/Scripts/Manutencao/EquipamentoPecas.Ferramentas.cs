@@ -201,8 +201,26 @@ public partial class EquipamentoPecas
     }
 
     // Multímetro: corpo amarelo, visor de LCD, seletor giratório e as duas pontas de prova
+    // Modelos do Sketchfab: giro para a mão (frente para a câmera) e posição do visor no modelo
+    static Quaternion GiroMultimetro = Quaternion.Euler(0f, 180f, 0f);
+    static Quaternion GiroPendrive = Quaternion.Euler(20f, -35f, 0f);
+    const float LcdAltura = 0.338f;   // centro do visor, em fração do comprimento a partir do centro
+
     static void MontarMultimetro(Transform f)
     {
+        var modelos = ModelosFerramentas.Carregar();
+        if (modelos != null && modelos.multimetro != null)
+        {
+            var m = ModelosFerramentas.Instanciar(modelos.multimetro, f, 0.15f, GiroMultimetro);
+            var b = ModelosFerramentas.Limites(m, f);
+            // o número do visor vem do jogo (a textura do modelo teve o visor apagado)
+            ferrVisor = Visor(f, new Vector3(0.002f, b.center.y + b.size.y * LcdAltura, b.min.z + 0.0035f), new Vector2(0.046f, 0.02f), 0.17f,
+                new Color(0.06f, 0.07f, 0.06f), TextAlignmentOptions.Right);
+            float topo = b.max.y;
+            Cubo(f, "PontaVermelha", new Vector3(-0.05f, topo + 0.035f, b.center.z), new Vector3(0.005f, 0.09f, 0.005f), mPontaVermelha).transform.localRotation = Quaternion.Euler(0f, 0f, 18f);
+            Cubo(f, "PontaPreta", new Vector3(0.05f, topo + 0.035f, b.center.z), new Vector3(0.005f, 0.09f, 0.005f), mPreta).transform.localRotation = Quaternion.Euler(0f, 0f, -18f);
+            return;
+        }
         Cubo(f, "Corpo", Vector3.zero, new Vector3(0.08f, 0.15f, 0.03f), mCorpoAmarelo);
         Cubo(f, "Frente", new Vector3(0f, 0f, -0.0152f), new Vector3(0.066f, 0.135f, 0.001f), mCorpoCinza);
         Cubo(f, "Lcd", new Vector3(0f, 0.04f, -0.016f), new Vector3(0.056f, 0.032f, 0.002f), mLcd);
@@ -228,6 +246,15 @@ public partial class EquipamentoPecas
     // Pendrive: espetado no gabinete; o resultado aparece no monitor
     static void MontarPendrive(Transform f)
     {
+        var modelos = ModelosFerramentas.Carregar();
+        if (modelos != null && modelos.pendrive != null)
+        {
+            var p = ModelosFerramentas.Instanciar(modelos.pendrive, f, 0.06f, GiroPendrive);
+            // a tampa fica no bolso: só o corpo e o conector vão para a porta USB
+            foreach (var t in p.GetComponentsInChildren<Transform>(true))
+                if (t.name.Contains("Plastic")) t.gameObject.SetActive(false);
+            return;
+        }
         Cubo(f, "Corpo", Vector3.zero, new Vector3(0.018f, 0.05f, 0.008f), mAzulPendrive);
         Cubo(f, "Usb", new Vector3(0f, 0.032f, 0f), new Vector3(0.012f, 0.016f, 0.0045f), mMetal);
         f.localScale = Vector3.one * 1.6f;

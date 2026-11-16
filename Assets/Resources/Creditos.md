@@ -27,6 +27,8 @@ Alteração comum a todos os modelos do Sketchfab: convertidos de GLB para glTF 
 | `Assets/Models/Sketchfab/Telefone_Escritorio/` | [Office Phone](https://sketchfab.com/3d-models/office-phone-4176a01b6d0b4d13ad165c0df278a6b5) | [maxdragonn](https://sketchfab.com/maxdragon) | — |
 | `Assets/Models/Sketchfab/Vaso_Sanitario/` | [Toilet](https://sketchfab.com/3d-models/toilet-132a8ee2af3a40d39d270fbed3d3666c) | [HippoStance](https://sketchfab.com/hippostance) | Texturas em 1024 px; banheiro da casa |
 | `Assets/Models/Sketchfab/Pia_Coluna/` | [Sink](https://sketchfab.com/3d-models/sink-a278d63585494921906ab3500c421ff7) | [lagesnpiet](https://sketchfab.com/lagesnpiet) | Texturas em 1024 px; banheiro da casa |
+| `Assets/Models/Sketchfab/Multimetro/` | [MultiMeter - FREE](https://sketchfab.com/3d-models/multimeter-free-79ac684e66b34554ba869bd2fc3c2653) | [Mathieu Godard](https://sketchfab.com/Mathieu.Godard) | Texturas em 1024 px; logotipo e modelo do fabricante apagados da textura; visor apagado (o número vem do jogo) |
+| `Assets/Models/Sketchfab/Pendrive/` | [USB Flash Drive](https://sketchfab.com/3d-models/usb-flash-drive-b7cfb7e2809e4c64afb713140c982489) | [Artik](https://sketchfab.com/artikdev) | Tampa escondida no jogo |
 
 ## Modelos e texturas CC0 (domínio público, crédito opcional)
 

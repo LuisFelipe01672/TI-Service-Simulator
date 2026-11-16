@@ -19,7 +19,7 @@ public class TexturasModelos : AssetPostprocessor
     static readonly string[] Pequenos =
     {
         "Cartucho_Toner", "Telefone_Escritorio", "Switch_5_Portas", "Roteador", "Mochila",
-        "Micro_Ondas", "Patch_Panel", "Switch_Rack_24",
+        "Micro_Ondas", "Patch_Panel", "Switch_Rack_24", "Multimetro", "Pendrive",
     };
 
     void OnPreprocessTexture()

@@ -120,9 +120,9 @@ public static class AvaliacaoCliente
         var l = new List<ItemChecklist>();
         bool resolvido = p == null || e == null || CatalogoProblemas.Resolvido(p, e);
         l.Add(new ItemChecklist("Defeito testado na frente do cliente", resolvido, "o problema não foi resolvido"));
-        bool fechado = e == null || (!e.pcGabineteAberto && !e.pcCoolerFora && !e.impTampaAberta && !e.impGavetaAberta && !e.cartuchoNaMao);
+        bool fechado = e == null || System.Array.TrueForAll(RegistroEquipamentos.Todas, d => d.Fechado(e));
         l.Add(new ItemChecklist("Equipamento fechado e montado", fechado, "deixou o equipamento aberto"));
-        bool ligado = e == null || (e.impLigada && e.pcLigado && e.rotNaTomada);
+        bool ligado = e == null || System.Array.TrueForAll(RegistroEquipamentos.Todas, d => d.Ligado(e));
         l.Add(new ItemChecklist("Tudo ligado como estava", ligado, "deixou equipamento desligado"));
         l.Add(new ItemChecklist("Local limpo (nada no chão)", sujeirasNoChao == 0, "deixou sujeira no chão"));
         return l;

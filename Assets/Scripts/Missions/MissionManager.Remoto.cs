@@ -5,32 +5,17 @@ using UnityEngine;
 // remoto e resolve o que é de software. Defeito físico (cabo, toner, roteador fora) exige ir ao local.
 public partial class MissionManager
 {
-    // Soluções que dá para aplicar de longe (o resto precisa das mãos no equipamento)
-    static readonly HashSet<string> SolucoesRemotas = new HashSet<string>
-    {
-        "Reiniciar spooler", "Verificar fila de impressão", "Reinstalar driver", "Reiniciar equipamento",
-    };
-
     public const float FatorPagamentoRemoto = 0.75f;   // sem deslocamento: cobra menos
     public const float MinutosAtendimentoRemoto = 30f;
     public const float ChanceClienteAusente = 0.2f;
 
     public enum ResultadoRemoto { Resolvido, ClienteAusente, SemInternet, PrecisaVisita, Bloqueado }
 
-    public static bool SolucaoRemota(Problema p)
-    {
-        if (p == null) return false;
-        if (SolucoesRemotas.Contains(p.solucao)) return true;
-        // IP errado no computador e configuração do roteador se acertam remotamente (o roteador funciona)
-        if (p.solucao == "Verificar IP" && p.equipamento == TipoEquipamento.Computador) return true;
-        if (p.solucao == "Verificar configurações" && p.equipamento == TipoEquipamento.Roteador) return true;
-        return false;
-    }
+    // Dá para aplicar de longe? (marcado no catálogo com .Remoto(); o resto precisa das mãos no equipamento)
+    public static bool SolucaoRemota(Problema p) => p != null && p.remoto;
 
-    // Problema que derruba a internet do cliente: nem dá para conectar
-    static bool SemInternetNoCliente(Problema p) =>
-        p != null && p.equipamento == TipoEquipamento.Roteador &&
-        (p.solucao == "Resetar para padrão" || p.solucao == "Reiniciar roteador" || p.solucao == "Verificar IP");
+    // Problema que derruba a internet do cliente (.SemInternet() no catálogo): nem dá para conectar
+    static bool SemInternetNoCliente(Problema p) => p != null && p.derrubaInternet;
 
     // Tenta resolver um chamado aberto à distância. Sempre gasta tempo do dia (a ligação e a tentativa).
     public ResultadoRemoto AtenderRemoto(Chamado c, out string mensagem)

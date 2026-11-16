@@ -51,9 +51,13 @@ public partial class EquipamentoPecas : MonoBehaviour
         eq = GetComponent<Equipamento>();
         visual = transform.Find("Visual");
         CriarMateriais();
-        if (eq.tipoEquipamento == TipoEquipamento.Impressora) MontarImpressora();
-        else if (eq.tipoEquipamento == TipoEquipamento.Roteador) MontarRoteador();
-        else MontarComputador();
+        switch (eq.tipoEquipamento)
+        {
+            case TipoEquipamento.Impressora: MontarImpressora(); break;
+            case TipoEquipamento.Roteador: MontarRoteador(); break;
+            case TipoEquipamento.Computador: MontarComputador(); break;
+            default: MontarGenerico(); break;   // equipamento sem visual próprio: peças da definição sobre o colisor
+        }
     }
 
     static void CriarMateriais()
@@ -249,9 +253,7 @@ public partial class EquipamentoPecas : MonoBehaviour
         else
         {
             // Sem o visual esperado: uma peça só, com todas as ações do equipamento numa lista
-            foreach (var id in eq.tipoEquipamento == TipoEquipamento.Impressora
-                         ? new[] { "visor", "traseira", "tampa", "cartucho", "botao", "energia", "gaveta" }
-                         : new[] { "luzes", "etiqueta", "fonte", "reset" })
+            foreach (var id in RegistroEquipamentos.De(eq.tipoEquipamento).Pecas)
                 PecaEquipamento.Criar(transform, eq, id, eq.Nome, c + Vector3.up * 0.001f * id.Length, s * 1.02f);
         }
     }
@@ -302,7 +304,7 @@ public partial class EquipamentoPecas : MonoBehaviour
                     Pintar(leds[i], !acesa ? mApagado : semInternet ? mLaranja : mVerde);
                 }
         }
-        else
+        else if (eq.tipoEquipamento == TipoEquipamento.Computador)
         {
             bool pcLigado = e == null || e.pcLigado;
             Pintar(botaoLiga, pcLigado ? mVerde : mApagado);

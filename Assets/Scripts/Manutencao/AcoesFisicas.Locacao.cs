@@ -25,10 +25,10 @@ public static partial class AcoesFisicas
     }
 
     // Impressora ainda na caixa: só dá para mexer na caixa. Devolve true se a lista termina aqui.
-    static bool ImpressoraNaCaixa(EstadoEquipamentos e, List<AcaoFisica> l)
+    static bool ImpressoraNaCaixa(EstadoEquipamentos e, ListaAcoes l)
     {
         if (!e.impNaCaixa) return false;
-        PecaAtual = "caixa";
+        l.peca = "caixa";
         l.Add(new AcaoFisica("Olhar a caixa", () =>
             "Caixa de papelão lacrada com fita, setas \"ESTE LADO PARA CIMA\" e a etiqueta de patrimônio da sua empresa. " +
             "Dentro: a impressora presa com calços de isopor, o toner inicial, o cabo de força e o manual.") { observacao = true });
@@ -44,10 +44,10 @@ public static partial class AcoesFisicas
     }
 
     // Fitas e calços de transporte presos na tampa e na gaveta
-    static void FitasDeTransporte(EstadoEquipamentos e, List<AcaoFisica> l)
+    static void FitasDeTransporte(EstadoEquipamentos e, ListaAcoes l)
     {
         if (!e.impComFitas) return;
-        PecaAtual = "tampa";
+        l.peca = "tampa";
         l.Add(new AcaoFisica("Tirar as fitas laranja e os calços de transporte", () =>
         {
             e.impComFitas = false;
@@ -57,10 +57,10 @@ public static partial class AcoesFisicas
     }
 
     // Painel da impressora: IP fixo na instalação
-    static void IpFixoNaInstalacao(EstadoEquipamentos e, List<AcaoFisica> l)
+    static void IpFixoNaInstalacao(EstadoEquipamentos e, ListaAcoes l)
     {
         if (!e.impLigada || !e.impIpPendente) return;
-        PecaAtual = "visor";
+        l.peca = "visor";
         l.Add(new AcaoFisica($"Configurar IP fixo {e.ipImpressora} no painel (Rede > TCP/IP > Manual)", () =>
         {
             if (!e.impCabo.conectado) return "Ligue o cabo de rede antes: sem rede o painel não deixa salvar o endereço.";
@@ -73,10 +73,10 @@ public static partial class AcoesFisicas
     }
 
     // Visita: leitura do contador vale mesmo sem o contrato carregado (testes)
-    static void ContadorNaVisita(EstadoEquipamentos e, List<AcaoFisica> l, ContratoLocacao locacao)
+    static void ContadorNaVisita(EstadoEquipamentos e, ListaAcoes l, ContratoLocacao locacao)
     {
         if (!e.visita || !e.impLigada || locacao != null) return;
-        PecaAtual = "visor";
+        l.peca = "visor";
         l.Add(new AcaoFisica("Ler o contador de páginas (menu Informações)", () =>
         {
             e.contadorLido = true;
@@ -86,12 +86,12 @@ public static partial class AcoesFisicas
     }
 
     // Visita: troca preventiva da unidade de imagem (com o cartucho fora) e toner reserva ao lado da impressora
-    static void ServicosDaVisita(EstadoEquipamentos e, List<AcaoFisica> l)
+    static void ServicosDaVisita(EstadoEquipamentos e, ListaAcoes l)
     {
         if (!e.visita) return;
         if (e.impTampaAberta && e.preventivaPendente && !e.impCartuchoPresente)
         {
-            PecaAtual = "cartucho";
+            l.peca = "cartucho";
             l.Add(new AcaoFisica("Troca preventiva da unidade de imagem (cilindro da mochila)", () =>
             {
                 var m = Mochila.Instance;
@@ -108,7 +108,7 @@ public static partial class AcoesFisicas
         var c = ContratoDoServico();
         if (c == null || c.reserva < ContratosManager.MaxReserva)
         {
-            PecaAtual = "gaveta";
+            l.peca = "gaveta";
             l.Add(new AcaoFisica("Deixar um toner reserva ao lado da impressora (e mostrar como trocar)", () =>
             {
                 var m = Mochila.Instance;
@@ -125,10 +125,10 @@ public static partial class AcoesFisicas
     }
 
     // Computador do cliente: adicionar a impressora pelo IP
-    static void AdicionarImpressoraNoPc(EstadoEquipamentos e, List<AcaoFisica> l)
+    static void AdicionarImpressoraNoPc(EstadoEquipamentos e, ListaAcoes l)
     {
         if (!e.pcLigado || !e.pcSemImpressora) return;
-        PecaAtual = "tela";
+        l.peca = "tela";
         l.Add(new AcaoFisica($"Adicionar a impressora pelo IP {e.ipImpressora} (Impressoras > Adicionar > TCP/IP)", () =>
         {
             string r = e.AdicionarImpressoraPeloIp(out bool ok);

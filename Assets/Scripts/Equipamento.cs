@@ -14,9 +14,7 @@ public class Equipamento : Interactable
 
     public override string TextoPrompt => $"[E] Mexer no(a) {Nome}";
 
-    public string Nome =>
-        tipoEquipamento == TipoEquipamento.Impressora ? "Impressora" :
-        tipoEquipamento == TipoEquipamento.Roteador   ? "Roteador" : "Computador";
+    public string Nome => RegistroEquipamentos.Nome(tipoEquipamento);
 
     public override void Interagir()
     {

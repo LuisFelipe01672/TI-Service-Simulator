@@ -18,7 +18,6 @@ public class AcaoFisica
     public AcaoFisica(string rotulo, Func<string> executar, float segurar = 0f, Item? requer = null)
     {
         this.rotulo = rotulo; this.executar = executar; this.segurar = segurar; this.requer = requer;
-        peca = AcoesFisicas.PecaAtual;
     }
 }
 
@@ -26,21 +25,11 @@ public class AcaoFisica
 // A janela de manutenção (e, depois, as peças 3D) usa isso.
 public static partial class AcoesFisicas
 {
-    // Peça das ações criadas a seguir (cada AcaoFisica guarda a peça atual ao ser criada).
-    // Ids: Impressora: visor, traseira, tampa, cartucho, botao, energia
-    //      Computador: tela, traseira, energia   ·   Roteador: luzes, etiqueta, fonte, reset
-    public static string PecaAtual;
-
+    // Ações do equipamento agora, pela definição dele (RegistroEquipamentos). Peças de cada uma em DefinicaoXxx.Pecas.
     public static List<AcaoFisica> Para(TipoEquipamento tipo, EstadoEquipamentos e)
     {
-        var lista = new List<AcaoFisica>();
-        PecaAtual = null;
-        switch (tipo)
-        {
-            case TipoEquipamento.Impressora: Impressora(e, lista); break;
-            case TipoEquipamento.Computador: Computador(e, lista); break;
-            default: Roteador(e, lista); break;
-        }
+        var lista = new ListaAcoes();
+        RegistroEquipamentos.De(tipo).Acoes(e, lista);
         return lista;
     }
 
@@ -58,10 +47,10 @@ public static partial class AcoesFisicas
 
     // ---------- Impressora ----------
 
-    static void Impressora(EstadoEquipamentos e, List<AcaoFisica> l)
+    internal static void Impressora(EstadoEquipamentos e, ListaAcoes l)
     {
         if (ImpressoraNaCaixa(e, l)) return;
-        PecaAtual = "visor";
+        l.peca = "visor";
         l.Add(new AcaoFisica("Olhar o visor", () => $"Visor: \"{e.VisorImpressora()}\"") { observacao = true, pistaVisual = "Leia o visor da impressora." });
         var locacao = ContratosManager.Instance != null ? ContratosManager.Instance.DoChamado(MM != null ? MM.chamadoAtivo : null) : null;
         if (e.impLigada && locacao != null)
@@ -97,7 +86,7 @@ public static partial class AcoesFisicas
         }
         IpFixoNaInstalacao(e, l);
         FitasDeTransporte(e, l);
-        PecaAtual = "traseira";
+        l.peca = "traseira";
         l.Add(new AcaoFisica("Olhar atrás da impressora", () => DescreverCabo(e.impCabo, e.impLigada, "impressora") +
             (e.impCaboSolto ? " <color=#F5B83F>O cabo passa solto pelo chão, bem no caminho do armário que a limpeza arrasta.</color>" : "")) { observacao = true });
         // Causa raiz do cabo: sem prender, a próxima faxina solta de novo
@@ -113,7 +102,7 @@ public static partial class AcoesFisicas
         // Atolamento: a folha amassada sai pela tampa de trás
         if (e.impPapelAtolado)
         {
-            PecaAtual = "traseira";
+            l.peca = "traseira";
             l.Add(new AcaoFisica("Abrir a tampa traseira e puxar o papel atolado (devagar)", () =>
             {
                 e.impPapelAtolado = false;
@@ -123,7 +112,7 @@ public static partial class AcoesFisicas
         }
 
         // Gaveta de papel
-        PecaAtual = "gaveta";
+        l.peca = "gaveta";
         if (!e.impGavetaAberta)
             l.Add(new AcaoFisica("Abrir a gaveta de papel", () =>
             {
@@ -151,7 +140,7 @@ public static partial class AcoesFisicas
         }
 
         // Tampa e toner: a parte de cima (scanner) levanta para acessar o cartucho
-        PecaAtual = "tampa";
+        l.peca = "tampa";
         if (e.impTampaMalFechada && !e.impTampaAberta)
             l.Add(new AcaoFisica("Pressionar a tampa dos dois lados até travar", () =>
             {
@@ -167,7 +156,7 @@ public static partial class AcoesFisicas
             }));
         else
         {
-            PecaAtual = "cartucho";
+            l.peca = "cartucho";
             if (e.impCartuchoPresente)
                 l.Add(new AcaoFisica("Retirar o cartucho", () =>
                 {
@@ -264,7 +253,7 @@ public static partial class AcoesFisicas
                 }, 3f, Item.Cilindro));
 
             ServicosDaVisita(e, l);
-            PecaAtual = "tampa";
+            l.peca = "tampa";
             l.Add(new AcaoFisica("Baixar o scanner (fechar a tampa)", () =>
             {
                 if (e.cartuchoNaMao) return "Encaixe ou guarde o cartucho que está na sua mão antes de fechar.";
@@ -276,14 +265,14 @@ public static partial class AcoesFisicas
         }
 
         if (!e.impTampaAberta) ServicosDaVisita(e, l);
-        PecaAtual = "botao";
+        l.peca = "botao";
         l.Add(new AcaoFisica("Imprimir página de teste (botão da impressora)", () =>
         {
             string r = e.Imprimir(false, out bool boa);
             if (boa) MM?.Verificar();
             return r;
         }, 2f));
-        PecaAtual = "energia";
+        l.peca = "energia";
         l.Add(new AcaoFisica(e.impLigada ? "Desligar a impressora" : "Ligar a impressora", () =>
         {
             e.impLigada = !e.impLigada;
@@ -293,9 +282,9 @@ public static partial class AcoesFisicas
 
     // ---------- Computador ----------
 
-    static void Computador(EstadoEquipamentos e, List<AcaoFisica> l)
+    internal static void Computador(EstadoEquipamentos e, ListaAcoes l)
     {
-        PecaAtual = "tela";
+        l.peca = "tela";
         if (e.pcLigado) l.Add(new AcaoFisica("Sentar e usar o computador", () => "") { abreComputador = true, observacao = true });
         if (e.pcLigado)
         {
@@ -314,11 +303,11 @@ public static partial class AcoesFisicas
                 }, 3f, Item.PendriveDrivers));
         }
         AdicionarImpressoraNoPc(e, l);
-        PecaAtual = "traseira";
+        l.peca = "traseira";
         l.Add(new AcaoFisica("Olhar atrás do gabinete", () => DescreverCabo(e.pcCabo, e.pcLigado, "computador")) { observacao = true });
         AcoesCabo(e.pcCabo, "do computador", l);
         FerramentasPcFechado(e, l);
-        PecaAtual = "energia";
+        l.peca = "energia";
         l.Add(new AcaoFisica(e.pcLigado ? "Desligar no botão (forçado)" : "Ligar o computador", () =>
         {
             if (e.pcLigado)
@@ -345,7 +334,7 @@ public static partial class AcoesFisicas
         }, e.pcLigado ? 3f : 0f));
 
         // Gabinete: por dentro (Fase 4)
-        PecaAtual = "gabinete";
+        l.peca = "gabinete";
         l.Add(new AcaoFisica("Olhar o gabinete (grades e ventoinha)", () =>
             e.pcPoeira > 0.7f ? "As grades estão entupidas de poeira e a ventoinha faz um barulhão. Sai ar muito quente."
             : e.pcPastaSeca ? "As grades estão limpas, mas a ventoinha gira no máximo e sai ar muito quente."
@@ -492,7 +481,7 @@ public static partial class AcoesFisicas
                                             : "SSD novo instalado... mas os arquivos do cliente ficaram no HD que morreu.") + velho;
                 }, 3f, Item.SSD));
             FerramentasGabineteAberto(e, l);
-            PecaAtual = "gabinete";
+            l.peca = "gabinete";
             l.Add(new AcaoFisica("Colocar a tampa e voltar o gabinete no lugar", () =>
             {
                 if (e.pcCoolerFora) return "Recoloque o cooler do processador antes de fechar.";
@@ -504,16 +493,16 @@ public static partial class AcoesFisicas
 
     // ---------- Roteador ----------
 
-    static void Roteador(EstadoEquipamentos e, List<AcaoFisica> l)
+    internal static void Roteador(EstadoEquipamentos e, ListaAcoes l)
     {
-        PecaAtual = "luzes";
+        l.peca = "luzes";
         l.Add(new AcaoFisica("Olhar as luzes", () => e.LuzesRoteador()) { observacao = true });
-        PecaAtual = "etiqueta";
+        l.peca = "etiqueta";
         l.Add(new AcaoFisica("Ler a etiqueta embaixo do roteador", () =>
             $"Painel: http://192.168.0.1 · Usuário: admin · Senha: {EstadoEquipamentos.SenhaPadrao} · Wi-Fi de fábrica: ROTEADOR_5G_A1B2") { observacao = true });
-        PecaAtual = "fonte";
+        l.peca = "fonte";
         l.Add(new AcaoFisica(e.rotNaTomada ? "Tirar da tomada" : "Colocar de volta na tomada", () => e.TomadaRoteador()));
-        PecaAtual = "reset";
+        l.peca = "reset";
         if (e.rotNaTomada)
             l.Add(new AcaoFisica("Segurar o botão de reset com o clipe (10 s)", () =>
             {
@@ -536,7 +525,7 @@ public static partial class AcoesFisicas
         return $"{cabo} LED da porta de rede do(a) {onde}: {led}.";
     }
 
-    static void AcoesCabo(CaboRede c, string de, List<AcaoFisica> l)
+    static void AcoesCabo(CaboRede c, string de, ListaAcoes l)
     {
         l.Add(new AcaoFisica(c.conectado ? $"Desconectar o cabo {de}" : $"Conectar o cabo {de} (até dar o clique)", () =>
         {

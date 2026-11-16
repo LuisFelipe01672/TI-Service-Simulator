@@ -175,7 +175,7 @@ public class ClienteNPC : Interactable
             if (caminho == null || caminho.Length == 0) { passo = int.MaxValue; return; }
             passo = 0;
             string nome = chamado.EquipamentoTexto().ToLowerInvariant();
-            string artigo = chamado.equipamento == TipoEquipamento.Impressora ? "a" : "o";
+            string artigo = RegistroEquipamentos.De(chamado.equipamento).Artigo;
             GameUI.Instance.Toast($"<b>{chamado.contato}</b>: \"Vem comigo, eu te mostro {artigo} {nome}.\"", UIFactory.Destaque, 3.5f);
             return;
         }

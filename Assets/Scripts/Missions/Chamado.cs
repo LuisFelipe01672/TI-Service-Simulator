@@ -88,9 +88,7 @@ public class Chamado
         dificuldade == DificuldadeChamado.Facil ? "Fácil" :
         dificuldade == DificuldadeChamado.Medio ? "Médio" : "Difícil";
 
-    public string EquipamentoTexto() =>
-        equipamento == TipoEquipamento.Impressora ? "Impressora" :
-        equipamento == TipoEquipamento.Roteador   ? "Roteador" : "Computador";
+    public string EquipamentoTexto() => RegistroEquipamentos.Nome(equipamento);
 
     // ---------- Personalidade ----------
 

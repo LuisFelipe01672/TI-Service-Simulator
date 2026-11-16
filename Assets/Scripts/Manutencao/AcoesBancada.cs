@@ -9,9 +9,8 @@ public static class AcoesBancada
 
     public static List<AcaoFisica> Para(EquipUsado e)
     {
-        var l = new List<AcaoFisica>();
+        var l = new ListaAcoes(Peca);
         if (e == null) return l;
-        AcoesFisicas.PecaAtual = Peca;
 
         l.Add(new AcaoFisica("Olhar o equipamento", () => Descrever(e)) { observacao = true });
 

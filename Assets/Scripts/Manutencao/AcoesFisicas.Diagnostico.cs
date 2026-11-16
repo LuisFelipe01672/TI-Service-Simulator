@@ -14,9 +14,9 @@ public static partial class AcoesFisicas
     }
 
     // Com o gabinete fechado: pendrive (no monitor) e multímetro na tomada (atrás)
-    static void FerramentasPcFechado(EstadoEquipamentos e, List<AcaoFisica> l)
+    static void FerramentasPcFechado(EstadoEquipamentos e, ListaAcoes l)
     {
-        PecaAtual = "traseira";
+        l.peca = "traseira";
         l.Add(new AcaoFisica("Medir a tomada com o multímetro (750 V AC)", () =>
         {
             float v = 124f + Random.Range(0f, 4.5f);
@@ -26,7 +26,7 @@ public static partial class AcoesFisicas
         }, 1.5f, Item.Multimetro) { observacao = true, close = false });
 
         if (e.pcGabineteAberto) return;
-        PecaAtual = "tela";
+        l.peca = "tela";
         if (e.pcLigado)
         {
             l.Add(new AcaoFisica("Dar boot pelo pendrive: teste de memória", () =>
@@ -73,9 +73,9 @@ public static partial class AcoesFisicas
     }
 
     // Com o gabinete aberto: placa POST, testador de fonte e multímetro nas peças
-    static void FerramentasGabineteAberto(EstadoEquipamentos e, List<AcaoFisica> l)
+    static void FerramentasGabineteAberto(EstadoEquipamentos e, ListaAcoes l)
     {
-        PecaAtual = "gabinete";
+        l.peca = "gabinete";
         l.Add(new AcaoFisica("Espetar a placa POST num slot livre e ligar (bancada)", () =>
         {
             if (e.pcCoolerFora) return "Não ligue sem o cooler: o processador queima em segundos.";

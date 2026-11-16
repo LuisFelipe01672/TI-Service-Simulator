@@ -131,9 +131,7 @@ public partial class MissionManager : MonoBehaviour
         return chamado;
     }
 
-    static TipoChamado TipoDo(Problema p) =>
-        p.equipamento == TipoEquipamento.Impressora ? TipoChamado.Impressora :
-        p.equipamento == TipoEquipamento.Roteador   ? TipoChamado.Rede : TipoChamado.Notebook;
+    static TipoChamado TipoDo(Problema p) => RegistroEquipamentos.De(p.equipamento).TipoChamado;
 
     // Defeito num equipamento alugado: vira um chamado incluso no contrato (não paga, mas o cliente espera rapidez)
     // dif Fácil = problemas de impressora; Médio = problemas de computador
@@ -145,7 +143,7 @@ public partial class MissionManager : MonoBehaviour
             foreach (var lista in new[] { CatalogoProblemas.Faceis, CatalogoProblemas.Medios, CatalogoProblemas.Dificeis })
                 foreach (var x in lista) if (x.solucao == solucao && x.equipamento == TipoEquipamento.Impressora) p = x;
         var prioridade = SLA.Definir(dif, Personalidade.Tranquilo, true, false);
-        var ch = new Chamado(empresa, p.descricao, p.equipamento == TipoEquipamento.Impressora ? TipoChamado.Impressora : TipoChamado.Notebook, dif, 0f, SLA.Horas(prioridade) * 60f)
+        var ch = new Chamado(empresa, p.descricao, TipoDo(p), dif, 0f, SLA.Horas(prioridade) * 60f)
         {
             equipamento = p.equipamento, solucao = p.solucao, problema = p, contratoId = contratoId,
             personalidade = Personalidade.Tranquilo, contato = CatalogoProblemas.SortearContato(),

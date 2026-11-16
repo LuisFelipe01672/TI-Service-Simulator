@@ -45,6 +45,22 @@ public class Problema
 
     public string Resposta(Pergunta p, bool mentir) =>
         mentir && p == perguntaMentira ? mentira : respostas[(int)p];
+
+    // ---------- O defeito na simulação (cada problema carrega o seu) ----------
+    public System.Action<EstadoEquipamentos> quebrar;          // estraga o estado do cliente (CatalogoProblemas.Quebrar)
+    public System.Func<EstadoEquipamentos, bool> concluido;    // condição a mais para dar por resolvido (além do equipamento funcionar)
+    public System.Func<EstadoEquipamentos, string> causaRaiz;  // como o cliente reclama se a causa ficou (null = tratada)
+    public Item? ferramentaIdeal;                              // ferramenta que deixa o diagnóstico bem mais fácil
+    public bool remoto;                                        // dá para resolver por acesso remoto
+    public bool derrubaInternet;                               // o cliente fica sem internet: nem o acesso remoto conecta
+    public string comoRemoto;                                  // o que o técnico faz de longe (vai na OS)
+
+    public Problema Quebra(System.Action<EstadoEquipamentos> q) { quebrar = q; return this; }
+    public Problema Conclui(System.Func<EstadoEquipamentos, bool> c) { concluido = c; return this; }
+    public Problema Causa(System.Func<EstadoEquipamentos, string> c) { causaRaiz = c; return this; }
+    public Problema Ferramenta(Item i) { ferramentaIdeal = i; return this; }
+    public Problema Remoto(string como = null) { remoto = true; comoRemoto = como; return this; }
+    public Problema SemInternet() { derrubaInternet = true; return this; }
 }
 
 public static class CatalogoProblemas
@@ -77,8 +93,6 @@ public static class CatalogoProblemas
 
     // ---------------- Defeitos na simulação ----------------
 
-    static string Chave(Problema p) => p.equipamento + ":" + p.solucao;
-
     // Soluções da Etapa 4 (ferramentas de diagnóstico)
     public const string EncaixarMemoria = "Encaixar a memória";
     public const string TrocarFonteFraca = "Trocar fonte fraca";
@@ -101,7 +115,24 @@ public static class CatalogoProblemas
             "Nenhuma, ela nem foi ligada ainda.",
             "Todo mundo vai imprimir nela pelo computador da recepção.",
             "Ainda não ligamos nada." },
-        Pergunta.MexeramEmAlgo, "Ninguém encostou na caixa.");
+        Pergunta.MexeramEmAlgo, "Ninguém encostou na caixa.")
+        .Conclui(e => e.InstalacaoCompleta)
+        .Quebra(e =>
+        {
+            e.instalacaoEmAndamento = true;
+            e.impNaCaixa = true;
+            e.impComFitas = true;
+            e.impCartuchoPresente = false;
+            e.tonerDaCaixa = true;
+            e.impToner = 0f;
+            e.impSemPapel = true;
+            e.impCabo.conectado = false;
+            e.impCabo.defeito = DefeitoCabo.Nenhum;
+            e.impLigada = false;
+            e.impIpPendente = true;
+            e.pcSemImpressora = true;
+            e.impTestePeloPc = false;
+        });
 
     public static readonly Problema VisitaLocacao = new Problema(TipoEquipamento.Impressora, VisitarLocacao,
         "Visita mensal da impressora alugada: leitura do contador e suprimentos.",
@@ -112,21 +143,16 @@ public static class CatalogoProblemas
             "Às vezes aparece aviso de toner no visor.",
             "Todo mundo imprime nela.",
             "Não precisou reiniciar." },
-        Pergunta.MensagemErro, "Nunca aparece nada no visor.");
+        Pergunta.MensagemErro, "Nunca aparece nada no visor.")
+        .Conclui(e => e.VisitaCompleta)
+        .Quebra(e =>
+        {
+            // O ContratosManager acerta o toner e a unidade de imagem pelo contrato (PrepararVisita)
+            e.PrepararVisita(e.impToner, 0f);
+        });
 
     // Problemas que ficam bem mais fáceis com uma ferramenta (o card mostra a dica quando o técnico não a tem)
-    public static Item? FerramentaIdeal(Problema p)
-    {
-        if (p == null || p.equipamento != TipoEquipamento.Computador) return null;
-        switch (p.solucao)
-        {
-            case EncaixarMemoria: case "Trocar memória": return Item.PlacaPOST;
-            case TrocarFonteFraca: case "Trocar fonte": return Item.TestadorFonte;
-            case TrocarMemoriaComErro: case "Trocar HD": case Checkup: return Item.PendriveDiagnostico;
-            case TrocarBateria: return Item.Multimetro;
-            default: return null;
-        }
-    }
+    public static Item? FerramentaIdeal(Problema p) => p?.ferramentaIdeal;
 
     // O check-up só é oferecido a quem tem as ferramentas para fazer o laudo inteiro
     public static bool PodeFazerCheckup(Mochila m) =>
@@ -143,144 +169,9 @@ public static class CatalogoProblemas
         // Desgaste das peças pela idade do computador (Etapa 4); o defeito abaixo derruba a peça culpada
         e.SortearDesgaste(Random.Range(1, 9));
 
-        switch (Chave(p))
-        {
-            case "Impressora:Reiniciar spooler":
-                e.spoolerRodando = false;
-                break;
-            case "Impressora:Verificar cabo":
-                SortearDefeitoCabo(e.impCabo);
-                e.impCaboSolto = true;   // a causa: o cabo passa solto atrás do armário
-                break;
-            case "Impressora:Verificar fila de impressão":
-                e.fila.Add(new TrabalhoImpressao("Relatorio_anual_FINAL_v3.pdf", 300, true));
-                int n = Random.Range(4, 15);
-                for (int i = 0; i < n; i++)
-                    e.fila.Add(new TrabalhoImpressao(new[] { "Boleto.pdf", "Contrato.docx", "Planilha.xlsx", "Foto.jpg", "Recibo.pdf" }[Random.Range(0, 5)], Random.Range(1, 6)));
-                break;
-            case "Impressora:Trocar toner":
-                e.impToner = Random.Range(0.01f, 0.06f);
-                break;
-            case "Impressora:Fechar a tampa":
-                e.impTampaMalFechada = true;
-                break;
-            case "Impressora:Fixar o IP":
-                e.impIpMudou = true;
-                break;
-            case "Impressora:Reinstalar driver da impressora":
-                e.impDriverErrado = true;
-                break;
-            case "Impressora:Retirar papel atolado":
-                e.impPapelAtolado = true;
-                e.impPapelUmido = true;  // a causa: a resma úmida continua na gaveta
-                break;
-            case "Impressora:Colocar papel":
-                e.impSemPapel = true;
-                break;
-            case "Impressora:Trocar cilindro":
-                e.impCilindroRiscado = true;
-                e.impToner = Random.Range(0.4f, 0.9f);   // toner está bom: a listra é do cilindro
-                break;
-            case "Computador:Verificar cabo de rede":
-                SortearDefeitoCabo(e.pcCabo);
-                break;
-            case "Computador:Verificar IP":
-                e.pcIpFixo = true;
-                e.pcIp = e.ipImpressora;
-                break;
-            case "Computador:Limpar por dentro":
-                e.pcPoeira = Random.Range(0.85f, 1f);
-                break;
-            case "Computador:Trocar pasta térmica":
-                e.pcPastaSeca = true;
-                e.pcPoeira = Random.Range(0.05f, 0.25f);   // está limpo: não é poeira
-                break;
-            case "Computador:Trocar HD":
-                e.pcHdRuim = true;
-                e.saudeDisco = 0.07f;
-                break;
-            case "Computador:Trocar memória":
-                e.pcMemoriaRuim = true;
-                e.saudeMemoria = 0f;
-                e.pcLigado = false;
-                break;
-            case "Computador:Trocar fonte":
-                e.pcFonteQueimada = true;
-                e.saudeFonte = 0f;
-                e.pcLigado = false;
-                break;
-            // Etapa 4: defeitos que só a ferramenta certa mostra com clareza
-            case "Computador:" + EncaixarMemoria:
-                e.pcMemoriaSolta = true;
-                e.pcLigado = false;
-                break;
-            case "Computador:" + TrocarFonteFraca:
-                e.pcFonteFraca = true;
-                e.saudeFonte = 0.12f;
-                break;
-            case "Computador:" + TrocarMemoriaComErro:
-                e.pcMemoriaIntermitente = true;
-                e.saudeMemoria = 0.2f;
-                break;
-            case "Computador:" + TrocarBateria:
-                e.pcBateriaFraca = true;
-                e.saudeBateria = 0.05f;
-                break;
-            // Etapa 5: a impressora alugada chega lacrada, sem toner nem papel, cabo fora e sem IP fixo
-            case "Impressora:" + InstalarLocacao:
-                e.instalacaoEmAndamento = true;
-                e.impNaCaixa = true;
-                e.impComFitas = true;
-                e.impCartuchoPresente = false;
-                e.tonerDaCaixa = true;
-                e.impToner = 0f;
-                e.impSemPapel = true;
-                e.impCabo.conectado = false;
-                e.impCabo.defeito = DefeitoCabo.Nenhum;
-                e.impLigada = false;
-                e.impIpPendente = true;
-                e.pcSemImpressora = true;
-                e.impTestePeloPc = false;
-                break;
-            case "Impressora:" + VisitarLocacao:
-                // O ContratosManager acerta o toner e a unidade de imagem pelo contrato (PrepararVisita)
-                e.PrepararVisita(e.impToner, 0f);
-                break;
-            case "Computador:" + Checkup:
-                e.checkup = true;
-                e.SortearDesgaste(Random.Range(4, 9));   // quem pede check-up costuma ter um computador mais velho
-                // Uma peça perto do fim (é o que dá valor ao laudo)
-                switch (Random.Range(0, 4))
-                {
-                    case 0: e.saudeDisco = Random.Range(0.25f, 0.38f); break;
-                    case 1: e.saudeBateria = Random.Range(0.3f, 0.38f); break;
-                    case 2: e.saudeCooler = Random.Range(0.3f, 0.38f); break;
-                    default: e.pcPoeira = Random.Range(0.4f, 0.65f); break;
-                }
-                break;
-            case "Computador:Reinstalar driver":
-                e.driverOk = false;
-                break;
-            case "Computador:Reiniciar equipamento":
-                e.memoria = Random.Range(0.94f, 0.99f);
-                e.diasLigado = Random.Range(15, 40);
-                break;
-            case "Roteador:Resetar para padrão":
-                e.rotConfigOk = false;
-                e.rotSenhaDesconhecida = true;
-                break;
-            case "Roteador:Reiniciar roteador":
-                e.rotTravado = true;
-                break;
-            case "Roteador:Verificar configurações":
-                e.wifiAtivo = false;
-                break;
-            case "Roteador:Verificar IP":
-                e.dhcpDuplo = true;
-                e.modemEmBridge = false;
-                e.pcIpErrado = true;
-                break;
-        }
+        if (p.quebrar == null)
+            throw new System.InvalidOperationException($"Problema \"{p.equipamento}: {p.solucao}\" sem defeito no catálogo (falta .Quebra).");
+        p.quebrar(e);
     }
 
     // Cabo com defeito: às vezes só está solto, às vezes o conector está ruim, às vezes rompeu
@@ -295,36 +186,14 @@ public static class CatalogoProblemas
     // O problema que o cliente reclamou foi resolvido? (o jogador confere imprimindo, pingando etc.)
     public static bool Resolvido(Problema p, EstadoEquipamentos e)
     {
-        if (p.solucao == InstalarLocacao && !e.InstalacaoCompleta) return false;
-        if (p.solucao == VisitarLocacao && !e.VisitaCompleta) return false;
-        switch (p.equipamento)
-        {
-            case TipoEquipamento.Impressora:
-                return e.impLigada && !e.impTampaAberta && e.impCartuchoPresente && !e.impCartuchoComLacre && e.impToner >= 0.1f &&
-                       !e.impPapelAtolado && !e.impSemPapel && !e.impGavetaAberta && !e.impCilindroRiscado &&
-                       !e.impTampaMalFechada && !e.impIpMudou && !e.impDriverErrado &&
-                       e.spoolerRodando && !e.FilaTravada && e.ImpressoraOnline && e.PcNaRede;
-            case TipoEquipamento.Computador:
-                return e.PcNaInternet && e.memoria < 0.8f && e.PcHardwareOk && (!e.checkup || e.LaudoCompleto);
-            default:
-                return e.PcNaInternet && e.wifiAtivo && e.rotConfigOk && !e.rotTravado && !e.dhcpDuplo;
-        }
+        if (p.concluido != null && !p.concluido(e)) return false;
+        return RegistroEquipamentos.De(p.equipamento).Funcionando(e);
     }
 
     // A causa do problema ficou? (o sintoma sumiu, mas volta em 1–3 dias: o cliente chama de novo, em garantia)
     // Devolve como o cliente vai descrever a volta, ou null se a causa foi tratada.
-    public static string CausaRaizPendente(Problema p, EstadoEquipamentos e)
-    {
-        if (p == null || e == null) return null;
-        switch (Chave(p))
-        {
-            case "Impressora:Retirar papel atolado":
-                return e.impPapelUmido ? "A impressora voltou a atolar: o papel úmido continuou na gaveta" : null;
-            case "Impressora:Verificar cabo":
-                return e.impCaboSolto ? "A impressora sumiu de novo: arrastaram o armário e o cabo solto soltou outra vez" : null;
-        }
-        return null;
-    }
+    public static string CausaRaizPendente(Problema p, EstadoEquipamentos e) =>
+        p == null || e == null || p.causaRaiz == null ? null : p.causaRaiz(e);
 
     // ---------------- Problemas ----------------
     // Ordem das respostas: DesdeQuando, MexeramEmAlgo, MensagemErro, OutrosAfetados, JaReiniciou
@@ -339,7 +208,9 @@ public static class CatalogoProblemas
                 "Aparece \"O serviço de impressão não está em execução\".",
                 "Ninguém consegue mandar impressão daqui.",
                 "Desliguei e liguei a impressora, não mudou nada." },
-            Pergunta.MensagemErro, "Mensagem? Não reparei em nenhuma."),
+            Pergunta.MensagemErro, "Mensagem? Não reparei em nenhuma.")
+            .Remoto()
+            .Quebra(e => { e.spoolerRodando = false; }),
 
         new Problema(TipoEquipamento.Impressora, "Verificar cabo",
             "Impressora aparece offline no sistema.",
@@ -350,7 +221,13 @@ public static class CatalogoProblemas
                 "Só diz \"Impressora offline\".",
                 "Ninguém consegue usar ela.",
                 "Reiniciei o computador, continuou offline." },
-            Pergunta.MexeramEmAlgo, "Ninguém mexeu em nada aqui, juro."),
+            Pergunta.MexeramEmAlgo, "Ninguém mexeu em nada aqui, juro.")
+            .Causa(e => e.impCaboSolto ? "A impressora sumiu de novo: arrastaram o armário e o cabo solto soltou outra vez" : null)
+            .Quebra(e =>
+            {
+                SortearDefeitoCabo(e.impCabo);
+                e.impCaboSolto = true;   // a causa: o cabo passa solto atrás do armário
+            }),
 
         new Problema(TipoEquipamento.Impressora, "Verificar fila de impressão",
             "Um documento travou e nada mais imprime.",
@@ -361,7 +238,15 @@ public static class CatalogoProblemas
                 "No documento aparece \"Erro - imprimindo\".",
                 "Todo mundo, porque a impressora é uma só.",
                 "Não, achei melhor não mexer." },
-            Pergunta.DesdeQuando, "Sei lá, parou do nada."),
+            Pergunta.DesdeQuando, "Sei lá, parou do nada.")
+            .Remoto()
+            .Quebra(e =>
+            {
+                e.fila.Add(new TrabalhoImpressao("Relatorio_anual_FINAL_v3.pdf", 300, true));
+                int n = Random.Range(4, 15);
+                for (int i = 0; i < n; i++)
+                    e.fila.Add(new TrabalhoImpressao(new[] { "Boleto.pdf", "Contrato.docx", "Planilha.xlsx", "Foto.jpg", "Recibo.pdf" }[Random.Range(0, 5)], Random.Range(1, 6)));
+            }),
 
         new Problema(TipoEquipamento.Impressora, "Fechar a tampa",
             "A impressora parou de imprimir do nada.",
@@ -372,7 +257,8 @@ public static class CatalogoProblemas
                 "No visor aparece \"Feche a tampa\", mas ela está fechada!",
                 "Ninguém consegue imprimir.",
                 "Desliguei e liguei, a mensagem continua." },
-            Pergunta.MexeramEmAlgo, "Ninguém encostou nela."),
+            Pergunta.MexeramEmAlgo, "Ninguém encostou nela.")
+            .Quebra(e => { e.impTampaMalFechada = true; }),
 
         new Problema(TipoEquipamento.Impressora, "Retirar papel atolado",
             "A impressora puxa a folha e trava no meio.",
@@ -383,7 +269,13 @@ public static class CatalogoProblemas
                 "Aparece \"Atolamento de papel\" no visorzinho.",
                 "Ninguém consegue imprimir, a impressora é uma só.",
                 "Desliguei e liguei, ela volta a reclamar do papel." },
-            Pergunta.MexeramEmAlgo, "Não mexi em nada, ela que é ruim."),
+            Pergunta.MexeramEmAlgo, "Não mexi em nada, ela que é ruim.")
+            .Causa(e => e.impPapelUmido ? "A impressora voltou a atolar: o papel úmido continuou na gaveta" : null)
+            .Quebra(e =>
+            {
+                e.impPapelAtolado = true;
+                e.impPapelUmido = true;  // a causa: a resma úmida continua na gaveta
+            }),
 
         new Problema(TipoEquipamento.Impressora, "Colocar papel",
             "A impressora não imprime e fica piscando.",
@@ -394,7 +286,8 @@ public static class CatalogoProblemas
                 "No visor diz alguma coisa de \"bandeja\".",
                 "Todo mundo, a impressora é a mesma.",
                 "Reiniciei duas vezes e continua igual." },
-            Pergunta.MensagemErro, "Não tem mensagem, só pisca."),
+            Pergunta.MensagemErro, "Não tem mensagem, só pisca.")
+            .Quebra(e => { e.impSemPapel = true; }),
 
         new Problema(TipoEquipamento.Impressora, "Trocar toner",
             "A impressão está saindo clara e falhada.",
@@ -405,7 +298,8 @@ public static class CatalogoProblemas
                 "Às vezes pisca \"Toner baixo\", mas a gente ignora.",
                 "Sai assim para todo mundo.",
                 "Reiniciar não muda nada, sai clara igual." },
-            Pergunta.MensagemErro, "Nunca apareceu mensagem nenhuma."),
+            Pergunta.MensagemErro, "Nunca apareceu mensagem nenhuma.")
+            .Quebra(e => { e.impToner = Random.Range(0.01f, 0.06f); }),
     };
 
     public static readonly Problema[] Medios = {
@@ -418,7 +312,13 @@ public static class CatalogoProblemas
                 "Não aparece nada e nem apita, fica só a tela preta.",
                 "Só esse.",
                 "Desliguei da tomada e liguei de novo, igual." },
-            Pergunta.MexeramEmAlgo, "Ninguém encostou nele."),
+            Pergunta.MexeramEmAlgo, "Ninguém encostou nele.")
+            .Ferramenta(Item.PlacaPOST)
+            .Quebra(e =>
+            {
+                e.pcMemoriaSolta = true;
+                e.pcLigado = false;
+            }),
 
         new Problema(TipoEquipamento.Computador, TrocarBateria,
             "O computador perde a data toda vez que fica desligado.",
@@ -429,7 +329,13 @@ public static class CatalogoProblemas
                 "\"CMOS checksum error\" e pede F1. Depois o sistema da contabilidade reclama do certificado.",
                 "Só esse; os outros ficam ligados direto.",
                 "Reiniciar não muda, o problema é quando desliga da tomada." },
-            Pergunta.MensagemErro, "Não aparece mensagem, ele só fica com a hora errada."),
+            Pergunta.MensagemErro, "Não aparece mensagem, ele só fica com a hora errada.")
+            .Ferramenta(Item.Multimetro)
+            .Quebra(e =>
+            {
+                e.pcBateriaFraca = true;
+                e.saudeBateria = 0.05f;
+            }),
 
         new Problema(TipoEquipamento.Computador, Checkup,
             "Quero um check-up completo do computador antes que ele dê problema.",
@@ -440,7 +346,21 @@ public static class CatalogoProblemas
                 "Nenhuma mensagem. Só às vezes acho ele mais barulhento.",
                 "É o computador do caixa; se ele parar, a empresa para.",
                 "Desligo todo dia no fim do expediente." },
-            Pergunta.MexeramEmAlgo, "Já trocaram tudo dele ano passado."),
+            Pergunta.MexeramEmAlgo, "Já trocaram tudo dele ano passado.")
+            .Ferramenta(Item.PendriveDiagnostico)
+            .Quebra(e =>
+            {
+                e.checkup = true;
+                e.SortearDesgaste(Random.Range(4, 9));   // quem pede check-up costuma ter um computador mais velho
+                // Uma peça perto do fim (é o que dá valor ao laudo)
+                switch (Random.Range(0, 4))
+                {
+                    case 0: e.saudeDisco = Random.Range(0.25f, 0.38f); break;
+                    case 1: e.saudeBateria = Random.Range(0.3f, 0.38f); break;
+                    case 2: e.saudeCooler = Random.Range(0.3f, 0.38f); break;
+                    default: e.pcPoeira = Random.Range(0.4f, 0.65f); break;
+                }
+            }),
 
         new Problema(TipoEquipamento.Computador, "Limpar por dentro",
             "O computador desliga sozinho no meio do trabalho.",
@@ -451,7 +371,8 @@ public static class CatalogoProblemas
                 "Não aparece nada, a tela só apaga de uma vez.",
                 "Só esse, os outros são mais novos.",
                 "Depois que esfria ele liga de novo, e daqui a pouco apaga." },
-            Pergunta.MexeramEmAlgo, "Mandei limpar mês passado, está novinho por dentro."),
+            Pergunta.MexeramEmAlgo, "Mandei limpar mês passado, está novinho por dentro.")
+            .Quebra(e => { e.pcPoeira = Random.Range(0.85f, 1f); }),
 
         new Problema(TipoEquipamento.Computador, "Trocar memória",
             "O computador liga, apita e não aparece nada na tela.",
@@ -462,7 +383,14 @@ public static class CatalogoProblemas
                 "Tela preta. São três apitos compridos toda vez que liga.",
                 "Só esse computador.",
                 "Liguei e desliguei umas dez vezes, sempre os apitos." },
-            Pergunta.MensagemErro, "Não tem apito nenhum, só não liga."),
+            Pergunta.MensagemErro, "Não tem apito nenhum, só não liga.")
+            .Ferramenta(Item.PlacaPOST)
+            .Quebra(e =>
+            {
+                e.pcMemoriaRuim = true;
+                e.saudeMemoria = 0f;
+                e.pcLigado = false;
+            }),
 
         new Problema(TipoEquipamento.Computador, "Trocar fonte",
             "O computador não liga de jeito nenhum.",
@@ -473,7 +401,14 @@ public static class CatalogoProblemas
                 "Nada: nem luz, nem barulho. Senti um cheiro de queimado.",
                 "Só esse; o roteador e a impressora estão normais.",
                 "Troquei de tomada e nada." },
-            Pergunta.MensagemErro, "Não senti cheiro nem nada, só parou."),
+            Pergunta.MensagemErro, "Não senti cheiro nem nada, só parou.")
+            .Ferramenta(Item.TestadorFonte)
+            .Quebra(e =>
+            {
+                e.pcFonteQueimada = true;
+                e.saudeFonte = 0f;
+                e.pcLigado = false;
+            }),
 
         new Problema(TipoEquipamento.Impressora, "Fixar o IP",
             "A impressora está ligada, mas aparece offline no computador.",
@@ -484,7 +419,8 @@ public static class CatalogoProblemas
                 "No computador diz \"Impressora offline\". No visor dela diz \"Pronta\".",
                 "Nenhum computador imprime, mas a cópia direto nela funciona.",
                 "Reiniciei a impressora e o computador, igual." },
-            Pergunta.MexeramEmAlgo, "Ninguém mexeu em roteador nenhum."),
+            Pergunta.MexeramEmAlgo, "Ninguém mexeu em roteador nenhum.")
+            .Quebra(e => { e.impIpMudou = true; }),
 
         new Problema(TipoEquipamento.Impressora, "Reinstalar driver da impressora",
             "A impressora imprime um monte de símbolos estranhos.",
@@ -495,7 +431,8 @@ public static class CatalogoProblemas
                 "Não dá erro: imprime, só que sai tudo embaralhado.",
                 "Só do computador da recepção; a cópia direto na impressora sai certa.",
                 "Reiniciei tudo e continua saindo lixo." },
-            Pergunta.MexeramEmAlgo, "Ninguém instalou nada."),
+            Pergunta.MexeramEmAlgo, "Ninguém instalou nada.")
+            .Quebra(e => { e.impDriverErrado = true; }),
 
         new Problema(TipoEquipamento.Impressora, "Trocar cilindro",
             "Todas as folhas saem com uma risca preta.",
@@ -506,7 +443,12 @@ public static class CatalogoProblemas
                 "Não aparece mensagem, só a risca na folha.",
                 "Sai assim para todo mundo, sempre no mesmo lugar da folha.",
                 "Desliguei, chacoalhei o toner, nada resolve." },
-            Pergunta.MexeramEmAlgo, "Não mexemos em nada."),
+            Pergunta.MexeramEmAlgo, "Não mexemos em nada.")
+            .Quebra(e =>
+            {
+                e.impCilindroRiscado = true;
+                e.impToner = Random.Range(0.4f, 0.9f);   // toner está bom: a listra é do cilindro
+            }),
 
         new Problema(TipoEquipamento.Computador, "Verificar cabo de rede",
             "Computador sem acesso à rede.",
@@ -517,7 +459,8 @@ public static class CatalogoProblemas
                 "\"Cabo de rede desconectado\", no cantinho da tela.",
                 "Só eu. O pessoal do lado está navegando.",
                 "Reiniciei duas vezes." },
-            Pergunta.MexeramEmAlgo, "Ninguém mudou nada de lugar."),
+            Pergunta.MexeramEmAlgo, "Ninguém mudou nada de lugar.")
+            .Quebra(e => { SortearDefeitoCabo(e.pcCabo); }),
 
         new Problema(TipoEquipamento.Computador, "Verificar IP",
             "Aparece \"conflito de IP\" e a rede não conecta.",
@@ -528,7 +471,13 @@ public static class CatalogoProblemas
                 "\"Outro dispositivo na rede está usando o seu endereço IP\".",
                 "A impressora também começou a falhar.",
                 "Reiniciei, voltou o mesmo aviso." },
-            Pergunta.MexeramEmAlgo, "Ninguém mexeu nas configurações."),
+            Pergunta.MexeramEmAlgo, "Ninguém mexeu nas configurações.")
+            .Remoto()
+            .Quebra(e =>
+            {
+                e.pcIpFixo = true;
+                e.pcIp = e.ipImpressora;
+            }),
 
         new Problema(TipoEquipamento.Computador, "Reinstalar driver",
             "A placa de rede sumiu depois de uma atualização.",
@@ -539,7 +488,9 @@ public static class CatalogoProblemas
                 "Nem aparece o ícone de rede direito.",
                 "Só o meu.",
                 "Reiniciei umas três vezes." },
-            Pergunta.DesdeQuando, "Faz tempo, nem lembro."),
+            Pergunta.DesdeQuando, "Faz tempo, nem lembro.")
+            .Remoto()
+            .Quebra(e => { e.driverOk = false; }),
 
         new Problema(TipoEquipamento.Computador, "Reiniciar equipamento",
             "O computador está travando e lento.",
@@ -550,7 +501,13 @@ public static class CatalogoProblemas
                 "Às vezes: \"O programa não está respondendo\".",
                 "Só o meu.",
                 "Reiniciar? Nunca, tenho medo de perder as coisas." },
-            Pergunta.JaReiniciou, "Claro, reinicio todo dia."),
+            Pergunta.JaReiniciou, "Claro, reinicio todo dia.")
+            .Remoto()
+            .Quebra(e =>
+            {
+                e.memoria = Random.Range(0.94f, 0.99f);
+                e.diasLigado = Random.Range(15, 40);
+            }),
     };
 
     public static readonly Problema[] Dificeis = {
@@ -563,7 +520,13 @@ public static class CatalogoProblemas
                 "Não aparece nada, a tela apaga e ele já volta ligando.",
                 "Só esse. Parado, ele fica ligado o dia inteiro; é só trabalhar que reinicia.",
                 "Reinicia sozinho, não precisa nem eu reiniciar." },
-            Pergunta.MexeramEmAlgo, "Ninguém mexeu em nada nesse computador."),
+            Pergunta.MexeramEmAlgo, "Ninguém mexeu em nada nesse computador.")
+            .Ferramenta(Item.TestadorFonte)
+            .Quebra(e =>
+            {
+                e.pcFonteFraca = true;
+                e.saudeFonte = 0.12f;
+            }),
 
         new Problema(TipoEquipamento.Computador, TrocarMemoriaComErro,
             "O computador dá tela azul de vez em quando.",
@@ -574,7 +537,13 @@ public static class CatalogoProblemas
                 "Tela azul. Já apareceu MEMORY_MANAGEMENT e outra vez um nome diferente.",
                 "Só esse. E os arquivos às vezes abrem corrompidos.",
                 "Reinicio e volta a funcionar... até a próxima." },
-            Pergunta.MensagemErro, "Não aparece mensagem nenhuma, ele só trava."),
+            Pergunta.MensagemErro, "Não aparece mensagem nenhuma, ele só trava.")
+            .Ferramenta(Item.PendriveDiagnostico)
+            .Quebra(e =>
+            {
+                e.pcMemoriaIntermitente = true;
+                e.saudeMemoria = 0.2f;
+            }),
 
         new Problema(TipoEquipamento.Computador, "Trocar pasta térmica",
             "O computador esquenta muito e desliga sozinho.",
@@ -585,7 +554,12 @@ public static class CatalogoProblemas
                 "Não aparece mensagem, ele simplesmente apaga.",
                 "Só esse; é o mais antigo, tem uns oito anos.",
                 "Liga de novo depois de uns minutos, e apaga outra vez." },
-            Pergunta.MexeramEmAlgo, "Ninguém nunca abriu esse computador."),
+            Pergunta.MexeramEmAlgo, "Ninguém nunca abriu esse computador.")
+            .Quebra(e =>
+            {
+                e.pcPastaSeca = true;
+                e.pcPoeira = Random.Range(0.05f, 0.25f);   // está limpo: não é poeira
+            }),
 
         new Problema(TipoEquipamento.Computador, "Trocar HD",
             "O computador está muito lento e travando.",
@@ -596,7 +570,13 @@ public static class CatalogoProblemas
                 "Às vezes aparece \"Verificando o disco\" quando liga.",
                 "Só esse computador. E dá para ouvir um clique-clique vindo dele.",
                 "Reiniciar não ajuda, demora o mesmo tanto." },
-            Pergunta.MexeramEmAlgo, "Nunca aconteceu nada com ele."),
+            Pergunta.MexeramEmAlgo, "Nunca aconteceu nada com ele.")
+            .Ferramenta(Item.PendriveDiagnostico)
+            .Quebra(e =>
+            {
+                e.pcHdRuim = true;
+                e.saudeDisco = 0.07f;
+            }),
 
         new Problema(TipoEquipamento.Roteador, "Resetar para padrão",
             "Roteador desconfigurado, ninguém acessa a internet.",
@@ -607,7 +587,13 @@ public static class CatalogoProblemas
                 "O navegador diz \"Sem conexão com a internet\".",
                 "O escritório inteiro.",
                 "Já tiramos da tomada, não voltou." },
-            Pergunta.MexeramEmAlgo, "Ninguém encostou nele!"),
+            Pergunta.MexeramEmAlgo, "Ninguém encostou nele!")
+            .SemInternet()
+            .Quebra(e =>
+            {
+                e.rotConfigOk = false;
+                e.rotSenhaDesconhecida = true;
+            }),
 
         new Problema(TipoEquipamento.Roteador, "Reiniciar roteador",
             "A internet cai para todo mundo a cada 10 minutos.",
@@ -618,7 +604,9 @@ public static class CatalogoProblemas
                 "Cai e volta sozinha em uns minutos.",
                 "Todo mundo ao mesmo tempo.",
                 "Não, ele voltou sozinho depois da queda e ficou assim." },
-            Pergunta.JaReiniciou, "Já reiniciamos, claro."),
+            Pergunta.JaReiniciou, "Já reiniciamos, claro.")
+            .SemInternet()
+            .Quebra(e => { e.rotTravado = true; }),
 
         new Problema(TipoEquipamento.Roteador, "Verificar configurações",
             "A rede Wi-Fi sumiu depois de mexerem no roteador.",
@@ -629,7 +617,9 @@ public static class CatalogoProblemas
                 "A rede simplesmente não aparece na lista.",
                 "Quem usa cabo está funcionando. Só o Wi-Fi sumiu.",
                 "Reiniciamos, continua sem Wi-Fi." },
-            Pergunta.MexeramEmAlgo, "Não mexemos em nada, o Wi-Fi sumiu sozinho."),
+            Pergunta.MexeramEmAlgo, "Não mexemos em nada, o Wi-Fi sumiu sozinho.")
+            .Remoto()
+            .Quebra(e => { e.wifiAtivo = false; }),
 
         new Problema(TipoEquipamento.Roteador, "Verificar IP",
             "Os computadores pegam IP errado e não navegam.",
@@ -640,7 +630,14 @@ public static class CatalogoProblemas
                 "\"Rede não identificada\".",
                 "Todo mundo que ligou o computador hoje.",
                 "Reiniciamos os computadores, nada." },
-            Pergunta.MexeramEmAlgo, "Nada mudou por aqui."),
+            Pergunta.MexeramEmAlgo, "Nada mudou por aqui.")
+            .SemInternet()
+            .Quebra(e =>
+            {
+                e.dhcpDuplo = true;
+                e.modemEmBridge = false;
+                e.pcIpErrado = true;
+            }),
     };
 
     public static Problema Sortear(DificuldadeChamado dif)

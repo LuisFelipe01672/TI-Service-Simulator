@@ -515,8 +515,7 @@ public static partial class AtalhosTeste
         if (c == null) { Debug.LogWarning("[Teste] Rode antes o contrato de teste."); return; }
         if (mm.chamadoAtivo != null) mm.AbandonarChamado();
         c.chamadoAberto = false; c.suprimento = 0.05f; c.paginasPeca = ContratosManager.VidaUnidadeImagem - 800;
-        Debug.Log("[Teste] " + cm.DeixarReserva(c));
-        Debug.Log("[Teste] Preventiva sem/como cilindro: " + cm.TrocaPreventiva(c));
+        c.reserva = 1;   // toner reserva deixado numa visita (atalhos de Locação física)
         c.paginasPeca = ContratosManager.VidaUnidadeImagem - 800;
         var sim = typeof(ContratosManager).GetMethod("SimularDia", Privado);
         for (int i = 0; i < 25 && !c.chamadoAberto; i++) sim.Invoke(cm, new object[] { c });

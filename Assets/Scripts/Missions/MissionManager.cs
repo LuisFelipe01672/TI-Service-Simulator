@@ -93,6 +93,7 @@ public partial class MissionManager : MonoBehaviour
 
         for (int i = 0; i < quantidade; i++)
             chamadosDisponiveis.Add(CriarChamadoPorFase(fase));
+        ContratosManager.Instance?.GarantirChamadosServico();
 
         Debug.Log($"[MissionManager] {chamadosDisponiveis.Count} chamados gerados para fase {fase}.");
     }
@@ -153,6 +154,35 @@ public partial class MissionManager : MonoBehaviour
         chamadosDisponiveis.Insert(0, ch);
     }
 
+    // ---------- Locação física (Etapa 5): instalação e visita mensal viram chamados no cliente ----------
+
+    public Chamado ChamadoDeServico(int contratoId, ServicoLocacao tipo)
+    {
+        if (chamadoAtivo != null && chamadoAtivo.contratoId == contratoId && chamadoAtivo.servicoLocacao == tipo) return chamadoAtivo;
+        return chamadosDisponiveis.Find(c => c.contratoId == contratoId && c.servicoLocacao == tipo);
+    }
+
+    public Chamado AdicionarChamadoServicoLocacao(ContratoLocacao c, ServicoLocacao tipo)
+    {
+        if (c == null || tipo == ServicoLocacao.Nenhum) return null;
+        bool instalacao = tipo == ServicoLocacao.Instalacao;
+        var p = instalacao ? CatalogoProblemas.InstalacaoLocacao : CatalogoProblemas.VisitaLocacao;
+        var prioridade = PrioridadeSLA.Baixa;   // serviço agendado: prazo longo
+        float valor = instalacao ? CatalogoLocacao.Implantacao + CatalogoLocacao.Frete : 0f;
+        var ch = new Chamado(c.empresa, p.descricao, TipoChamado.Impressora, DificuldadeChamado.Facil, valor, SLA.Horas(prioridade) * 60f)
+        {
+            equipamento = p.equipamento, solucao = p.solucao, problema = p, contratoId = c.id, servicoLocacao = tipo,
+            personalidade = Personalidade.Tranquilo, contato = CatalogoProblemas.SortearContato(),
+            prioridade = prioridade, abertoEm = SLA.Agora(), exigeNota = true
+        };
+        ch.anotacoes.Add(instalacao
+            ? "Instalação da locação: a impressora vai na caixa. Monte, fixe o IP no painel, adicione no computador e teste."
+            : "Visita mensal: ler o contador no visor, ver o toner e a unidade de imagem. Leve toner e cilindro.");
+        chamadosDisponiveis.Insert(0, ch);
+        Debug.Log($"[MissionManager] Chamado de locação: {(instalacao ? "instalação" : "visita mensal")} na {c.empresa}.");
+        return ch;
+    }
+
     public void AceitarChamado(Chamado chamado)
     {
         var empresa = EmpresaManager.Instance;
@@ -166,6 +196,7 @@ public partial class MissionManager : MonoBehaviour
         chamado.estado = new EstadoEquipamentos();
         if (chamado.problema != null) CatalogoProblemas.Quebrar(chamado.problema, chamado.estado);
         if (chamado.tutorial) chamado.estado.tonerDoCliente = true;   // o cliente já comprou o toner
+        if (chamado.servicoLocacao != ServicoLocacao.Nenhum) ContratosManager.Instance?.PrepararEstado(chamado);
         Sujeira.LimparTudo();
         chamado.aceitoEm = SLA.Agora();
         chamado.aguardandoAssinatura = false;
@@ -230,7 +261,8 @@ public partial class MissionManager : MonoBehaviour
         if (ch.os != null)
         {
             ch.os.equipamento = ch.EquipamentoTexto();
-            ch.os.diagnostico = checkup
+            ch.os.diagnostico = CatalogoProblemas.EhServicoLocacao(ch.problema) ? DiagnosticoLocacao(ch)
+                : checkup
                 ? $"Check-up completo do computador ({ch.estado.idadePcAnos} anos): {ch.estado.Recomendacoes().Count} recomendação(ões) no laudo."
                 : $"Defeito no(a) {ch.EquipamentoTexto().ToLowerInvariant()}. Solução: {ch.problema.solucao.ToLowerInvariant()}.";
             AtualizarLaudo(ch);
@@ -242,6 +274,14 @@ public partial class MissionManager : MonoBehaviour
         Debug.Log($"[MissionManager] Defeito resolvido (OS {ch.os?.numero}): falta a assinatura do cliente.");
         return true;
     }
+
+    // Instalação/visita da locação: o que foi feito (a OS mostra; refeito na assinatura, depois da reserva)
+    static string DiagnosticoLocacao(Chamado ch) =>
+        ch.servicoLocacao == ServicoLocacao.Instalacao
+            ? $"Impressora alugada instalada: tirada da caixa, toner inicial, papel, rede com IP fixo {ch.estado.ipImpressora}, adicionada no computador e testada."
+            : "Visita mensal: contador lido no visor" + (ch.estado.visitaTonerBaixo ? ", toner trocado" : "") +
+              (ch.estado.trocasCilindro > 0 ? ", unidade de imagem trocada (preventiva)" : "") +
+              (ch.estado.reservasDeixadas > 0 ? $", {ch.estado.reservasDeixadas} toner(s) reserva deixado(s) no cliente" : "") + ".";
 
     // Medições das ferramentas viram o laudo da OS (no check-up é o próprio serviço; nos outros, o teste de prova)
     static void AtualizarLaudo(Chamado ch)
@@ -350,7 +390,14 @@ public partial class MissionManager : MonoBehaviour
         // Pagamento: retorno em garantia não cobra o serviço de novo (só peças novas)
         float servico = ch.retrabalho ? 0f : cometeuErro ? ch.recompensa * 0.3f : ch.recompensa;
         float valor = servico + ch.pecasCobradas;
-        if (ch.contratoId > 0)
+        if (ch.servicoLocacao != ServicoLocacao.Nenhum)
+        {
+            // Instalação/visita da locação: a implantação é cobrada pelo contrato; toner e cilindro são da empresa
+            string r = ContratosManager.Instance?.ServicoLocacaoConcluido(ch, atraso <= 0f);
+            if (r != null) GameUI.Instance?.Toast(r, UIFactory.Sucesso, 5f);
+            servico = 0f;
+        }
+        else if (ch.contratoId > 0)
         {
             // Incluso no contrato: não cobra o serviço; peças podem ser cobradas
             bool noPrazo = atraso <= 0f;
@@ -392,6 +439,7 @@ public partial class MissionManager : MonoBehaviour
             ch.os.valorServico = servico;
             ch.os.causaPendente = causa ?? "";
             AtualizarLaudo(ch);
+            if (ch.estado != null && CatalogoProblemas.EhServicoLocacao(ch.problema)) ch.os.diagnostico = DiagnosticoLocacao(ch);
             if (string.IsNullOrEmpty(ch.os.diagnostico) && ch.problema != null)
                 ch.os.diagnostico = $"Solução: {ch.problema.solucao.ToLowerInvariant()}.";
             dados.historico.Insert(0, ch.os);
@@ -420,7 +468,9 @@ public partial class MissionManager : MonoBehaviour
         if (chamadoAtivo == null) return;
         Debug.Log($"[MissionManager] Chamado abandonado: {chamadoAtivo.nomeCliente}");
         chamadoAtivo.falhou = true;
-        if (chamadoAtivo.contratoId > 0)
+        if (chamadoAtivo.servicoLocacao != ServicoLocacao.Nenhum)
+            ContratosManager.Instance?.ServicoLocacaoAbandonado(chamadoAtivo);
+        else if (chamadoAtivo.contratoId > 0)
         {
             ContratosManager.Instance?.ChamadoContratoEncerrado(chamadoAtivo.contratoId, false, false);
             ServicosManager.Instance?.ChamadoContratoEncerrado(chamadoAtivo.contratoId, false, false);
@@ -429,6 +479,7 @@ public partial class MissionManager : MonoBehaviour
         if (chamadoAtivo.retrabalho) dados.retornos.RemoveAll(r => r.id == chamadoAtivo.retornoId);
         ReputationManager.Instance?.AlterarReputacao(-ReputationManager.Instance.punicaoErro * (chamadoAtivo.retrabalho ? 1.5f : 1f));
         chamadoAtivo = null;
+        ContratosManager.Instance?.GarantirChamadosServico();   // instalação/visita continua pendente
         if (chamadosDisponiveis.Count < 2)
             GerarChamados();
     }

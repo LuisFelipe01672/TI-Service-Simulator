@@ -8,6 +8,14 @@ public enum TipoChamado
     Notebook
 }
 
+// Serviço da locação feito no local (Etapa 5): instalar a impressora alugada ou a visita mensal
+public enum ServicoLocacao
+{
+    Nenhum,
+    Instalacao,
+    VisitaMensal
+}
+
 public enum DificuldadeChamado
 {
     Facil,
@@ -46,6 +54,9 @@ public class Chamado
 
     [Tooltip("Chamado de um contrato (incluso, sem cobrança). 0 = chamado avulso")]
     public int contratoId;
+
+    [Tooltip("Instalação ou visita mensal de um contrato de locação (contratoId diz qual)")]
+    public ServicoLocacao servicoLocacao;
 
     [Tooltip("Cliente empresa: só contrata e paga com nota fiscal")]
     public bool exigeNota;

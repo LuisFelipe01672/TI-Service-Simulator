@@ -50,6 +50,7 @@ public static partial class AcoesFisicas
 
     static void Impressora(EstadoEquipamentos e, List<AcaoFisica> l)
     {
+        if (ImpressoraNaCaixa(e, l)) return;
         PecaAtual = "visor";
         l.Add(new AcaoFisica("Olhar o visor", () => $"Visor: \"{e.VisorImpressora()}\"") { observacao = true, pistaVisual = "Leia o visor da impressora." });
         var locacao = ContratosManager.Instance != null ? ContratosManager.Instance.DoChamado(MM != null ? MM.chamadoAtivo : null) : null;
@@ -58,8 +59,11 @@ public static partial class AcoesFisicas
             {
                 e.visorTemporario = $"Contador {locacao.contadorTotal:N0}";
                 e.visorTemporarioAte = UnityEngine.Time.time + 6f;
-                return ContratosManager.Instance.LerContadorNoVisor(locacao);
+                string r = ContratosManager.Instance.LerContadorNoVisor(locacao);
+                if (e.visita) { e.contadorLido = true; MM?.Verificar(); }
+                return r;
             }, 1.5f) { observacao = true });
+        ContadorNaVisita(e, l, locacao);
         if (e.impLigada)
         {
             l.Add(new AcaoFisica("Imprimir o relatório de configuração de rede (menu do painel)", () =>
@@ -69,8 +73,9 @@ public static partial class AcoesFisicas
                 e.impRelatorioVisto = true;
                 e.paginasImpressas++;
                 e.ultimaPagina = ResultadoPagina.Relatorio;
-                string ip = e.impIpMudou ? EstadoEquipamentos.IpNovoImpressora : e.ipImpressora;
-                return $"Saiu o relatório: <b>IP {ip}</b> (obtido por DHCP), máscara 255.255.255.0, gateway 192.168.0.1." +
+                string ip = e.impIpMudou ? EstadoEquipamentos.IpNovoImpressora : e.impIpPendente ? EstadoEquipamentos.IpDhcpNovaImpressora : e.ipImpressora;
+                return $"Saiu o relatório: <b>IP {ip}</b> ({(e.impIpPendente || e.impIpMudou ? "obtido por DHCP" : "fixo")}), máscara 255.255.255.0, gateway 192.168.0.1." +
+                       (e.impIpPendente ? $" <color=#F5B83F>Endereço automático: pode mudar quando faltar luz. O combinado é fixar {e.ipImpressora}.</color>" : "") +
                        (e.impIpMudou ? $" <color=#F5B83F>O computador está configurado para imprimir em {e.ipImpressora}!</color>" : "");
             }, 2f) { observacao = true });
             if (e.impIpMudou && e.impRelatorioVisto)
@@ -80,6 +85,8 @@ public static partial class AcoesFisicas
                     return $"IP fixo {e.ipImpressora} gravado. A impressora reiniciou a rede e voltou no endereço que o computador conhece.";
                 }, 3f));
         }
+        IpFixoNaInstalacao(e, l);
+        FitasDeTransporte(e, l);
         PecaAtual = "traseira";
         l.Add(new AcaoFisica("Olhar atrás da impressora", () => DescreverCabo(e.impCabo, e.impLigada, "impressora") +
             (e.impCaboSolto ? " <color=#F5B83F>O cabo passa solto pelo chão, bem no caminho do armário que a limpeza arrasta.</color>" : "")) { observacao = true });
@@ -142,7 +149,12 @@ public static partial class AcoesFisicas
                 return "Clique! Um dos lados não tinha travado. Agora fechou de verdade.";
             }, 1f));
         if (!e.impTampaAberta)
-            l.Add(new AcaoFisica("Levantar o scanner (abrir a tampa)", () => { e.impTampaAberta = true; return "Você levantou o scanner. Dá para ver o cartucho de toner."; }));
+            l.Add(new AcaoFisica("Levantar o scanner (abrir a tampa)", () =>
+            {
+                if (e.impComFitas) return "Tem fita laranja de transporte segurando a tampa. Tire as fitas primeiro.";
+                e.impTampaAberta = true;
+                return e.impCartuchoPresente ? "Você levantou o scanner. Dá para ver o cartucho de toner." : "Você levantou o scanner. O lugar do cartucho está vazio.";
+            }));
         else
         {
             PecaAtual = "cartucho";
@@ -194,6 +206,17 @@ public static partial class AcoesFisicas
                         return "Cartucho usado guardado num saco na mochila (logística reversa).";
                     }));
             }
+            else if (!e.impCartuchoPresente && e.tonerDaCaixa)
+                l.Add(new AcaoFisica("Pegar o toner inicial que veio na caixa da impressora", () =>
+                {
+                    e.tonerDaCaixa = false;
+                    e.cartuchoNaMao = true;
+                    e.cartuchoNaMaoUsado = false;
+                    e.cartuchoNaMaoToner = 1f;
+                    e.cartuchoNaMaoComLacre = true;
+                    e.cartuchoNaMaoChacoalhado = false;
+                    return "Você abriu o saquinho preto do toner inicial que veio junto com a impressora.";
+                }, 1f));
             else if (!e.impCartuchoPresente && e.tonerDoCliente)
                 l.Add(new AcaoFisica("Pegar o toner novo que o cliente deixou no armário", () =>
                 {
@@ -208,13 +231,14 @@ public static partial class AcoesFisicas
             else if (!e.impCartuchoPresente)
                 l.Add(new AcaoFisica("Pegar um toner novo da mochila", () =>
                 {
-                    if (!Mochila.Instance.Usar(Item.Toner)) return "Você não tem toner.";
+                    if (Mochila.Instance != null && !Mochila.Instance.Usar(Item.Toner)) return "Você não tem toner.";
                     e.cartuchoNaMao = true;
                     e.cartuchoNaMaoUsado = false;
                     e.cartuchoNaMaoToner = 1f;
                     e.cartuchoNaMaoComLacre = true;
                     e.cartuchoNaMaoChacoalhado = false;
-                    MM?.CobrarPeca(Mochila.Info(Item.Toner).preco, Mochila.Info(Item.Toner).nome);
+                    if (ServicoLocacaoAtivo) MM?.chamadoAtivo?.os?.RegistrarPeca("Toner (incluso no contrato)", 0f);
+                    else MM?.CobrarPeca(Mochila.Info(Item.Toner).preco, Mochila.Info(Item.Toner).nome);
                     return "Você tirou o cartucho novo da embalagem.";
                 }, 0f, Item.Toner));
 
@@ -229,16 +253,19 @@ public static partial class AcoesFisicas
                     return "Você soltou as travas, tirou o cilindro riscado e encaixou o novo, sem tocar na superfície verde.";
                 }, 3f, Item.Cilindro));
 
+            ServicosDaVisita(e, l);
             PecaAtual = "tampa";
             l.Add(new AcaoFisica("Baixar o scanner (fechar a tampa)", () =>
             {
                 if (e.cartuchoNaMao) return "Encaixe ou guarde o cartucho que está na sua mão antes de fechar.";
                 e.impTampaAberta = false;
                 e.impTampaMalFechada = false;
+                if (e.visita) MM?.Verificar();
                 return "Tampa fechada.";
             }));
         }
 
+        if (!e.impTampaAberta) ServicosDaVisita(e, l);
         PecaAtual = "botao";
         l.Add(new AcaoFisica("Imprimir página de teste (botão da impressora)", () =>
         {
@@ -276,6 +303,7 @@ public static partial class AcoesFisicas
                     return "Você removeu a impressora, apagou o driver genérico errado e instalou o do modelo certo.";
                 }, 3f, Item.PendriveDrivers));
         }
+        AdicionarImpressoraNoPc(e, l);
         PecaAtual = "traseira";
         l.Add(new AcaoFisica("Olhar atrás do gabinete", () => DescreverCabo(e.pcCabo, e.pcLigado, "computador")) { observacao = true });
         AcoesCabo(e.pcCabo, "do computador", l);

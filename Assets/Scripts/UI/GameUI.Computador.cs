@@ -266,6 +266,17 @@ public partial class GameUI
 
     void MontarImpressoras(EstadoEquipamentos e)
     {
+        if (e.pcSemImpressora)
+        {
+            TextoPc("Impressoras e scanners", 28, true);
+            TextoPc("Nenhuma impressora instalada neste computador.", 22);
+            BotaoPc(LinhaPc(), $"Adicionar impressora por endereço TCP/IP ({e.ipImpressora})", () =>
+            {
+                avisoPc = e.AdicionarImpressoraPeloIp(out bool ok);
+                if (ok) { MissionManager.Instance?.ConsumirTempo(10f); MissionManager.Instance?.RegistrarAcao($"Adicionou a impressora pelo IP {e.ipImpressora}"); }
+            }, null, 560);
+            return;
+        }
         TextoPc("Impressora do escritório (192.168.0.50)", 28, true);
         string status = !e.spoolerRodando ? "<color=#B23A48>Não disponível (spooler parado)</color>" :
                         !e.ImpressoraOnline || !e.PcNaRede ? "<color=#B23A48>Offline</color>" :

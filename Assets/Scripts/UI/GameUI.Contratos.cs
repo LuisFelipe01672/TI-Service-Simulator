@@ -21,7 +21,7 @@ public partial class GameUI
         Secao("LOCAÇÃO DE IMPRESSORAS");
         var resumo = Cartao(UIFactory.CartaoClaro);
         UIFactory.Texto(resumo, $"Receita recorrente: <b>{UIFactory.Dinheiro(cm.Mrr)}/mês</b>   ·   Contratos: {ativos} ({instalados} instalados)   ·   No estoque: {estoque}", 21, UIFactory.CorTexto);
-        UIFactory.Texto(resumo, "Cada contrato cobra um fixo por mês + páginas excedentes. O excedente só é cobrado se você ler o contador (visita) no mês.", 18, UIFactory.CorSuave);
+        UIFactory.Texto(resumo, "Cada contrato cobra um fixo por mês + páginas excedentes. O excedente só é cobrado se você ler o contador no visor (visita no cliente) no mês.", 18, UIFactory.CorSuave);
         if (!cm.Liberado)
         {
             UIFactory.Texto(tabletConteudo, "<color=#F5B83F>Locação exige CNPJ.</color> Abra o MEI na aba Empresa para receber contatos de empresas.", 21, UIFactory.CorTexto);
@@ -49,8 +49,8 @@ public partial class GameUI
             UIFactory.Texto(card, $"{(e != null ? e.Tipo.nome : "?")}  ·  franquia {c.franquia} pág.  ·  {c.meses} meses (faltam {Mathf.Max(0, diasRestantes / 30)})", 18, UIFactory.CorSuave);
             if (!c.Instalado)
             {
-                UIFactory.Texto(card, "<color=#F5B83F>Aguardando instalação.</color> O contrato só começa a render depois de instalado.", 18, UIFactory.CorTexto);
-                UIFactory.Botao(LinhaBotoes(card), "Instalar (2 h)", () => { Toast(cm.Instalar(contrato), UIFactory.Destaque, 4f); AtualizarTablet(); }, UIFactory.Destaque, 220, 46, 20);
+                UIFactory.Texto(card, "<color=#F5B83F>Instalação agendada: atenda o chamado na lista de chamados.</color> A impressora vai na caixa; " +
+                    "o contrato só começa a render depois de instalada e testada no computador do cliente.", 18, UIFactory.CorTexto);
                 continue;
             }
             int mes = EmpresaManager.MesDoDia(DiaManager.Instance != null ? DiaManager.Instance.dia : 1);
@@ -60,13 +60,14 @@ public partial class GameUI
             string corPeca = c.UsoPeca >= 1f ? "#F2545B" : c.UsoPeca >= 0.85f ? "#F5B83F" : "#9AA6B8";
             UIFactory.Texto(card, $"<color={corPeca}>Unidade de imagem: {c.UsoPeca * 100f:F0}% da vida útil ({c.paginasPeca:N0} de {ContratosManager.VidaUnidadeImagem:N0} páginas)</color>" +
                 $"  ·  Reserva no cliente: {(c.reserva > 0 ? c.reserva.ToString() : "<color=#F5B83F>nenhuma</color>")}", 18, UIFactory.CorTexto);
-            var linhaP = LinhaBotoes(card);
-            if (c.reserva < ContratosManager.MaxReserva)
-                UIFactory.Botao(linhaP, $"Deixar toner reserva ({UIFactory.Dinheiro(cm.CustoReserva(c))}, 30 min)", () => { Toast(cm.DeixarReserva(contrato), UIFactory.Destaque, 4.5f); AtualizarTablet(); }, UIFactory.CartaoClaro, 430, 46, 18);
-            if (c.UsoPeca >= 0.7f)
-                UIFactory.Botao(linhaP, "Troca preventiva da unidade de imagem (1 cilindro, 1 h)", () => { Toast(cm.TrocaPreventiva(contrato), UIFactory.Destaque, 4.5f); AtualizarTablet(); }, c.UsoPeca >= 0.85f ? UIFactory.Destaque : UIFactory.CartaoClaro, 520, 46, 18);
             var linhaC = LinhaBotoes(card);
-            UIFactory.Botao(linhaC, "Visitar: ler contador e repor tinta (1 h 30)", () => { Toast(cm.Visitar(contrato), UIFactory.Destaque, 4f); AtualizarTablet(); }, UIFactory.CartaoClaro, 480, 46, 19);
+            if (c.visitaAgendada)
+                UIFactory.Texto(card, "<color=#3FA9F5>Visita agendada: atenda o chamado no cliente</color> (ler o contador no visor" +
+                    (c.suprimento < EstadoEquipamentos.TonerBaixoVisita ? ", trocar o toner" : "") + (c.UsoPeca >= 0.7f ? ", troca preventiva do cilindro" : "") +
+                    (c.reserva < ContratosManager.MaxReserva ? ", deixar toner reserva" : "") + ").", 18, UIFactory.CorTexto);
+            else
+                UIFactory.Botao(linhaC, "Agendar visita no cliente", () => { Toast(cm.AgendarVisita(contrato), UIFactory.Destaque, 4f); AtualizarTablet(); },
+                    c.UsoPeca >= 0.7f || c.suprimento < 0.15f ? UIFactory.Destaque : UIFactory.CartaoClaro, 340, 46, 19);
             if (!c.bilhetagem && Parcerias.Ativa(Parcerias.ControleImpressao))
                 UIFactory.Botao(linhaC, $"Controle de impressão (+{UIFactory.Dinheiro(ContratosManager.MensalBilhetagem)}/mês, 1 h)", () => { Toast(cm.InstalarBilhetagem(contrato), UIFactory.Destaque, 5f); AtualizarTablet(); }, UIFactory.Destaque, 420, 46, 18);
         }

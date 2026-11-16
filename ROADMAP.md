@@ -56,9 +56,21 @@ catálogo, mas a **ordem de trabalho** passa a ser esta. Cada etapa puxa os iten
    medidas; o laudo com medições e recomendações vai na OS que o cliente assina. Testes `TestesDiagnostico`; atalhos em
    *TI Service/Teste (Play)/Diagnóstico*. Ferramentas feitas por código: no Sketchfab só havia multímetro e pendrive
    CC-BY (candidatos para trocar o corpo, com aprovação do dono).
-5. 🔜 **Locação física** — impressora de patrimônio na caixa, instalação e IP no painel, visita mensal no local
-   (contador no visor, toner reserva, troca preventiva).
-6. ⬜ **Bancada e usados como objetos** — testar, recuperar, apagar dados, etiquetar patrimônio, vender ou locar.
+5. ✅ **Locação física** (16/11/2026) — instalar e visitar deixaram de ser botões no tablet: viram **chamados no
+   cliente** (prioridade baixa, sem sorteio no catálogo; `CatalogoProblemas.InstalacaoLocacao` e `VisitaLocacao`,
+   campo `servicoLocacao` no chamado). **Instalação**: a impressora de patrimônio chega **lacrada na caixa** no móvel
+   da sala (etiqueta de patrimônio); abrir com o estilete faz ela subir de dentro e a caixa desmontar no chão com o
+   isopor (sujeira do checklist); **fitas laranja** de transporte prendem a tampa e a gaveta; toner inicial da caixa
+   (com lacre), papel, cabo de rede, ligar; o relatório mostra o IP por DHCP e o técnico **fixa o IP no painel**
+   (o visor mostra o endereço); no computador do cliente, **adicionar a impressora pelo IP** (ação na tela ou no
+   "Windows" do cliente) e a **página de teste pelo computador** fecha o serviço. Na assinatura: contrato começa a
+   contar e implantação + frete viram boleto. **Visita mensal**: entra sozinha no dia 15 sem leitura do mês, com
+   toner baixo sem reserva ou com a unidade de imagem perto do fim (ou pelo botão "Agendar visita no cliente");
+   no local: **ler o contador no visor**, trocar o toner se estiver baixo, **troca preventiva da unidade de imagem**
+   (a velha sai, a nova entra) e **toner reserva** deixado ao lado da impressora (itens da mochila, sem cobrar o
+   cliente). Janela de manutenção mostra o que falta. Testes `TestesLocacao`; atalhos em
+   *TI Service/Teste (Play)/Locação física* (passo a passo, inteiro e fotos em `Builds/Capturas/locacao`).
+6. 🔜 **Bancada e usados como objetos** — testar, recuperar, apagar dados, etiquetar patrimônio, vender ou locar.
 7. ⬜ **Notebook e problemas de software** (senha, e-mail, vírus, lentidão, impressora padrão). Antes: reorganizar
    o código para **uma definição por equipamento** (estado, ações, quebrar/resolvido e peças num lugar só).
 8. ⬜ **Rede física** — rack, patch panel, cabeamento com antes/depois (Fase 5).

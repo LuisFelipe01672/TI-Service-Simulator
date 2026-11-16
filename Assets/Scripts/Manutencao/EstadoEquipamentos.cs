@@ -153,6 +153,7 @@ public partial class EstadoEquipamentos
     // Mensagem no visor da impressora
     public string VisorImpressora()
     {
+        if (impNaCaixa) return "(na caixa)";
         if (!impLigada) return "(desligada)";
         if (impTampaAberta) return "Tampa aberta";
         if (impTampaMalFechada) return "Feche a tampa";
@@ -190,6 +191,7 @@ public partial class EstadoEquipamentos
         if (!impCartuchoPresente) return "Sem cartucho de toner.";
         if (pelaRede)
         {
+            if (pcSemImpressora) return "Nenhuma impressora instalada neste computador. Adicione a impressora pelo IP primeiro.";
             if (!spoolerRodando) return "Erro: o serviço Spooler de Impressão não está em execução.";
             if (!PcNaRede) return "Erro: este computador está sem rede.";
             if (!ImpressoraOnline) return "Impressora offline. O documento ficou na fila.";
@@ -208,6 +210,7 @@ public partial class EstadoEquipamentos
         impToner = Mathf.Max(0f, impToner - 0.002f);
         ultimaPagina = ResultadoPagina.Perfeita;
         saiuBoa = true;
+        if (pelaRede) impTestePeloPc = true;
         return impPapelUmido ? "A página saiu legível, mas ondulada e meio mole (o papel parece úmido)." : "A página saiu perfeita!";
     }
 
@@ -220,7 +223,7 @@ public partial class EstadoEquipamentos
         if (!RoteadorFuncionando || pcIpErrado) return $"Esgotado o tempo limite do pedido. ({destino})";
         if (local)
         {
-            if (destino == ipImpressora && (!ImpressoraOnline || impIpMudou)) return $"Host de destino inacessível. ({destino})";
+            if (destino == ipImpressora && (!ImpressoraOnline || impIpMudou || impIpPendente || impNaCaixa)) return $"Host de destino inacessível. ({destino})";
             return $"Resposta de {destino}: bytes=32 tempo=1ms TTL=64";
         }
         if (!InternetOk) return $"Esgotado o tempo limite do pedido. ({destino})";

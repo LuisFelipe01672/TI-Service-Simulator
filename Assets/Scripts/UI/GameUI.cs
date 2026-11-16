@@ -710,7 +710,10 @@ public partial class GameUI : MonoBehaviour
                 $"   <color={chamado.CorPersonalidade()}><size=18>{chamado.PersonalidadeTexto().ToUpper()}</size></color>",
                 26, UIFactory.CorTexto);
             UIFactory.Texto(c, $"\"{chamado.DescricaoVisivel}\"  <color=#9AA6B8>— {chamado.contato}</color>", 21, UIFactory.CorTexto);
-            UIFactory.Texto(c, (chamado.retrabalho ? "<color=#F2545B>RETORNO em garantia (sem cobrança)</color>" : chamado.contratoId > 0 ? "<color=#3FA9F5>Incluso no contrato de locação</color>" : $"Paga {UIFactory.Dinheiro(chamado.recompensa)}") +
+            UIFactory.Texto(c, (chamado.retrabalho ? "<color=#F2545B>RETORNO em garantia (sem cobrança)</color>" :
+                chamado.servicoLocacao == ServicoLocacao.Instalacao ? $"<color=#3FA9F5>Instalação da locação</color> (implantação + frete {UIFactory.Dinheiro(chamado.recompensa)} no fim)" :
+                chamado.servicoLocacao == ServicoLocacao.VisitaMensal ? "<color=#3FA9F5>Visita mensal da locação (incluso)</color>" :
+                chamado.contratoId > 0 ? "<color=#3FA9F5>Incluso no contrato de locação</color>" : $"Paga {UIFactory.Dinheiro(chamado.recompensa)}") +
                 $"  ·  <color={SLA.Cor(chamado.prioridade)}>{SLA.Texto(chamado.prioridade)}</color>, SLA até {SLA.HoraDoPrazo(chamado, SLA.Agora())}  ·  {chamado.EquipamentoVisivel}" +
                 (chamado.contratoId > 0 ? "" : chamado.exigeNota ? "  ·  <color=#F5B83F>exige nota fiscal</color>" : "  ·  aceita recibo"),
                 19, UIFactory.CorSuave);
@@ -727,14 +730,15 @@ public partial class GameUI : MonoBehaviour
             atender.interactable = mm.chamadoAtivo == null && !foraDoExpediente && liberado;
 
             // Do PC de casa: tentar resolver por acesso remoto (só software; físico precisa de visita)
-            if (NoComputador)
+            bool servicoLocal = chamado.servicoLocacao != ServicoLocacao.Nenhum;   // instalação/visita: só no local, pelo técnico
+            if (NoComputador && !servicoLocal)
             {
                 var remoto = UIFactory.Botao(linha, "Acesso remoto", () => StartCoroutine(SessaoRemota(chamado)),
                     UIFactory.Sucesso, 220, 48, 22);
                 remoto.interactable = mm.chamadoAtivo == null && !foraDoExpediente && liberado && !sessaoRemotaEmAndamento;
             }
 
-            if (equipeLivre && !foraDoExpediente)
+            if (equipeLivre && !foraDoExpediente && !servicoLocal)
             {
                 UIFactory.Botao(linha, "Delegar para a equipe", () =>
                 {

@@ -107,6 +107,13 @@ public partial class GameUI
             txtManSub.text += estado.LaudoCompleto ? "\n<color=#3CCB7F>Laudo completo: feche tudo, ligue e entregue ao cliente.</color>"
                                                    : $"\n<color=#F5B83F>Laudo: falta medir {estado.FaltaNoLaudo()}.</color>";
 
+        // Instalação/visita da locação: o que ainda falta fazer
+        if (ch.servicoLocacao != ServicoLocacao.Nenhum && !ch.aguardandoAssinatura)
+        {
+            var falta = estado.PendenciasLocacao();
+            if (falta.Count > 0) txtManSub.text += $"\n<color=#F5B83F>Falta: {string.Join(" · ", falta)}.</color>";
+        }
+
         var mochila = Mochila.Instance;
         foreach (var acao in AcoesFisicas.Para(eq.tipoEquipamento, estado))
         {
@@ -135,7 +142,7 @@ public partial class GameUI
         foreach (var info in Mochila.Catalogo)
             if (info.ferramenta && m.Tem(info.item)) ferramentas.Add(info.nome);
         UIFactory.Texto(manMochila, "Ferramentas: " + (ferramentas.Count == 0 ? "só o notebook" : "notebook, " + string.Join(", ", ferramentas)), 18, UIFactory.CorTexto);
-        UIFactory.Texto(manMochila, $"Conectores RJ45: {m.Quantidade(Item.ConectorRJ45)}  ·  Toner: {m.Quantidade(Item.Toner)}  ·  Cabos prontos: {m.ListaCabos()}", 18, UIFactory.CorSuave);
+        UIFactory.Texto(manMochila, $"Conectores RJ45: {m.Quantidade(Item.ConectorRJ45)}  ·  Toner: {m.Quantidade(Item.Toner)}  ·  Cilindro: {m.Quantidade(Item.Cilindro)}  ·  Cabos prontos: {m.ListaCabos()}", 18, UIFactory.CorSuave);
     }
 
     void ExecutarAcao(AcaoFisica a)

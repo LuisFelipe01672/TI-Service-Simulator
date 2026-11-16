@@ -150,6 +150,7 @@ public partial class EquipamentoPecas : MonoBehaviour
         PecaEquipamento.Criar(visual, eq, "traseira", "Parte de trás (cabo de rede)", P("Traseira"), S("Traseira"));
         PecaEquipamento.Criar(visual, eq, "cartucho", "Cartucho de toner", P("Cartucho"), S("Cartucho"));
         if (A("Gaveta") != null) PecaEquipamento.Criar(visual, eq, "gaveta", "Gaveta de papel", P("Gaveta"), S("Gaveta"));
+        MontarLocacao();   // antes do plugue e do cabo pendurado: a caixa mede só a impressora
         MontarDetalhesImpressora();
         // A peça da tampa acompanha a parte de cima quando ela levanta
         PecaEquipamento.Criar(dobradica, eq, "tampa", "Tampa (levantar o scanner)",
@@ -286,6 +287,7 @@ public partial class EquipamentoPecas : MonoBehaviour
             Pintar(painel, ligada ? (e != null && e.impCartuchoPresente && e.impToner > 0.1f ? mVerde : mLaranja) : mApagado);
             AtualizarLcd(e, ligada);
             AtualizarDetalhesImpressora(e, ligada);
+            AtualizarLocacao(e);
         }
         else if (eq.tipoEquipamento == TipoEquipamento.Roteador)
         {

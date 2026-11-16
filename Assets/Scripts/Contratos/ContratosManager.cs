@@ -64,6 +64,7 @@ public class ContratoLocacao
 
     public int paginasPeca;             // páginas desde a última troca da unidade de imagem (cilindro)
     public int reserva;                 // toner/tinta reserva deixado no cliente (ele mesmo troca quando acaba)
+    public bool visitaAgendada;         // há uma visita mensal marcada (vira chamado no cliente)
     public float UsoPeca => paginasPeca / (float)ContratosManager.VidaUnidadeImagem;
 
     public bool Instalado => diaInstalacao > 0;
@@ -84,8 +85,6 @@ public class ContratosManager : MonoBehaviour
 
     [Header("Ajustes")]
     public float chanceLeadPorDia = 0.25f;
-    public float minutosVisita = 90f;
-    public float minutosInstalacao = 120f;
     public float chanceDefeitoBase = 0.004f;   // por dia, por equipamento
 
     EventBinding<DiaIniciadoEvent> bDia;
@@ -264,95 +263,116 @@ public class ContratosManager : MonoBehaviour
         };
         e.contratoId = c.id;
         contratos.Add(c);
-        return $"Contrato fechado com <b>{l.empresa}</b>: {UIFactory.Dinheiro(c.mensal)}/mês por {meses} meses! Agora instale o equipamento (aba Contratos).";
+        GarantirChamadosServico();
+        return $"Contrato fechado com <b>{l.empresa}</b>: {UIFactory.Dinheiro(c.mensal)}/mês por {meses} meses! A instalação virou um chamado: leve a impressora e instale no cliente.";
     }
 
-    // ---------- Visitas ----------
-
-    // Passa o tempo da visita; devolve false se não dá (fora do expediente ou com chamado aberto)
+    // Passa o tempo de um serviço feito pelo tablet; devolve false se não dá (fora do expediente ou com chamado aberto)
     bool GastarTempo(float minutos, out string motivo)
     {
         motivo = null;
         var d = DiaManager.Instance;
         if (MissionManager.Instance != null && MissionManager.Instance.chamadoAtivo != null)
-        { motivo = "Termine o chamado em atendimento antes de sair para uma visita."; return false; }
+        { motivo = "Termine o chamado em atendimento antes de sair."; return false; }
         if (d == null) return true;
-        if (d.diaEncerrado || d.ForaDoExpediente) { motivo = "Fora do expediente: visite amanhã."; return false; }
+        if (d.diaEncerrado || d.ForaDoExpediente) { motivo = "Fora do expediente: faça amanhã."; return false; }
         d.minutoAtual += minutos;
         return true;
     }
 
-    public string Instalar(ContratoLocacao c)
+    // ---------- Instalação e visita no cliente (Etapa 5) ----------
+
+    // Contrato do chamado de instalação/visita (instalado ou não)
+    public ContratoLocacao DoServico(Chamado ch) =>
+        ch == null || ch.servicoLocacao == ServicoLocacao.Nenhum ? null
+            : contratos.Find(x => x.id == ch.contratoId && x.ativo && x.empresa == ch.nomeCliente);
+
+    // Cada contrato sem instalação e cada visita marcada têm o seu chamado na lista (também depois de carregar o jogo)
+    public void GarantirChamadosServico(bool novoDia = false)
     {
-        if (c.Instalado) return "Já está instalado.";
-        if (!GastarTempo(minutosInstalacao, out string motivo)) return motivo;
-        c.diaInstalacao = Hoje;
-        c.suprimento = 1f;
-        // Implantação e frete são cobrados uma vez
-        CobrarCliente(c, CatalogoLocacao.Implantacao + CatalogoLocacao.Frete, "Implantação e frete");
-        return $"Equipamento instalado na <b>{c.empresa}</b>. Implantação + frete cobrados ({UIFactory.Dinheiro(CatalogoLocacao.Implantacao + CatalogoLocacao.Frete)}).";
+        var mm = MissionManager.Instance;
+        if (mm == null) return;
+        foreach (var c in contratos)
+        {
+            if (!c.ativo) continue;
+            var tipo = !c.Instalado ? ServicoLocacao.Instalacao : c.visitaAgendada ? ServicoLocacao.VisitaMensal : ServicoLocacao.Nenhum;
+            if (tipo == ServicoLocacao.Nenhum) continue;
+            var existente = mm.ChamadoDeServico(c.id, tipo);
+            if (existente == null) mm.AdicionarChamadoServicoLocacao(c, tipo);
+            else if (novoDia && existente != mm.chamadoAtivo) existente.abertoEm = SLA.Agora();   // agendado para hoje
+        }
     }
 
-    // Visita de rotina: lê o contador e repõe tinta/toner (o custo do suprimento sai na hora)
-    public string Visitar(ContratoLocacao c)
+    // Tablet: marca a visita do mês (vira chamado no cliente)
+    public string AgendarVisita(ContratoLocacao c)
     {
-        if (!c.Instalado) return "Instale o equipamento primeiro.";
-        if (!GastarTempo(minutosVisita, out string motivo)) return motivo;
-        var e = Equip(c.equipamentoId);
-        var t = e != null ? e.Tipo : CatalogoLocacao.Equipamentos[0];
-        int mes = EmpresaManager.MesDoDia(Hoje);
+        if (!c.Instalado) return "Instale o equipamento primeiro (atenda o chamado de instalação).";
+        if (c.visitaAgendada) return $"A visita na <b>{c.empresa}</b> já está agendada: atenda o chamado.";
+        c.visitaAgendada = true;
+        GarantirChamadosServico();
+        return $"Visita agendada na <b>{c.empresa}</b>: o chamado está na lista. Leve toner e cilindro na mochila.";
+    }
 
-        RegistrarLeitura(c);
+    // A visita entra sozinha quando o mês vai passando sem leitura ou o suprimento fica baixo
+    void MarcarVisitaSePrecisar(ContratoLocacao c, int dia)
+    {
+        if (c.visitaAgendada || !c.Instalado) return;
+        int mes = EmpresaManager.MesDoDia(dia);
+        bool semLeitura = !c.bilhetagem && c.mesLeitura != mes && DiaManager.DataDoDia(dia).Day >= 15;
+        bool suprimento = c.suprimento < 0.2f && c.reserva == 0;
+        bool peca = c.UsoPeca >= 0.85f;
+        if (!semLeitura && !suprimento && !peca) return;
+        c.visitaAgendada = true;
+        string motivo = suprimento ? "toner baixo" : peca ? "unidade de imagem no fim" : "contador do mês ainda não lido";
+        Avisar($"Visita mensal na <b>{c.empresa}</b> entrou na lista de chamados ({motivo}).", UIFactory.Destaque, 4f);
+        Debug.Log($"[Contratos] Visita marcada: {c.empresa} ({motivo}) no dia {dia}.");
+    }
 
-        float faltando = 1f - c.suprimento;
-        float custo = Mathf.Round(faltando * t.rendimentoRefil * CatalogoLocacao.CustoPorPagina(t, c.fracCor, CatalogoLocacao.Fornecedor(c.fornecedorSuprimento)) * FocoEmpresa.MultSuprimento * 100f) / 100f;
-        if (custo > 0f) GameEconomy.Instance?.Gastar(custo, LivroCaixa.Suprimentos);
-        c.suprimento = 1f;
-        c.diasSemSuprimento = 0;
-        c.satisfacao = Mathf.Min(100f, c.satisfacao + 3f);
-        return $"Visita na <b>{c.empresa}</b>: contador em {c.contadorTotal} ({c.paginasNoMes} páginas este mês)." +
-               (custo > 0f ? $" Suprimento reposto: {UIFactory.Dinheiro(custo)}." : "");
+    // O chamado de instalação/visita começa com a impressora como o contrato está
+    public void PrepararEstado(Chamado ch)
+    {
+        var c = DoServico(ch);
+        if (c == null || ch.estado == null) return;
+        if (ch.servicoLocacao == ServicoLocacao.VisitaMensal) ch.estado.PrepararVisita(c.suprimento, c.UsoPeca);
+    }
+
+    // Cliente assinou a OS da instalação/visita
+    public string ServicoLocacaoConcluido(Chamado ch, bool noPrazo)
+    {
+        var c = DoServico(ch);
+        if (c == null) return null;
+        var e = ch.estado;
+        if (ch.servicoLocacao == ServicoLocacao.Instalacao)
+        {
+            c.diaInstalacao = Hoje;
+            c.suprimento = e != null && e.impCartuchoPresente ? Mathf.Clamp01(e.impToner) : 1f;
+            c.satisfacao = Mathf.Min(100f, c.satisfacao + (noPrazo ? 5f : 0f));
+            float valor = CatalogoLocacao.Implantacao + CatalogoLocacao.Frete;
+            CobrarCliente(c, valor, "Implantação e frete");
+            return $"Impressora instalada na <b>{c.empresa}</b>: o contrato começa a contar hoje. Implantação + frete cobrados ({UIFactory.Dinheiro(valor)}).";
+        }
+        if (ch.servicoLocacao == ServicoLocacao.VisitaMensal)
+        {
+            c.visitaAgendada = false;
+            if (e != null && e.impCartuchoPresente) c.suprimento = Mathf.Clamp01(e.impToner);
+            if (c.suprimento > 0f) c.diasSemSuprimento = 0;
+            c.satisfacao = Mathf.Min(100f, c.satisfacao + (noPrazo ? 3f : 1f));
+            return $"Visita na <b>{c.empresa}</b> concluída: contador {c.contadorTotal:N0}, toner {c.suprimento * 100f:F0}%, reserva {c.reserva}.";
+        }
+        return null;
+    }
+
+    // Técnico desistiu: a instalação/visita continua pendente e o cliente fica chateado
+    public void ServicoLocacaoAbandonado(Chamado ch)
+    {
+        var c = DoServico(ch);
+        if (c != null) c.satisfacao = Mathf.Max(0f, c.satisfacao - 5f);
     }
 
     // ---------- Peças por tempo de uso e toner reserva ----------
 
     public const int VidaUnidadeImagem = 12000;   // páginas que a unidade de imagem aguenta
     public const int MaxReserva = 2;
-    const float MinutosPreventiva = 60f, MinutosReserva = 30f;
-
-    public float CustoReserva(ContratoLocacao c)
-    {
-        var e = Equip(c.equipamentoId);
-        var t = e != null ? e.Tipo : CatalogoLocacao.Equipamentos[0];
-        return Mathf.Round(t.rendimentoRefil * CatalogoLocacao.CustoPorPagina(t, c.fracCor, CatalogoLocacao.Fornecedor(c.fornecedorSuprimento)) * FocoEmpresa.MultSuprimento * 100f) / 100f;
-    }
-
-    // Deixa um toner/tinta reserva no cliente: quando acabar, ele mesmo troca e você não precisa correr
-    public string DeixarReserva(ContratoLocacao c)
-    {
-        if (!c.Instalado) return "Instale o equipamento primeiro.";
-        if (c.reserva >= MaxReserva) return $"A {c.empresa} já tem {c.reserva} de reserva: mais que isso fica parado e some.";
-        float custo = CustoReserva(c);
-        if (GameEconomy.Instance != null && GameEconomy.Instance.saldo < custo) return $"Sem saldo para o suprimento reserva ({UIFactory.Dinheiro(custo)}).";
-        if (!GastarTempo(MinutosReserva, out string motivo)) return motivo;
-        GameEconomy.Instance?.Gastar(custo, LivroCaixa.Suprimentos);
-        c.reserva++;
-        return $"Você deixou um toner/tinta reserva na <b>{c.empresa}</b> ({UIFactory.Dinheiro(custo)}) e mostrou como trocar. Reserva lá: {c.reserva}.";
-    }
-
-    // Troca preventiva da unidade de imagem (antes de riscar): gasta um cilindro da mochila
-    public string TrocaPreventiva(ContratoLocacao c)
-    {
-        if (!c.Instalado) return "Instale o equipamento primeiro.";
-        if (Mochila.Instance == null || Mochila.Instance.Quantidade(Item.Cilindro) <= 0) return "Você precisa de um cilindro (unidade de imagem) na mochila. Compre na Loja.";
-        if (!Mochila.Instance.Tem(Item.Cilindro)) return "O cilindro está na mochila, e a mochila não está com você.";
-        if (!GastarTempo(MinutosPreventiva, out string motivo)) return motivo;
-        if (!Mochila.Instance.Usar(Item.Cilindro)) return "Você não tem cilindro com você.";
-        int rodou = c.paginasPeca;
-        PecaTrocada(c);
-        c.satisfacao = Mathf.Min(100f, c.satisfacao + 2f);
-        return $"Unidade de imagem trocada na <b>{c.empresa}</b> depois de {rodou:N0} páginas, antes de dar defeito.";
-    }
 
     // A unidade de imagem foi trocada (preventiva ou durante um chamado): zera a contagem
     public void PecaTrocada(ContratoLocacao c) { if (c != null) c.paginasPeca = 0; }
@@ -402,7 +422,9 @@ public class ContratosManager : MonoBehaviour
         {
             if (!c.ativo || !c.Instalado) continue;
             SimularDia(c);
+            if (c.ativo) MarcarVisitaSePrecisar(c, dia);
         }
+        GarantirChamadosServico(true);
 
         // Fechamento do mês: fatura todos os contratos
         int mesAtual = EmpresaManager.MesDoDia(dia);
@@ -561,6 +583,7 @@ public class ContratosManager : MonoBehaviour
         };
         e.contratoId = c.id;
         contratos.Add(c);
+        GarantirChamadosServico();
         return c;
     }
 

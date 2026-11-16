@@ -87,6 +87,33 @@ public static class CatalogoProblemas
     public const string Checkup = "Check-up completo";
     public static bool EhCheckup(Problema p) => p != null && p.solucao == Checkup;
 
+    // Etapa 5: serviços da locação feitos no local. Ficam FORA das listas sorteáveis (só o ContratosManager cria).
+    public const string InstalarLocacao = "Instalar a impressora alugada";
+    public const string VisitarLocacao = "Visita mensal da locação";
+    public static bool EhServicoLocacao(Problema p) => p != null && (p.solucao == InstalarLocacao || p.solucao == VisitarLocacao);
+
+    public static readonly Problema InstalacaoLocacao = new Problema(TipoEquipamento.Impressora, InstalarLocacao,
+        "Chegou a impressora do contrato: precisa instalar e deixar imprimindo no computador.",
+        "Chegou a impressora nova, está na caixa ainda.",
+        new[] {
+            "Assinamos o contrato com vocês esta semana.",
+            "Ninguém abriu a caixa, deixamos para o técnico.",
+            "Nenhuma, ela nem foi ligada ainda.",
+            "Todo mundo vai imprimir nela pelo computador da recepção.",
+            "Ainda não ligamos nada." },
+        Pergunta.MexeramEmAlgo, "Ninguém encostou na caixa.");
+
+    public static readonly Problema VisitaLocacao = new Problema(TipoEquipamento.Impressora, VisitarLocacao,
+        "Visita mensal da impressora alugada: leitura do contador e suprimentos.",
+        "É a visita do mês da impressora, né?",
+        new[] {
+            "A última visita foi no mês passado.",
+            "Só usamos normalmente.",
+            "Às vezes aparece aviso de toner no visor.",
+            "Todo mundo imprime nela.",
+            "Não precisou reiniciar." },
+        Pergunta.MensagemErro, "Nunca aparece nada no visor.");
+
     // Problemas que ficam bem mais fáceis com uma ferramenta (o card mostra a dica quando o técnico não a tem)
     public static Item? FerramentaIdeal(Problema p)
     {
@@ -199,6 +226,26 @@ public static class CatalogoProblemas
                 e.pcBateriaFraca = true;
                 e.saudeBateria = 0.05f;
                 break;
+            // Etapa 5: a impressora alugada chega lacrada, sem toner nem papel, cabo fora e sem IP fixo
+            case "Impressora:" + InstalarLocacao:
+                e.instalacaoEmAndamento = true;
+                e.impNaCaixa = true;
+                e.impComFitas = true;
+                e.impCartuchoPresente = false;
+                e.tonerDaCaixa = true;
+                e.impToner = 0f;
+                e.impSemPapel = true;
+                e.impCabo.conectado = false;
+                e.impCabo.defeito = DefeitoCabo.Nenhum;
+                e.impLigada = false;
+                e.impIpPendente = true;
+                e.pcSemImpressora = true;
+                e.impTestePeloPc = false;
+                break;
+            case "Impressora:" + VisitarLocacao:
+                // O ContratosManager acerta o toner e a unidade de imagem pelo contrato (PrepararVisita)
+                e.PrepararVisita(e.impToner, 0f);
+                break;
             case "Computador:" + Checkup:
                 e.checkup = true;
                 e.SortearDesgaste(Random.Range(4, 9));   // quem pede check-up costuma ter um computador mais velho
@@ -248,6 +295,8 @@ public static class CatalogoProblemas
     // O problema que o cliente reclamou foi resolvido? (o jogador confere imprimindo, pingando etc.)
     public static bool Resolvido(Problema p, EstadoEquipamentos e)
     {
+        if (p.solucao == InstalarLocacao && !e.InstalacaoCompleta) return false;
+        if (p.solucao == VisitarLocacao && !e.VisitaCompleta) return false;
         switch (p.equipamento)
         {
             case TipoEquipamento.Impressora:
@@ -624,6 +673,8 @@ public static class CatalogoProblemas
     {
         foreach (var lista in new[] { Faceis, Medios, Dificeis })
             foreach (var p in lista) if (p.equipamento == equipamento && p.solucao == solucao) return p;
+        foreach (var p in new[] { InstalacaoLocacao, VisitaLocacao })
+            if (p.equipamento == equipamento && p.solucao == solucao) return p;
         return null;
     }
 

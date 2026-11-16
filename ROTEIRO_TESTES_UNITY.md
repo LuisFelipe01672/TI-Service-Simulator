@@ -33,6 +33,15 @@ Tudo abaixo já passou nos testes de lógica fora da Unity. O que falta conferir
 - [ ] Impressora instalada mostra botão "Controle de impressão" (com a parceria PrintControl)
 - [ ] Central: alertas de firewall e de ERP aparecem quando houver esses contratos
 
+## 4b. Locação física (Etapa 5)
+- [ ] Contrato fechado: a instalação aparece na lista de chamados; a aba Contratos diz "Instalação agendada"
+- [ ] No cliente a impressora está na caixa; abrir faz ela subir e a caixa vai para o chão (recolher antes de assinar)
+- [ ] Fitas laranja seguram a tampa; toner da caixa com lacre; papel; cabo; ligar; relatório mostra IP por DHCP
+- [ ] Fixar o IP no painel (visor mostra o endereço); adicionar a impressora pelo IP no computador; página de teste
+      pelo computador → cliente confere e assina; contrato instalado e implantação + frete no Empresa
+- [ ] "Agendar visita no cliente": ler o contador no visor, trocar toner baixo, troca preventiva (unidade de imagem
+      animada), toner reserva aparece ao lado da impressora; contrato com toner cheio, reserva e leitura do mês
+
 ## 5. Fim de jogo
 - [ ] Forçar saldo negativo (Inspector do GameEconomy) e dormir vários dias: avisos em 10 e 20 dias, tela "Sua empresa faliu" no 30º
 - [ ] "Recomeçar do zero" recarrega a cena com jogo novo

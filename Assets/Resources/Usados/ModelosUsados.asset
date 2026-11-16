@@ -15,3 +15,4 @@ MonoBehaviour:
   impressora: {fileID: 919132149155446097, guid: ca15d83ee5f75e24b8a4b0e70e670974, type: 3}
   roteador: {fileID: -6689036041284674117, guid: 7eb987dcb52d0d64b80e59ca7363105e, type: 3}
   switchRede: {fileID: -6689036041284674117, guid: 23c4169bd05f8794da17d57fbf70a8aa, type: 3}
+  notebook: {fileID: -6689036041284674117, guid: b7c4461f62badf14cb857e9f19e9bf07, type: 3}

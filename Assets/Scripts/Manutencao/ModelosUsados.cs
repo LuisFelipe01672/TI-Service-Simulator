@@ -6,6 +6,7 @@ using UnityEngine;
 public class ModelosUsados : ScriptableObject
 {
     public GameObject impressora, roteador, switchRede;
+    public GameObject notebook;   // Etapa 7: notebook do cliente (EquipamentoPecas.Notebook)
 
     static ModelosUsados carregado;
     static bool tentou;

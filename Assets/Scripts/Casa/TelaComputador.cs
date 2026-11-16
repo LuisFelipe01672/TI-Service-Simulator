@@ -148,6 +148,9 @@ public class TelaComputador : MonoBehaviour
         else sobTexto.text = $"{sobProgresso}\n\n[{new string('#', 30)}]  100%\n\n{sobResultado}";
     }
 
+    // Telas menores (notebook): o texto encolhe para caber na janela
+    static void Encolher(TextMeshProUGUI t, float max) { t.enableAutoSizing = true; t.fontSizeMax = max; t.fontSizeMin = 8; }
+
     public bool SobreposicaoVisivel => sobreposicao != null && sobreposicao.gameObject.activeSelf;
 
     // ---------- Etapa 7: pistas de software (ficam até o problema sumir) ----------
@@ -173,6 +176,7 @@ public class TelaComputador : MonoBehaviour
             UIFactory.Esticar(fundo);
             var t = UIFactory.Texto(fundo, $"<size=140%><b>{titulo}</b></size>\n\n{texto}", 44, Color.white, FontStyles.Normal, TextAlignmentOptions.Center);
             UIFactory.Esticar(t.rectTransform, 60);
+            Encolher(t, 44);
         }
         else if (!string.IsNullOrEmpty(titulo))
         {
@@ -188,6 +192,8 @@ public class TelaComputador : MonoBehaviour
             var corpo = UIFactory.Texto(jan, texto, 32, new Color(0.1f, 0.14f, 0.2f), FontStyles.Normal, TextAlignmentOptions.TopLeft);
             UIFactory.Esticar(corpo.rectTransform, 24);
             corpo.margin = new Vector4(10, 80, 10, 10);
+            Encolher(corpo, 32);
+            Encolher(tt, 34);
         }
         string[] anuncios = { "PARABÉNS!!! Você ganhou um celular", "Seu PC está LENTO! Clique aqui", "OFERTA 90% OFF só hoje",
                               "Vírus detectado! Baixe o Limpador Pro", "Ganhe dinheiro em casa" };
@@ -200,6 +206,7 @@ public class TelaComputador : MonoBehaviour
             var t = UIFactory.Texto(p, $"<b>{anuncios[i % anuncios.Length]}</b>\n<size=70%>[ X ]</size>", 30,
                                     i % 2 == 0 ? new Color(0.5f, 0f, 0f) : Color.white, FontStyles.Normal, TextAlignmentOptions.Center);
             UIFactory.Esticar(t.rectTransform, 10);
+            Encolher(t, 30);
         }
         if (sobreposicao != null) sobreposicao.SetAsLastSibling();
     }

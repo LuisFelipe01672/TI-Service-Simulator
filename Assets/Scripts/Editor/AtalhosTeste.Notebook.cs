@@ -59,6 +59,38 @@ public static partial class AtalhosTeste
         Debug.Log("[Teste] Foto: " + arq);
     }
 
+    // Foto de perto com uma câmera própria (a aba Game é pequena): de frente/cima do notebook, 1280x720
+    [MenuItem(MenuNb + "Foto de perto do notebook", false, 744)]
+    static void FotoPertoNb()
+    {
+        if (!Application.isPlaying) return;
+        Equipamento nb = null;
+        foreach (var e in Object.FindObjectsByType<Equipamento>()) if (e.tipoEquipamento == TipoEquipamento.Notebook) nb = e;
+        if (nb == null) { Debug.LogWarning("[Teste] Sem notebook na cena."); return; }
+        var go = new GameObject("CameraFotoNb");
+        var cam = go.AddComponent<Camera>();
+        cam.fieldOfView = 40f;
+        cam.nearClipPlane = 0.02f;
+        Vector3 c = nb.transform.position + Vector3.up * 0.08f;
+        go.transform.position = c - nb.transform.forward * 0.42f + Vector3.up * 0.3f + nb.transform.right * 0.12f;
+        go.transform.LookAt(c);
+        var rt = new RenderTexture(1280, 720, 24);
+        cam.targetTexture = rt;
+        cam.Render();
+        RenderTexture.active = rt;
+        var tex = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+        tex.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
+        tex.Apply();
+        RenderTexture.active = null;
+        string pasta = System.IO.Path.Combine(Application.dataPath, "../Builds/Capturas/notebook");
+        System.IO.Directory.CreateDirectory(pasta);
+        string arq = System.IO.Path.Combine(pasta, $"{System.DateTime.Now:HHmmss}_perto.png");
+        System.IO.File.WriteAllBytes(arq, tex.EncodeToPNG());
+        cam.targetTexture = null;
+        Object.Destroy(go); Object.Destroy(rt); Object.Destroy(tex);
+        Debug.Log("[Teste] Foto: " + arq);
+    }
+
     // Atende de casa (acesso remoto) um chamado de software sem ir ao cliente: mostra o resultado no log
     [MenuItem(MenuNb + "Remoto: tentar todos os problemas novos (log)", false, 760)]
     static void RemotoTodos()

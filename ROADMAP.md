@@ -106,7 +106,7 @@ catálogo, mas a **ordem de trabalho** passa a ser esta. Cada etapa puxa os iten
    retrabalho) e **impressora padrão virando PDF** (definir a padrão e desligar a troca automática). Mais **seis casos
    de atendimento remoto**. Marcas reais tiradas dos textos (TI OS, buscador, pacote de escritório). Testes
    `TestesEquipamentos` e `TestesNotebookSoftware`; atalhos em *TI Service/Teste (Play)/Notebook e software*.
-   Notebook em primitivas: candidatos CC-BY no Sketchfab (tela separada, dá para animar) esperando a aprovação do dono.
+   Modelo do notebook: "Laptop" (Aullwen, CC-BY), com a tela girando na dobradiça por código.
 8. 🔜 **Rede física** — rack, patch panel, cabeamento com antes/depois (Fase 5).
 
 Regras desta ordem: **sistemas novos de gestão ficam congelados até a etapa 5** (o que existe precisa ganhar corpo

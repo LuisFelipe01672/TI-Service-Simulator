@@ -20,8 +20,9 @@ static class ConfigurarUsados
         banco.impressora = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Models/Sketchfab/Impressora_MFP_Compacta.fbx");
         banco.roteador = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Models/Sketchfab/Roteador/Roteador.gltf");
         banco.switchRede = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Models/Sketchfab/Switch_5_Portas/Switch_5_Portas.gltf");
+        banco.notebook = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Models/Sketchfab/Notebook/Notebook.gltf");
         EditorUtility.SetDirty(banco);
         AssetDatabase.SaveAssets();
-        Debug.Log($"[Usados] Modelos ligados: impressora {(banco.impressora != null ? "ok" : "FALTANDO")}, roteador {(banco.roteador != null ? "ok" : "FALTANDO")}, switch {(banco.switchRede != null ? "ok" : "FALTANDO")}");
+        Debug.Log($"[Usados] Modelos ligados: impressora {(banco.impressora != null ? "ok" : "FALTANDO")}, roteador {(banco.roteador != null ? "ok" : "FALTANDO")}, switch {(banco.switchRede != null ? "ok" : "FALTANDO")}, notebook {(banco.notebook != null ? "ok" : "FALTANDO")}");
     }
 }

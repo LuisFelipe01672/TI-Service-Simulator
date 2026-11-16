@@ -10,6 +10,8 @@ public partial class EquipamentoPecas
               nbDobradicaEsq, nbFita;
     Renderer nbLedLiga, nbLedCarregador;
     float nbAnguloTampa = 15f, nbVirado;
+    float nbTopo = 0.019f;          // altura do tampo do teclado (o modelo 3D é mais fino que as primitivas)
+    bool nbModelo;                  // usando o modelo do Sketchfab (ModelosUsados.notebook)
     int nbLimpezasVistas, nbTrocasVistas;
     static Material mNbCarcaca, mNbTeclado, mNbBateria, mNbPoeira, mNbMetal, mNbFita;
 
@@ -84,6 +86,72 @@ public partial class EquipamentoPecas
         PecaEquipamento.Criar(nbVisual, eq, "fundo", "Base (tampa de baixo e bateria)", new Vector3(0f, 0.01f, -0.108f), new Vector3(0.35f, 0.03f, 0.03f));
         PecaEquipamento.Criar(nbVisual, eq, "saida_ar", "Saída de ar", new Vector3(-0.175f, 0.01f, 0.05f), new Vector3(0.03f, 0.03f, 0.1f));
         PecaEquipamento.Criar(transform, eq, "carregador", "Carregador", new Vector3(0.3f, 0.02f, 0.04f), new Vector3(0.13f, 0.05f, 0.08f));
+        TrocarPeloModelo();
+    }
+
+    // Modelo "Laptop" (Aullwen, CC-BY; ver CREDITOS.md): a base no lugar da base de primitivas e a tela dentro da
+    // dobradiça que gira. As primitivas das pistas (touchpad estufado, buraco da tecla, bateria e ventoinha por baixo)
+    // ficam por cima. Sem o modelo, fica tudo em primitivas.
+    void TrocarPeloModelo()
+    {
+        var banco = ModelosUsados.Carregar();
+        var prefab = banco != null ? banco.notebook : null;
+        if (prefab == null) return;
+        var inst = Instantiate(prefab, nbVisual, false);
+        inst.name = "Modelo";
+        Transform baseNb = null, tela = null;
+        foreach (var r in inst.GetComponentsInChildren<Renderer>(true))
+        {
+            if (r.name.Contains("Frame")) baseNb = r.transform;
+            else if (r.name.Contains("Screen")) tela = r.transform;
+        }
+        if (baseNb == null || tela == null) { Destroy(inst); Debug.LogWarning("[Notebook] Modelo sem Frame/Screen: fica em primitivas."); return; }
+
+        // Caixa da base no espaço do Visual
+        Bounds B()
+        {
+            var b = baseNb.GetComponent<Renderer>().bounds;
+            var c = nbVisual.InverseTransformPoint(b.center);
+            var t = nbVisual.InverseTransformVector(b.size);
+            return new Bounds(c, new Vector3(Mathf.Abs(t.x), Mathf.Abs(t.y), Mathf.Abs(t.z)));
+        }
+        // Largura no x, 34 cm como as primitivas; base no tampo, centrada
+        var b0 = B();
+        if (b0.size.z > b0.size.x) inst.transform.localRotation = Quaternion.Euler(0f, 90f, 0f) * inst.transform.localRotation;
+        b0 = B();
+        inst.transform.localScale *= 0.34f / b0.size.x;
+        b0 = B();
+        inst.transform.localPosition -= new Vector3(b0.center.x, b0.min.y, b0.center.z);
+        // O pé da tela (dobradiça) fica atrás (+z); se ficou na frente, gira meia volta
+        if (nbVisual.InverseTransformPoint(tela.position).z < 0f)
+        {
+            inst.transform.localRotation = Quaternion.Euler(0f, 180f, 0f) * inst.transform.localRotation;
+            inst.transform.localPosition = Quaternion.Euler(0f, 180f, 0f) * inst.transform.localPosition;
+        }
+        b0 = B();
+        nbTopo = b0.max.y;
+
+        // Tela na dobradiça: o pé da tela vira o pivô e a inclinação do modelo é desfeita (a tampa gira por código)
+        nbPivoTampa.localPosition = nbVisual.InverseTransformPoint(tela.position);
+        tela.SetParent(nbPivoTampa, true);
+        Vector3 cima = nbVisual.InverseTransformDirection(tela.up);
+        float inclinacao = Vector3.SignedAngle(Vector3.up, Vector3.ProjectOnPlane(cima, Vector3.right), Vector3.right);
+        tela.RotateAround(nbPivoTampa.position, nbVisual.right, -inclinacao);
+
+        // Some com as primitivas que o modelo substitui
+        foreach (var n in new[] { "Base", "Teclado", "TeclaA" }) { var x = nbVisual.Find(n); if (x != null) x.gameObject.SetActive(false); }
+        foreach (var n in new[] { "Tampa", "Moldura", "DobradicaEsq", "DobradicaDir" }) { var x = nbPivoTampa.Find(n); if (x != null) x.gameObject.SetActive(false); }
+        nbModelo = true;
+        // Buraco da tecla A (aparece sem a capinha) e o LED rentes ao tampo do modelo
+        nbTeclaA = Cubo(nbVisual, "BuracoTeclaA", new Vector3(-0.1f, nbTopo + 0.0004f, 0.015f), new Vector3(0.016f, 0.001f, 0.016f), mPreto).transform;
+        nbLedLiga.transform.localPosition = new Vector3(0.14f, nbTopo + 0.0004f, 0.1f);
+        // A tela viva vai para a frente da tela do modelo
+        var tb = tela.GetComponent<Renderer>().bounds;
+        float frente = nbPivoTampa.InverseTransformPoint(tb.center).z - Mathf.Abs(nbPivoTampa.InverseTransformVector(tb.size).z) / 2f;
+        float alto = Mathf.Abs(nbPivoTampa.InverseTransformVector(tb.size).y);
+        telaViva.transform.localPosition = new Vector3(0.003f, alto * 0.53f - 0.004f, frente - 0.0007f);
+        telaViva.GetComponent<TelaComputador>().tamanho = new Vector2(0.322f, 0.194f);   // cobre a área branca da tela do modelo
+        Debug.Log($"[Notebook] Modelo do Sketchfab ligado: tampo a {nbTopo * 100f:0.0} cm, tela de {alto * 100f:0} cm, inclinada {inclinacao:0} graus no original.");
     }
 
     void AtualizarNotebook(EstadoEquipamentos e)
@@ -104,21 +172,23 @@ public partial class EquipamentoPecas
 
         // Virar de barriga para cima (e desvirar) com a tampa de baixo
         nbVirado = Mathf.MoveTowards(nbVirado, virado && nbAnguloTampa < -80f ? 180f : 0f, 240f * Time.deltaTime);
-        nbVisual.localPosition = new Vector3(0f, nbVirado > 1f ? 0.027f : 0f, 0f);
+        nbVisual.localPosition = new Vector3(0f, nbVirado > 1f ? nbTopo + 0.008f : 0f, 0f);
         float balanco = e != null && e.nbBateriaEstufada && !virado ? Mathf.Sin(Time.time * 2.2f) * 1.2f : 0f;
         nbVisual.localRotation = Quaternion.Euler(balanco, 0f, nbVirado);
         nbTampaFundo.gameObject.SetActive(!(virado && nbVirado > 170f));
 
         // Bateria estufada: teclado e touchpad levantados; a bateria (por baixo) abaulada
         bool estufada = e != null && e.nbBateriaEstufada;
-        nbTouchpad.localPosition = new Vector3(0f, estufada ? 0.0225f : 0.0192f, -0.075f);
+        nbTouchpad.localPosition = new Vector3(0f, nbTopo + (estufada ? 0.0035f : 0.0002f), -0.075f);
+        nbTouchpad.gameObject.SetActive(!nbModelo || estufada);   // no modelo, o touchpad de primitiva só aparece quando levanta
         nbTouchpad.localRotation = Quaternion.Euler(estufada ? -4f : 0f, 0f, 0f);
-        nbPlacaTeclado.localPosition = new Vector3(0f, estufada ? 0.0215f : 0.0195f, 0.025f);
+        if (!nbModelo) nbPlacaTeclado.localPosition = new Vector3(0f, estufada ? 0.0215f : 0.0195f, 0.025f);
         nbBateria.gameObject.SetActive(e == null || !e.nbBateriaFora);
         nbBateria.localScale = new Vector3(0.24f, estufada ? 0.016f : 0.006f, 0.07f);
 
         // Tecla A sem a capinha; poeira na grade e na ventoinha
-        nbTeclaA.gameObject.SetActive(e == null || !e.nbTeclaSemCapa);
+        bool semCapa = e != null && e.nbTeclaSemCapa;
+        nbTeclaA.gameObject.SetActive(nbModelo ? semCapa : !semCapa);   // modelo: aparece o buraco; primitivas: some a tecla
         bool poeira = e != null && e.nbPoeira > 0.7f;
         nbPoeiraVent.gameObject.SetActive(poeira);
         var pv = nbVisual.Find("Ventoinha/PoeiraVentoinha");
@@ -126,7 +196,7 @@ public partial class EquipamentoPecas
 
         // Moldura solta em cima da mesa
         bool moldura = e != null && e.nbMolduraAberta;
-        nbMoldura.gameObject.SetActive(!moldura);
+        if (!nbModelo) nbMoldura.gameObject.SetActive(!moldura);
         nbMolduraSolta.gameObject.SetActive(moldura);
 
         // Carregador: fita isolante no cabo ruim, luz verde só carregando

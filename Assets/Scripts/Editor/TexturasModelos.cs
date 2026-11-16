@@ -18,7 +18,7 @@ public class TexturasModelos : AssetPostprocessor
     // Objetos pequenos ou vistos de longe: 1024 basta. O resto (móveis, impressora, PC): 2048.
     static readonly string[] Pequenos =
     {
-        "Cartucho_Toner", "Telefone_Escritorio", "Switch_5_Portas", "Roteador", "Mochila",
+        "Cartucho_Toner", "Telefone_Escritorio", "Notebook", "Switch_5_Portas", "Roteador", "Mochila",
         "Micro_Ondas", "Patch_Panel", "Switch_Rack_24", "Multimetro", "Pendrive",
     };
 

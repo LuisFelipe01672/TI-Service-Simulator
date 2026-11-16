@@ -3,7 +3,7 @@ using UnityEngine;
 
 // Atalhos para testar no Play: levam o jogador a um ponto exato e miram num alvo.
 // Menu "TI Service/Teste (Play)". Só funcionam com o jogo rodando.
-public static class AtalhosTeste
+public static partial class AtalhosTeste
 {
     const string Menu = "TI Service/Teste (Play)/";
 
@@ -341,7 +341,7 @@ public static class AtalhosTeste
         var todas = new System.Collections.Generic.List<AcaoFisica>(AcoesFisicas.Para(mm.chamadoAtivo.equipamento, mm.Estado));
         foreach (TipoEquipamento tp in System.Enum.GetValues(typeof(TipoEquipamento))) if (tp != mm.chamadoAtivo.equipamento) todas.AddRange(AcoesFisicas.Para(tp, mm.Estado));
         foreach (var a in todas)
-            if (a.rotulo.StartsWith(inicio)) { string r = a.executar(); Debug.Log($"[Teste] {a.rotulo} → {r} | Visor: {mm.Estado?.VisorImpressora() ?? "(chamado concluído)"}"); return; }
+            if (a.rotulo.StartsWith(inicio)) { string r = a.executar(); if (!a.observacao) mm.RegistrarAcao(a.rotulo); Debug.Log($"[Teste] {a.rotulo} → {r} | Visor: {mm.Estado?.VisorImpressora() ?? "(chamado concluído)"}"); return; }
         Debug.LogWarning("[Teste] Ação não disponível agora: " + inicio);
     }
 

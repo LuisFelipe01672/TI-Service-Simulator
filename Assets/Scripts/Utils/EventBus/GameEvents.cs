@@ -35,6 +35,8 @@ public struct ChamadoConcluidoEvent : IEvent
     public bool cometeuErro;
     public bool porFuncionario;
     public bool diagnosticoCerteiro;   // investigou e acertou de primeira
+    public int estrelas;               // avaliação do cliente (0 = sem avaliação, ex.: equipe)
+    public string comentario;
 }
 
 public struct AcaoErradaEvent : IEvent

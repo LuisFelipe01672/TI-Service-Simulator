@@ -34,6 +34,16 @@ public class Chamado
     public int acoesFeitas;
     public float pecasCobradas;       // toner, cabos... (o cliente paga junto)
 
+    [Header("Prazo (SLA) e ordem de serviço")]
+    public PrioridadeSLA prioridade = PrioridadeSLA.Normal;
+    public float abertoEm;                // minuto absoluto do jogo em que o cliente abriu o chamado
+    public float aceitoEm;                // minuto absoluto em que o técnico aceitou
+    public bool aguardandoAssinatura;     // o defeito sumiu: falta o cliente conferir o checklist e assinar a OS
+    public bool retrabalho;               // o cliente voltou a chamar (garantia: não paga de novo)
+    public bool tutorial;                 // primeiro chamado do jogo novo: o card mostra um guia passo a passo
+    public int retornoId;
+    public OrdemServico os;
+
     [Tooltip("Chamado de um contrato (incluso, sem cobrança). 0 = chamado avulso")]
     public int contratoId;
 

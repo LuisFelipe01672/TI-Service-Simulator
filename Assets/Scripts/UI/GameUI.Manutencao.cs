@@ -100,7 +100,7 @@ public partial class GameUI
             MontarMochilaResumo();
             return;
         }
-        txtManSub.text = $"\"{ch.DescricaoVisivel}\" — {ch.contato}   ·   Prazo: {Tempo(mm.TempoRestante)}";
+        txtManSub.text = $"\"{ch.DescricaoVisivel}\" — {ch.contato}   ·   {(ch.aguardandoAssinatura ? "Resolvido: falta assinar a OS" : mm.TempoRestante > 0 ? $"SLA: resta {Tempo(mm.TempoRestante)}" : $"SLA estourado há {Tempo(-mm.TempoRestante)}")}";
 
         var mochila = Mochila.Instance;
         foreach (var acao in AcoesFisicas.Para(eq.tipoEquipamento, estado))
@@ -162,7 +162,7 @@ public partial class GameUI
     {
         if (equipamentoAtual != null) SomManager.SomDaAcao(a.rotulo, equipamentoAtual.transform.position);
         string r = a.executar();
-        if (!a.observacao) MissionManager.Instance?.RegistrarAcao();
+        if (!a.observacao) MissionManager.Instance?.RegistrarAcao(a.rotulo);
         Registrar(r);
         // A ação pode ter fechado o chamado (página de teste ok, por exemplo)
         if (MissionManager.Instance == null || MissionManager.Instance.chamadoAtivo == null) { FecharModal(); return; }
@@ -362,12 +362,12 @@ public partial class GameUI
             MontarManutencao();
             return;
         }
-        mm.RegistrarAcao();
+        mm.RegistrarAcao("Refez a ponta do cabo de rede (crimpagem)");
         IniciarCrimpagem($"Refazer a ponta do cabo: {eq.Nome}", eq.transform.position, ok =>
         {
             if (ok) { if (cabo.defeito == DefeitoCabo.Conector) cabo.defeito = DefeitoCabo.Nenhum; }
             else if (cabo.defeito != DefeitoCabo.Rompido) cabo.defeito = DefeitoCabo.Conector;
-            mm.CobrarPeca(2f);
+            mm.CobrarPeca(2f, "Conectores RJ45");
             Registrar("Você refez a ponta do cabo. Teste com o testador para ter certeza.");
             if (pelaPeca) { FecharModal(); MostrarResultadoPeca("Você refez a ponta do cabo. Teste com o testador para ter certeza."); }
             else AbrirManutencao(eq);

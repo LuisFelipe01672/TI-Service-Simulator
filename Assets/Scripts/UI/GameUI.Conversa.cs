@@ -88,7 +88,7 @@ public partial class GameUI
         if (restantes == 0)
             UIFactory.Texto(convPerguntas, "Você já perguntou tudo. Agora é com você: vá ao equipamento e teste.", 20, UIFactory.CorSuave);
         else
-            UIFactory.Texto(convPerguntas, $"<size=85%>Cada pergunta gasta {(mm != null ? mm.custoPergunta : 5f):F0}s do prazo." +
+            UIFactory.Texto(convPerguntas, $"<size=85%>Cada pergunta gasta {(mm != null ? mm.custoPergunta : 5f):F0} min do relógio (o SLA corre junto)." +
                 (ch.personalidade == Personalidade.Apressado ? " Este cliente está com pressa: não exagere." : "") + "</size>",
                 18, UIFactory.CorSuave);
 

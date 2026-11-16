@@ -79,7 +79,16 @@ public static class AcoesFisicas
                 }, 3f));
         }
         PecaAtual = "traseira";
-        l.Add(new AcaoFisica("Olhar atrás da impressora", () => DescreverCabo(e.impCabo, e.impLigada, "impressora")) { observacao = true });
+        l.Add(new AcaoFisica("Olhar atrás da impressora", () => DescreverCabo(e.impCabo, e.impLigada, "impressora") +
+            (e.impCaboSolto ? " <color=#F5B83F>O cabo passa solto pelo chão, bem no caminho do armário que a limpeza arrasta.</color>" : "")) { observacao = true });
+        // Causa raiz do cabo: sem prender, a próxima faxina solta de novo
+        if (e.impCaboSolto && e.impCabo.conectado)
+            l.Add(new AcaoFisica("Passar o cabo rente à parede e prender com abraçadeiras", () =>
+            {
+                e.impCaboSolto = false;
+                MM?.CobrarPeca(5f, "Abraçadeiras e fixadores");
+                return "Você tirou o cabo do caminho do armário, passou rente ao rodapé e prendeu com abraçadeiras a cada palmo.";
+            }, 3f));
         AcoesCabo(e.impCabo, "da impressora", l);
 
         // Atolamento: a folha amassada sai pela tampa de trás
@@ -100,7 +109,9 @@ public static class AcoesFisicas
             l.Add(new AcaoFisica("Abrir a gaveta de papel", () =>
             {
                 e.impGavetaAberta = true;
-                return e.impSemPapel ? "Gaveta aberta: está VAZIA, sem nenhuma folha." : "Gaveta aberta: tem papel A4 até a marca.";
+                return e.impSemPapel ? "Gaveta aberta: está VAZIA, sem nenhuma folha." :
+                       e.impPapelUmido ? "Gaveta aberta: tem papel A4, mas as folhas estão <color=#F5B83F>onduladas e frias, parecem úmidas</color>." :
+                       "Gaveta aberta: tem papel A4 até a marca.";
             }));
         else
         {
@@ -110,6 +121,13 @@ public static class AcoesFisicas
                     e.impSemPapel = false;
                     return "Você ventilou as folhas, colocou na gaveta e encostou a guia no papel.";
                 }, 2f));
+            if (e.impPapelUmido && !e.impSemPapel)
+                l.Add(new AcaoFisica("Trocar a resma úmida por papel seco (pacote lacrado do cliente)", () =>
+                {
+                    e.impPapelUmido = false;
+                    return "Você tirou as folhas úmidas, abriu um pacote lacrado, ventilou o papel novo e colocou na gaveta. " +
+                           "Avisou o cliente para guardar as resmas longe da janela e do ar-condicionado.";
+                }, 2.5f));
             l.Add(new AcaoFisica("Fechar a gaveta (até o fim)", () => { e.impGavetaAberta = false; return "Gaveta fechada, encaixou certinho."; }));
         }
 
@@ -174,6 +192,17 @@ public static class AcoesFisicas
                         return "Cartucho usado guardado num saco na mochila (logística reversa).";
                     }));
             }
+            else if (!e.impCartuchoPresente && e.tonerDoCliente)
+                l.Add(new AcaoFisica("Pegar o toner novo que o cliente deixou no armário", () =>
+                {
+                    e.tonerDoCliente = false;
+                    e.cartuchoNaMao = true;
+                    e.cartuchoNaMaoUsado = false;
+                    e.cartuchoNaMaoToner = 1f;
+                    e.cartuchoNaMaoComLacre = true;
+                    e.cartuchoNaMaoChacoalhado = false;
+                    return "Você pegou a caixa do toner que o cliente comprou e tirou o cartucho novo da embalagem (o cliente já pagou por ele).";
+                }, 1f));
             else if (!e.impCartuchoPresente)
                 l.Add(new AcaoFisica("Pegar um toner novo da mochila", () =>
                 {
@@ -183,7 +212,7 @@ public static class AcoesFisicas
                     e.cartuchoNaMaoToner = 1f;
                     e.cartuchoNaMaoComLacre = true;
                     e.cartuchoNaMaoChacoalhado = false;
-                    MM?.CobrarPeca(Mochila.Info(Item.Toner).preco);
+                    MM?.CobrarPeca(Mochila.Info(Item.Toner).preco, Mochila.Info(Item.Toner).nome);
                     return "Você tirou o cartucho novo da embalagem.";
                 }, 0f, Item.Toner));
 
@@ -193,7 +222,7 @@ public static class AcoesFisicas
                 {
                     if (!Mochila.Instance.Usar(Item.Cilindro)) return "Você não tem cilindro novo.";
                     e.impCilindroRiscado = false;
-                    MM?.CobrarPeca(Mochila.Info(Item.Cilindro).preco);
+                    MM?.CobrarPeca(Mochila.Info(Item.Cilindro).preco, Mochila.Info(Item.Cilindro).nome);
                     ContratosManager.Instance?.PecaTrocada(ContratosManager.Instance.DoChamado(MM != null ? MM.chamadoAtivo : null));
                     return "Você soltou as travas, tirou o cilindro riscado e encaixou o novo, sem tocar na superfície verde.";
                 }, 3f, Item.Cilindro));
@@ -342,7 +371,7 @@ public static class AcoesFisicas
                     if (!Mochila.Instance.Usar(Item.Memoria)) return "Você não tem pente de memória.";
                     e.pcMemoriaRuim = false;
                     e.pcTrocasMemoria++;
-                    MM?.CobrarPeca(Mochila.Info(Item.Memoria).preco);
+                    MM?.CobrarPeca(Mochila.Info(Item.Memoria).preco, Mochila.Info(Item.Memoria).nome);
                     return "Você abriu as travas, tirou o pente ruim e encaixou o novo até as duas travas fecharem.";
                 }, 2f, Item.Memoria));
             if (e.pcFonteQueimada)
@@ -351,7 +380,7 @@ public static class AcoesFisicas
                     if (!Mochila.Instance.Usar(Item.Fonte)) return "Você não tem fonte nova.";
                     e.pcFonteQueimada = false;
                     e.pcTrocasFonte++;
-                    MM?.CobrarPeca(Mochila.Info(Item.Fonte).preco);
+                    MM?.CobrarPeca(Mochila.Info(Item.Fonte).preco, Mochila.Info(Item.Fonte).nome);
                     return "Você soltou os 4 parafusos, desligou os conectores da placa e dos discos, e instalou a fonte nova.";
                 }, 4f, Item.Fonte));
             // Cooler e pasta térmica
@@ -377,7 +406,7 @@ public static class AcoesFisicas
                     {
                         if (!Mochila.Instance.Usar(Item.PastaTermica)) return "Você não tem pasta térmica.";
                         e.pcPastaNova = true;
-                        MM?.CobrarPeca(10f);
+                        MM?.CobrarPeca(10f, "Pasta térmica");
                         return "Um grão de pasta do tamanho de uma ervilha, bem no centro do processador.";
                     }, 1.5f, Item.PastaTermica));
                 l.Add(new AcaoFisica("Recolocar o cooler (apertar em X)", () =>
@@ -401,7 +430,7 @@ public static class AcoesFisicas
                     e.pcHdRuim = false;
                     e.pcSemSistema = true;
                     e.pcTrocasHd++;
-                    MM?.CobrarPeca(Mochila.Info(Item.SSD).preco);
+                    MM?.CobrarPeca(Mochila.Info(Item.SSD).preco, Mochila.Info(Item.SSD).nome);
                     if (!e.pcBackupFeito) MM?.RegistrarErro("Trocou o disco SEM fazer backup: o cliente perdeu todos os arquivos!", 6f);
                     return e.pcBackupFeito ? "HD velho fora, SSD novo parafusado e com os cabos de dados e energia ligados."
                                            : "SSD novo instalado... mas os arquivos do cliente ficaram no HD que morreu.";
@@ -476,7 +505,7 @@ public static class AcoesFisicas
                 var novo = m.PegarCabo(c.metrosNecessarios);
                 if (novo == null)
                     return $"<color=#F2545B>Nenhum cabo seu alcança!</color> Precisa de {c.metrosNecessarios:0.#} m e você tem: {m.ListaCabos()}.";
-                MM?.CobrarPeca(novo.metros * 3f + 4f);   // cabo + 2 conectores
+                MM?.CobrarPeca(novo.metros * 3f + 4f, $"Cabo de rede {novo.metros:0.#} m + 2 conectores");   // cabo + 2 conectores
                 Sujeira.Espalhar(MM != null ? MM.PosicaoEquipamentoAtual : UnityEngine.Vector3.zero, 1, "cabo velho");
                 c.defeito = novo.Bom ? DefeitoCabo.Nenhum : DefeitoCabo.Conector;
                 c.conectado = true;

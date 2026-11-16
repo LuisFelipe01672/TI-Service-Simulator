@@ -65,6 +65,10 @@ public class EstadoEquipamentos
     public bool impIpMudou;                   // pegou outro IP por DHCP: o computador ainda imprime no IP antigo
     public bool impRelatorioVisto;            // o técnico imprimiu o relatório de configuração de rede
     public bool impDriverErrado;              // driver errado no computador: saem folhas com caracteres estranhos
+    // Causas raiz: o sintoma some, mas o problema volta em 1–3 dias se ficarem (retrabalho)
+    public bool impPapelUmido;                // resma úmida na gaveta: volta a atolar
+    public bool impCaboSolto;                 // cabo solto no chão, no caminho do armário que a limpeza arrasta
+    public bool tonerDoCliente;               // chamado guiado: o cliente já comprou um toner novo (fica no armário)
     public const string IpNovoImpressora = "192.168.0.87";
     [System.NonSerialized] public string visorTemporario;     // ex.: contador de páginas (menu Informações)
     [System.NonSerialized] public float visorTemporarioAte;
@@ -203,7 +207,7 @@ public class EstadoEquipamentos
         impToner = Mathf.Max(0f, impToner - 0.002f);
         ultimaPagina = ResultadoPagina.Perfeita;
         saiuBoa = true;
-        return "A página saiu perfeita!";
+        return impPapelUmido ? "A página saiu legível, mas ondulada e meio mole (o papel parece úmido)." : "A página saiu perfeita!";
     }
 
     public string Ping(string destino)

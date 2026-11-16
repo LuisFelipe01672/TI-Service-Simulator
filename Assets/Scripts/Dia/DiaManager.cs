@@ -176,7 +176,8 @@ public class DiaManager : MonoBehaviour
             GameUI.Instance?.Toast("Termine ou desista do chamado em atendimento antes de ir embora.", UIFactory.Perigo, 3f);
             return false;
         }
-        if (mm != null && mm.chamadoAtivo != null) mm.AbandonarChamado();
+        // Já resolvido e só faltando assinar: o cliente assina às pressas na saída; senão é abandono
+        if (mm != null && mm.chamadoAtivo != null) { if (mm.chamadoAtivo.aguardandoAssinatura) mm.FecharOSAssinada(); else mm.AbandonarChamado(); }
 
         diaEncerrado = true;
 

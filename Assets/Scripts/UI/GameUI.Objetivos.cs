@@ -33,6 +33,7 @@ public partial class GameUI
 
         string concluido = Objetivos.Atualizar();
         if (concluido != null) Toast($"<b>Objetivo concluído:</b> {concluido}", UIFactory.Sucesso, 4f);
+        AplicarAbasLiberadas();
 
         if (Objetivos.Terminou) { painelObjetivo.gameObject.SetActive(false); return; }
         var o = Objetivos.Atual;

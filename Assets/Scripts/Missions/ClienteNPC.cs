@@ -14,12 +14,107 @@ public class ClienteNPC : Interactable
     readonly List<Material> materiais = new List<Material>();
     float fase;
 
+    bool assinando;
+
     public override string TextoPrompt =>
+        assinando ? null :
+        chamado != null && chamado.aguardandoAssinatura ? $"[E] Mostrar a OS para {chamado.contato} conferir e assinar" :
         chamado != null ? $"[E] Conversar com {chamado.contato}" : "[E] Conversar";
 
     public override void Interagir()
     {
-        if (GameUI.Instance != null) GameUI.Instance.AbrirConversa(this);
+        if (assinando || GameUI.Instance == null) return;
+        if (chamado != null && chamado.aguardandoAssinatura) GameUI.Instance.AbrirOS(this);
+        else GameUI.Instance.AbrirConversa(this);
+    }
+
+    // ---------- Assinatura da OS (prancheta física) ----------
+
+    // O técnico entrega a prancheta, o cliente assina com a caneta (o traço aparece no papel) e devolve.
+    public void Assinar(System.Action aoTerminar)
+    {
+        if (assinando) return;
+        StartCoroutine(RotinaAssinar(aoTerminar));
+    }
+
+    System.Collections.IEnumerator RotinaAssinar(System.Action aoTerminar)
+    {
+        assinando = true;
+        var cam = Camera.main;
+        Tocar(BancoPersonagens.ConversandoEmPe);
+
+        // Prancheta: base de madeira, folha da OS, prendedor de metal e a caneta
+        var prancheta = new GameObject("Prancheta_OS").transform;
+        Peca(PrimitiveType.Cube, prancheta, Vector3.zero, new Vector3(0.23f, 0.012f, 0.32f), Mat(new Color(0.55f, 0.38f, 0.22f), 0.25f));
+        Peca(PrimitiveType.Cube, prancheta, new Vector3(0f, 0.0075f, -0.01f), new Vector3(0.2f, 0.002f, 0.27f), Mat(new Color(0.95f, 0.95f, 0.93f), 0.1f));
+        Peca(PrimitiveType.Cube, prancheta, new Vector3(0f, 0.014f, 0.145f), new Vector3(0.09f, 0.014f, 0.03f), Mat(new Color(0.7f, 0.72f, 0.75f), 0.8f));
+        // Linhas impressas da OS e a linha da assinatura
+        var mTinta = Mat(new Color(0.35f, 0.38f, 0.42f), 0.1f);
+        for (int i = 0; i < 6; i++)
+            Peca(PrimitiveType.Cube, prancheta, new Vector3(-0.015f, 0.0088f, 0.1f - i * 0.025f), new Vector3(i % 2 == 0 ? 0.15f : 0.12f, 0.0005f, 0.004f), mTinta);
+        Peca(PrimitiveType.Cube, prancheta, new Vector3(0f, 0.0088f, -0.09f), new Vector3(0.12f, 0.0005f, 0.002f), mTinta);
+        var caneta = Peca(PrimitiveType.Cylinder, prancheta, new Vector3(0.06f, 0.06f, -0.08f), new Vector3(0.012f, 0.06f, 0.012f), Mat(new Color(0.1f, 0.2f, 0.6f), 0.5f));
+        caneta.localRotation = Quaternion.Euler(25f, 0f, -20f);
+
+        // O traço da assinatura (no espaço da prancheta)
+        var assinatura = new GameObject("Assinatura").transform;   // escala 1: os pontos ficam em metros
+        assinatura.SetParent(prancheta, false);
+        var traco = assinatura.gameObject.AddComponent<LineRenderer>();
+        traco.useWorldSpace = false;
+        traco.widthMultiplier = 0.0022f;
+        traco.numCapVertices = 2;
+        var mTraco = new Material(Shader.Find("Sprites/Default")) { color = new Color(0.08f, 0.12f, 0.45f) };
+        materiais.Add(mTraco);
+        traco.sharedMaterial = mTraco;
+        traco.positionCount = 0;
+
+        // Posições: na mão do técnico (frente da câmera) e na frente do peito do cliente, inclinada para ele ler
+        Vector3 maoTecnico = cam != null ? cam.transform.position + cam.transform.forward * 0.45f - cam.transform.up * 0.25f : transform.position + transform.forward;
+        Vector3 maoCliente = transform.position + Vector3.up * 1.05f + transform.forward * 0.32f;
+        Quaternion rotCliente = Quaternion.LookRotation(transform.forward, Vector3.up) * Quaternion.Euler(-35f, 180f, 0f);
+        Quaternion rotTecnico = cam != null ? Quaternion.LookRotation(-cam.transform.forward, Vector3.up) * Quaternion.Euler(-50f, 180f, 0f) : rotCliente;
+
+        // 1) Entrega a prancheta
+        for (float t = 0f; t < 1f; t += Time.deltaTime / 0.6f)
+        {
+            float k = Mathf.SmoothStep(0f, 1f, t);
+            prancheta.position = Vector3.Lerp(maoTecnico, maoCliente, k);
+            prancheta.rotation = Quaternion.Slerp(rotTecnico, rotCliente, k);
+            yield return null;
+        }
+        prancheta.position = maoCliente;
+        prancheta.rotation = rotCliente;
+        yield return new WaitForSeconds(0.6f);   // lê a OS
+
+        // 2) Assina: a ponta da caneta desenha a rubrica sobre a linha
+        SomManager.TocarEm("caneta", prancheta.position, 0.8f);
+        var pontos = new List<Vector3>();
+        float dur = 1.4f;
+        for (float t = 0f; t < 1f; t += Time.deltaTime / dur)
+        {
+            float x = Mathf.Lerp(-0.055f, 0.055f, t);
+            float z = -0.082f + Mathf.Sin(t * Mathf.PI * 7f) * 0.009f * (1f - t * 0.4f) + Mathf.Sin(t * Mathf.PI * 2f) * 0.004f;
+            var ponta = new Vector3(x, 0.0095f, z);
+            pontos.Add(ponta);
+            traco.positionCount = pontos.Count;
+            traco.SetPositions(pontos.ToArray());
+            caneta.localPosition = ponta + new Vector3(0.012f, 0.055f, 0.02f);
+            yield return null;
+        }
+        yield return new WaitForSeconds(0.35f);
+
+        // 3) Devolve a prancheta assinada e o técnico guarda
+        for (float t = 0f; t < 1f; t += Time.deltaTime / 0.55f)
+        {
+            float k = Mathf.SmoothStep(0f, 1f, t);
+            prancheta.position = Vector3.Lerp(maoCliente, maoTecnico, k);
+            prancheta.rotation = Quaternion.Slerp(rotCliente, rotTecnico, k);
+            prancheta.localScale = Vector3.one * Mathf.Lerp(1f, 0.6f, Mathf.Clamp01((t - 0.6f) / 0.4f));
+            yield return null;
+        }
+        Destroy(prancheta.gameObject);
+        assinando = false;
+        aoTerminar?.Invoke();
     }
 
     // ---------- Criação ----------

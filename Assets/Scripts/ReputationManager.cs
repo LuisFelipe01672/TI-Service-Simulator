@@ -66,6 +66,14 @@ public class ReputationManager : MonoBehaviour
         AlterarReputacao(delta * multiplicador * (delta >= 0f ? escalaGanho : escalaPunicao));
     }
 
+    // Avaliação do cliente ao assinar a OS (1 a 5 estrelas). multiplicador: VIP vale mais
+    public void AvaliarEstrelas(int estrelas, float multiplicador = 1f)
+    {
+        float delta = AvaliacaoCliente.ReputacaoPorEstrelas(estrelas);
+        Debug.Log($"[Reputação] Cliente deu {estrelas} estrela(s) → {delta:+0;-0}");
+        AlterarReputacao(delta * multiplicador * (delta >= 0f ? escalaGanho : escalaPunicao));
+    }
+
     public void AlterarReputacao(float delta)
     {
         float anterior = reputacao;

@@ -13,7 +13,7 @@ public partial class GameUI : MonoBehaviour
 {
     public static GameUI Instance;
 
-    enum Modal { Nenhum, Tablet, Manutencao, Pausa, Conversa, Resumo, Computador, Crimpagem, Bancada, Falencia, Configuracoes, Celular, Inventario }
+    enum Modal { Nenhum, Tablet, Manutencao, Pausa, Conversa, Resumo, Computador, Crimpagem, Bancada, Falencia, Configuracoes, Celular, Inventario, OS }
     Modal modal = Modal.Nenhum;
     public bool PainelAberto => modal != Modal.Nenhum;
 
@@ -220,6 +220,7 @@ public partial class GameUI : MonoBehaviour
         ConstruirComputador(overlay);
         ConstruirPausa(overlay);
         ConstruirConversa(overlay);
+        ConstruirOS(overlay);
         ConstruirResumo(overlay, raiz);
         ConstruirFalencia(overlay);
         overlay.gameObject.SetActive(false);
@@ -416,9 +417,12 @@ public partial class GameUI : MonoBehaviour
                 : $"Sua equipe resolveu o chamado de {e.chamado.nomeCliente}!",
                 e.cometeuErro ? UIFactory.Perigo : UIFactory.Sucesso);
         else
-            Toast($"Chamado de <b>{e.chamado.nomeCliente}</b> resolvido em {Tempo(e.tempoGasto)}!" +
+        {
+            if (e.estrelas > 0) MostrarAvaliacao(e);
+            Toast($"Chamado de <b>{e.chamado.nomeCliente}</b> fechado: {Tempo(e.tempoGasto)} de trabalho." +
                   (e.diagnosticoCerteiro ? "\n<color=#FFD54A>Diagnóstico certeiro! +1 reputação</color>" : ""),
                   UIFactory.Sucesso, 3.5f);
+        }
         AtualizarTablet();
     }
 
@@ -436,9 +440,12 @@ public partial class GameUI : MonoBehaviour
         txtChEquip.text = ch.EquipamentoConhecido
             ? $"Problema no(a) {ch.EquipamentoTexto()}  ·  Fale com {ch.contato}"
             : $"Converse com {ch.contato} para entender o problema";
-        txtChPistas.text = ch.anotacoes.Count == 0 ? "Nenhuma pista anotada ainda"
+        txtChPistas.text = ch.tutorial ? $"<color=#FFD54A>Guia:</color> {TutorialPrimeiroDia.Passo(ch)}"
+            : ch.anotacoes.Count == 0 ? "Nenhuma pista anotada ainda"
             : $"{ch.anotacoes.Count} pista(s) anotada(s)  ·  veja no tablet (Tab)";
-        txtChTempo.text = restante > 0 ? $"Prazo: {Tempo(restante)}" : $"ATRASADO {Tempo(-restante)}";
+        txtChTempo.text = ch.aguardandoAssinatura ? $"Resolvido! Fale com {ch.contato} para assinar a OS"
+            : restante > 0 ? $"SLA <color={SLA.Cor(ch.prioridade)}>{SLA.Texto(ch.prioridade)}</color> até {SLA.HoraDoPrazo(ch, SLA.Agora())}  ·  resta {Tempo(restante)}"
+            : $"SLA ESTOURADO há {Tempo(-restante)}";
         txtChTempo.color = restante <= 0 ? UIFactory.Perigo : frac < 0.25f ? UIFactory.Alerta : UIFactory.CorTexto;
         barraTempo.anchorMax = new Vector2(frac, 1f);
         barraTempoImg.color = frac < 0.25f ? UIFactory.Perigo : frac < 0.5f ? UIFactory.Alerta : UIFactory.Sucesso;
@@ -592,6 +599,7 @@ public partial class GameUI : MonoBehaviour
 
         int fase = ReputationManager.Instance != null ? ReputationManager.Instance.FaseAtual : 1;
         if (fase < 2 && abaAtiva == 1) abaAtiva = 0;
+        AplicarAbasLiberadas();
         abaChamados.GetComponent<Image>().color = abaAtiva == 0 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaEquipe.GetComponent<Image>().color = abaAtiva == 1 ? UIFactory.Destaque : UIFactory.CartaoClaro;
         abaLoja.GetComponent<Image>().color = abaAtiva == 2 ? UIFactory.Destaque : UIFactory.CartaoClaro;
@@ -647,7 +655,9 @@ public partial class GameUI : MonoBehaviour
             var c = Cartao(UIFactory.CartaoClaro);
             UIFactory.Texto(c, $"<b>{ch.nomeCliente}</b>   <size=18><color={ch.CorPersonalidade()}>{ch.PersonalidadeTexto().ToUpper()}</color></size>", 26, UIFactory.CorTexto);
             UIFactory.Texto(c, ch.DescricaoVisivel, 21, UIFactory.CorTexto);
-            UIFactory.Texto(c, ch.EquipamentoConhecido
+            UIFactory.Texto(c, ch.aguardandoAssinatura
+                ? $"<color=#3CCB7F>Resolvido!</color> Arrume o local e fale com {ch.contato} (E) para conferir o checklist e assinar a OS {ch.os?.numero:0000}."
+                : ch.EquipamentoConhecido
                 ? $"Converse com {ch.contato} (E) para pegar pistas e vá até o(a) {ch.EquipamentoTexto()}. Conserte e confira se funcionou (imprimir, ping...)."
                 : $"{ch.contato} não soube explicar. Converse com ele(a) (E) para descobrir o equipamento.", 19, UIFactory.CorSuave);
             foreach (var nota in ch.anotacoes)
@@ -665,6 +675,8 @@ public partial class GameUI : MonoBehaviour
         if (foraDoExpediente)
             UIFactory.Texto(tabletConteudo, "<color=#F5B83F>Fora do expediente:</color> os clientes voltam a ligar amanhã às 8h. " + ComoEncerrarODia(),
                 20, UIFactory.CorTexto);
+
+        MontarResumoAtendimento();
 
         Secao("CHAMADOS ABERTOS");
         if (mm.chamadosDisponiveis.Count == 0)
@@ -686,8 +698,8 @@ public partial class GameUI : MonoBehaviour
                 $"   <color={chamado.CorPersonalidade()}><size=18>{chamado.PersonalidadeTexto().ToUpper()}</size></color>",
                 26, UIFactory.CorTexto);
             UIFactory.Texto(c, $"\"{chamado.DescricaoVisivel}\"  <color=#9AA6B8>— {chamado.contato}</color>", 21, UIFactory.CorTexto);
-            UIFactory.Texto(c, (chamado.contratoId > 0 ? "<color=#3FA9F5>Incluso no contrato de locação</color>" : $"Paga {UIFactory.Dinheiro(chamado.recompensa)}") +
-                $"  ·  Prazo {Tempo(chamado.tempoLimite)}  ·  {chamado.EquipamentoVisivel}" +
+            UIFactory.Texto(c, (chamado.retrabalho ? "<color=#F2545B>RETORNO em garantia (sem cobrança)</color>" : chamado.contratoId > 0 ? "<color=#3FA9F5>Incluso no contrato de locação</color>" : $"Paga {UIFactory.Dinheiro(chamado.recompensa)}") +
+                $"  ·  <color={SLA.Cor(chamado.prioridade)}>{SLA.Texto(chamado.prioridade)}</color>, SLA até {SLA.HoraDoPrazo(chamado, SLA.Agora())}  ·  {chamado.EquipamentoVisivel}" +
                 (chamado.contratoId > 0 ? "" : chamado.exigeNota ? "  ·  <color=#F5B83F>exige nota fiscal</color>" : "  ·  aceita recibo"),
                 19, UIFactory.CorSuave);
             string motivoBloqueio = null;
@@ -760,9 +772,8 @@ public partial class GameUI : MonoBehaviour
         }
     }
 
-    static string Tempo(float segundos)
+    static string Tempo(float segundos)   // recebe minutos do jogo
     {
-        int s = Mathf.Max(0, Mathf.CeilToInt(segundos));
-        return $"{s / 60}:{s % 60:00}";
+        return OrdemServico.HorasTexto(segundos);   // minutos do jogo (1 min do jogo = 1 s real no ritmo padrão)
     }
 }

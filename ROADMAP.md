@@ -14,10 +14,15 @@ catálogo, mas a **ordem de trabalho** passa a ser esta. Cada etapa puxa os iten
 0. ✅ **Base segura** — save à prova de queda (arquivo temporário, cópia .bak, save estragado guardado à parte),
    versão do save com migração em cadeia; testes automáticos (EditMode) do catálogo de problemas; consertos rápidos
    (cor neutra e SMAA, sombra encostando nos objetos, material da cozinha, marcas reais, glifos fora da fonte).
-1. 🔜 **Fechar o atendimento** — OS preenchida pelas ações, assinatura do cliente, estrelas e comentário, retrabalho
-   quando a causa fica, prazo virando SLA em horas do jogo (fim do cronômetro em segundos). Logo depois: tutorial do
-   primeiro dia e abas do tablet liberadas aos poucos.
-2. ⬜ **Realismo visual da base** — luz pré-calculada nos interiores (light probes, reflection probes baked),
+1. ✅ **Fechar o atendimento** — OS aberta no aceite e preenchida pelas ações (relato, perguntas, ações, peças,
+   tempo); resolvido o defeito, o técnico mostra a OS, o cliente confere o checklist (testado, equipamento fechado,
+   tudo ligado, chão limpo) e **assina numa prancheta 3D** com caneta; **estrelas e comentário** mexem na reputação
+   (média no tablet); **causa raiz** (papel úmido, cabo solto no caminho do armário) faz o cliente voltar em 1–3 dias,
+   urgente e em garantia; prazo virou **SLA em horas do jogo** com prioridade (Baixa 9h a Urgente 2h, desde a
+   abertura). Também: **chamado guiado de toner** no primeiro dia (guia passo a passo no card) e **abas do tablet**
+   liberadas pela trilha "Primeiros passos". Save versão 4; 20 testes novos (`Editor/Testes/TestesOSeSLA.cs`);
+   atalhos em *TI Service/Teste (Play)/Atendimento*.
+2. 🔜 **Realismo visual da base** — luz pré-calculada nos interiores (light probes, reflection probes baked),
    texturas dos GLB extraídas e comprimidas (meta: build perto de 200 MB), móveis do cliente sem o kit simples,
    telas que refletem, close de câmera nas peças, pendências da casa (banheiro, abajur, rotina da manhã).
 3. ⬜ **Três clientes com sala própria** (contabilidade, clínica, loja), o cliente leva o técnico até o equipamento.
@@ -76,10 +81,11 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ⬜ Ferramentas compradas liberam ou aceleram pistas (ver Fases 4 e 5)
 
 **Ordem de serviço (OS) e checklist**
-- ⬜ Todo atendimento abre uma **OS**: problema relatado, diagnóstico, o que foi feito, peças, horas, deslocamento
-- ⬜ **Checklist do serviço** na prancheta/celular (ex.: "testar todos os pontos", "etiquetar", "limpar o local");
-      o cliente confere no fim — item esquecido vira retrabalho ou estrela a menos
-- ⬜ **Cliente assina a OS**; sem assinatura ele pode contestar a cobrança
+- ✅ Todo atendimento abre uma **OS**: problema relatado, diagnóstico, o que foi feito, peças, horas
+      (⬜ deslocamento separado na OS)
+- ✅ **Checklist do serviço** que o cliente confere no fim — item esquecido vira estrela a menos
+      (⬜ itens por tipo de serviço: "testar todos os pontos", "etiquetar")
+- ✅ **Cliente assina a OS** na prancheta (⬜ sem assinatura ele pode contestar a cobrança)
 - ⬜ **Teste de prova** no fim (temperatura e desempenho antes/depois, página de teste, teste de cabo) anexado à OS
 - ⬜ **Fotos de antes/depois** anexadas à OS vão para o **portfólio** no celular e atraem clientes
 
@@ -254,7 +260,8 @@ Decisão do dono: **dirigir de verdade** (sem viagem rápida por mapa).
       que **não paga**, o fiel que indica outros
 - ⬜ **Horário comercial do cliente**: certos serviços só com o escritório vazio (parar servidor/rede) — fim de
       tarde, noite ou fim de semana
-- ⬜ **Avaliação por estrelas** depois de cada atendimento; **retrabalho/garantia** quando o serviço foi mal feito
+- ✅ **Avaliação por estrelas** depois de cada atendimento; **retrabalho/garantia** quando a causa do problema ficou
+      (⬜ mais causas raiz além do papel úmido e do cabo solto)
 - ⬜ **Golpes e engenharia social** nos clientes (ligação do "banco", e-mail falso, phishing): limpar o estrago e
       vender treinamento
 - ⬜ Mais variedade de personagens (Mixamo) e escritórios com cara própria por tipo de cliente

@@ -69,7 +69,11 @@ public partial class MissionManager
         chamadoAtivo = c;
         chamadosDisponiveis.Remove(c);
         c.estado = new EstadoEquipamentos();
-        tempoInicioAtendimento = Time.time;
+        c.aceitoEm = SLA.Agora() - MinutosAtendimentoRemoto;
+        c.os = NovaOS(c);
+        c.os.diagnostico = $"Resolvido por acesso remoto: {c.problema?.solucao.ToLowerInvariant()}.";
+        c.os.RegistrarAcao("Ligou para o cliente e conectou pelo programa de acesso remoto");
+        c.os.RegistrarAcao($"Acesso remoto: {c.problema?.solucao}");
         float original = c.recompensa;
         c.recompensa = Mathf.Round(original * FatorPagamentoRemoto);
         c.anotacoes.Add($"Resolvido por acesso remoto: {c.problema?.solucao}.");

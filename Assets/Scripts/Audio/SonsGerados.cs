@@ -53,6 +53,7 @@ public static class SonsGerados
                     return motor * env * 0.7f;
                 });
             }
+            case "caneta": return Criar(nome, 1.4f, (t, i) => Ruido() * 0.16f * (0.55f + 0.45f * Mathf.Sin(t * 42f)) * Mathf.Clamp01(t * 20f) * Mathf.Clamp01((1.4f - t) * 10f));   // assinatura no papel
             case "bip": return Criar(nome, 0.13f, (t, i) => Seno(1250f, t) * Ataque(t, 0.004f) * Mathf.Clamp01((0.13f - t) * 40f) * 0.35f);
             case "dormir": return Arpejo(nome, new[] { 784f, 659f, 523f, 392f }, 0.14f, 0.6f);
             case "ambiente_dentro":

@@ -159,7 +159,7 @@ public partial class GameUI
     {
         if (pecaMirada != null) SomManager.SomDaAcao(a.rotulo, pecaMirada.transform.position);
         string r = a.executar();
-        if (!a.observacao) MissionManager.Instance?.RegistrarAcao();
+        if (!a.observacao) MissionManager.Instance?.RegistrarAcao(a.rotulo);
         Registrar(r);
         MostrarResultadoPeca(r);
         // A ação pode ter fechado o chamado (página de teste ok, por exemplo): a notificação já avisa

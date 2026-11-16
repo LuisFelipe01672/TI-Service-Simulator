@@ -153,7 +153,7 @@ public partial class GameUI
         UIFactory.Texto(pcConteudo, texto, tamanho, UIFactory.Hex("#1A2433"), negrito ? FontStyles.Bold : FontStyles.Normal);
 
     Button BotaoPc(RectTransform pai, string rotulo, System.Action acao, Color? cor = null, float largura = 260) =>
-        UIFactory.Botao(pai, rotulo, () => { acao(); MissionManager.Instance?.RegistrarAcao(); if (modal == Modal.Computador) MontarComputador(); },
+        UIFactory.Botao(pai, rotulo, () => { acao(); MissionManager.Instance?.RegistrarAcao("No computador: " + rotulo); if (modal == Modal.Computador) MontarComputador(); },
                         cor ?? UIFactory.Hex("#2D6CDF"), largura, 44, 18);
 
     RectTransform LinhaPc()
@@ -186,7 +186,7 @@ public partial class GameUI
         Saida(PromptCmd + cmd);
         if (e == null || cmd.Length == 0) return;
         string c = cmd.ToLowerInvariant();
-        mm.RegistrarAcao();
+        mm.RegistrarAcao("Prompt de comando: " + cmd);
 
         if (c == "ajuda" || c == "help")
         {

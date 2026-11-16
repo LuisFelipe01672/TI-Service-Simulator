@@ -30,6 +30,7 @@ public class SaveData
     public LivroCaixa.Dados caixa;
     public EventosAleatorios.Dados eventos;
     public EquipamentosUsados.Dados usados;
+    public MissionManager.Dados atendimento;   // OS fechadas, estrelas e retornos em garantia (versão 4)
     public float saldo;
     public float energia = -1f;   // energia do técnico (-1 = save antigo, começa cheia)
     public float reputacao;
@@ -54,7 +55,8 @@ public class SaveManager : MonoBehaviour
     public static bool ExisteSave => File.Exists(CaminhoSave) || File.Exists(CaminhoBak);
 
     // 3 = save à prova de queda + migração em cadeia (formato igual ao 2)
-    public const int VersaoAtual = 3;
+    // 4 = atendimento: ordens de serviço, estrelas dos clientes e retornos em garantia
+    public const int VersaoAtual = 4;
 
     // Save de uma versão mais nova do jogo: não carrega e não deixa sobrescrever
     static bool bloqueadoPorVersao;
@@ -124,6 +126,7 @@ public class SaveManager : MonoBehaviour
             caixa = LivroCaixa.Exportar(),
             eventos = EventosAleatorios.Exportar(),
             usados = EquipamentosUsados.Exportar(),
+            atendimento = MissionManager.Instance != null ? MissionManager.Instance.Exportar() : null,
             dia = DiaManager.Instance != null ? DiaManager.Instance.dia : Mathf.Max(1, DiaManager.DiaSalvo),
             equipe = FuncionarioManager.Instance != null
                      ? new List<Funcionario>(FuncionarioManager.Instance.equipe)
@@ -180,6 +183,12 @@ public class SaveManager : MonoBehaviour
             // 2→3: só o jeito de gravar mudou. Saves de antes das parcerias viram revenda do que já vendiam.
             if (data.parcerias == null || data.parcerias.estados == null || data.parcerias.estados.Count == 0) MigrarParcerias(data);
         }
+        if (data.versao < 4)
+        {
+            // 3→4: o atendimento (OS, estrelas, retornos) começa vazio
+            if (data.atendimento == null || data.atendimento.proximaOS <= 0) data.atendimento = new MissionManager.Dados();
+            data.atendimento.tutorialFeito = true;   // quem já jogava não precisa do chamado guiado
+        }
         data.versao = VersaoAtual;
     }
 
@@ -225,6 +234,8 @@ public class SaveManager : MonoBehaviour
         LivroCaixa.Iniciar();
         EventosAleatorios.Iniciar();
         EquipamentosUsados.Iniciar();
+        MissionManager.dadosSalvos = null;
+        MissionManager.Instance?.NovoJogo();
         GameEconomy.Instance?.DefinirSaldo(saldoInicial);
         Debug.Log($"[Save] Jogo novo: R${saldoInicial:F0} para começar.");
     }
@@ -302,6 +313,8 @@ public class SaveManager : MonoBehaviour
         LivroCaixa.Carregar(data.caixa);
         EventosAleatorios.Carregar(data.eventos);
         EquipamentosUsados.Carregar(data.usados);
+        if (MissionManager.Instance != null) MissionManager.Instance.Carregar(data.atendimento);
+        else MissionManager.dadosSalvos = data.atendimento;
         if (DiaManager.Instance != null) DiaManager.Instance.dia = DiaManager.DiaSalvo;
 
         Debug.Log($"[Save] Jogo carregado (salvo em {data.salvoEm}): R${data.saldo:F2}, reputação {data.reputacao:F0}, fase {data.fase}, {data.equipe?.Count ?? 0} funcionário(s)");

@@ -95,6 +95,7 @@ public static class CatalogoProblemas
                 break;
             case "Impressora:Verificar cabo":
                 SortearDefeitoCabo(e.impCabo);
+                e.impCaboSolto = true;   // a causa: o cabo passa solto atrás do armário
                 break;
             case "Impressora:Verificar fila de impressão":
                 e.fila.Add(new TrabalhoImpressao("Relatorio_anual_FINAL_v3.pdf", 300, true));
@@ -116,6 +117,7 @@ public static class CatalogoProblemas
                 break;
             case "Impressora:Retirar papel atolado":
                 e.impPapelAtolado = true;
+                e.impPapelUmido = true;  // a causa: a resma úmida continua na gaveta
                 break;
             case "Impressora:Colocar papel":
                 e.impSemPapel = true;
@@ -198,6 +200,21 @@ public static class CatalogoProblemas
             default:
                 return e.PcNaInternet && e.wifiAtivo && e.rotConfigOk && !e.rotTravado && !e.dhcpDuplo;
         }
+    }
+
+    // A causa do problema ficou? (o sintoma sumiu, mas volta em 1–3 dias: o cliente chama de novo, em garantia)
+    // Devolve como o cliente vai descrever a volta, ou null se a causa foi tratada.
+    public static string CausaRaizPendente(Problema p, EstadoEquipamentos e)
+    {
+        if (p == null || e == null) return null;
+        switch (Chave(p))
+        {
+            case "Impressora:Retirar papel atolado":
+                return e.impPapelUmido ? "A impressora voltou a atolar: o papel úmido continuou na gaveta" : null;
+            case "Impressora:Verificar cabo":
+                return e.impCaboSolto ? "A impressora sumiu de novo: arrastaram o armário e o cabo solto soltou outra vez" : null;
+        }
+        return null;
     }
 
     // ---------------- Problemas ----------------
@@ -473,6 +490,14 @@ public static class CatalogoProblemas
     static readonly string[] contatos = {
         "Sr. Carlos", "Dona Márcia", "Sr. Roberto", "Fernanda", "Seu Jorge", "Patrícia",
         "Dr. Henrique", "Cláudia", "Marcos", "Dona Lúcia", "Renato", "Simone" };
+
+    // Acha um problema do catálogo pelo equipamento e pela solução (retornos salvos no save)
+    public static Problema Buscar(TipoEquipamento equipamento, string solucao)
+    {
+        foreach (var lista in new[] { Faceis, Medios, Dificeis })
+            foreach (var p in lista) if (p.equipamento == equipamento && p.solucao == solucao) return p;
+        return null;
+    }
 
     public static string SortearContato() => contatos[Random.Range(0, contatos.Length)];
 

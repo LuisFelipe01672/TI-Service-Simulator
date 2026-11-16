@@ -11,8 +11,8 @@ using UnityEngine;
 // roteador e computador com a frente em -z; cadeira de jantar e personagens com a frente em +z.
 public static partial class MontarCenario
 {
-    static readonly Vector3 CentroClinica = new Vector3(40f, 0f, 14f);
-    static readonly Vector3 CentroLoja = new Vector3(40f, 0f, -14f);
+    internal static Vector3 CentroClinica => new Vector3(40f, 0f, 14f);
+    internal static Vector3 CentroLoja => new Vector3(40f, 0f, -14f);
     // Textura de piso cerâmico (ambientCG, CC0). Sem ela, o piso fica só com a cor.
     const string TexturaPisoCeramico = "Tiles002";   // porcelanato branco 60 x 60
 

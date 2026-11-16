@@ -14,7 +14,7 @@ public static partial class MontarCenario
     const float CalcadaNorteZ0 = -3.15f, CalcadaNorteZ1 = -5.5f;
     const float AsfaltoZ1 = -12.5f, CalcadaSulZ1 = -15f;
     const float RuaX = 34f;                  // a rua vai de -34 a +34 em x
-    static readonly Vector3 CentroCasa = new Vector3(0f, 0f, -19.5f);
+    internal static Vector3 CentroCasa => new Vector3(0f, 0f, -19.5f);
 
     static void MontarRuaECasaDentro()
     {

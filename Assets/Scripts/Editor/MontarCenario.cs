@@ -24,7 +24,7 @@ public static partial class MontarCenario
 
     const float Escala = 2f;     // o kit do Kenney é pequeno (mesa com 38 cm): 2x deixa no tamanho do jogador
     const float H = 2.8f;        // pé-direito
-    const float T = 0.15f;       // espessura das paredes
+    internal const float T = 0.15f;       // espessura das paredes
     const bool MadeiraNosMoveis = true;
 
     enum Colisao { Nenhuma, Caixa, Malha }

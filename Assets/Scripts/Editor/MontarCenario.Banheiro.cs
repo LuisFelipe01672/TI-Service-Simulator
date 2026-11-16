@@ -10,8 +10,10 @@ public static partial class MontarCenario
 {
     // A porta fica na parede sul da casa (x = 0,4 da casa); o vão do banheiro fica logo atrás, na parede dele
     static Abertura PortaBanheiro => new Abertura { centro = 0.4f, largura = 0.8f, baixo = 0f, alto = 2.1f, porta = true };
-    static readonly Vector3 CentroBanheiro = CentroCasa + new Vector3(0.4f, 0f, -3f - 2f * T - 0.85f);
-    const float LarguraBanheiro = 2.6f, ProfBanheiro = 1.7f;
+    // Propriedade (não campo): campo estático que depende de outro partial pode ser calculado antes dele
+    // (a ordem dos arquivos não é garantida) e o banheiro ia parar em frente à porta do escritório
+    internal static Vector3 CentroBanheiro => CentroCasa + new Vector3(0.4f, 0f, -3f - 2f * T - 0.85f);
+    internal const float LarguraBanheiro = 2.6f, ProfBanheiro = 1.7f;
     const string TexturaAzulejo = "Tiles107";        // azulejo branco
 
     static void MontarBanheiro()

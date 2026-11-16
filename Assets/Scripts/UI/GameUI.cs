@@ -144,6 +144,17 @@ public partial class GameUI : MonoBehaviour
     {
         AtualizarEnergia();
         AtualizarCelularFundo();
+
+        // Close de câmera numa peça: as teclas são do close (E/Esc voltam); só o relógio e o card seguem
+        AtualizarLegendaClose(CloseDePeca.Ativo);
+        if (CloseDePeca.Ativo)
+        {
+            if (prompt.gameObject.activeSelf) prompt.gameObject.SetActive(false);
+            AtualizarCardChamado();
+            AtualizarRelogio();
+            return;
+        }
+
         if (Input.GetKeyDown(KeyCode.I))
         {
             if (modal == Modal.Inventario) FecharModal();

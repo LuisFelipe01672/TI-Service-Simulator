@@ -180,7 +180,7 @@ public static partial class MontarCenario
         Lixeira(sala, new Vector3(2.4f, 0, 3.7f));
 
         // Impressora em cima de um armário baixo, na parede leste
-        var armario = ModeloReal(PH("modern_wooden_cabinet"), sala, new Vector3(4.62f, 0, 0.8f), 1.3f, -90);
+        var armario = ModeloReal(PH("modern_wooden_cabinet"), sala, new Vector3(4.64f, 0, 0.8f), 2.4f, -90);   // aparador de 67 cm
         // O visual da impressora tem a frente em -z: 90° deixa a frente virada para a sala
         PosicionarEquipamento("Impressora", sala, new Vector3(4.6f, Altura(armario), 0.8f), 90, VisualImpressoraReal);
 

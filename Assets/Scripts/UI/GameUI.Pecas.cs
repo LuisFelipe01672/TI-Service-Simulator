@@ -11,6 +11,8 @@ public partial class GameUI
     RectTransform miraRt, painelPeca, barraPecaFundo, barraPeca;
     Image miraImg;
     TextMeshProUGUI txtPecaTitulo, txtPecaAcoes, txtPecaResultado;
+    RectTransform painelClose;
+    TextMeshProUGUI txtClose;
 
     PecaEquipamento pecaMirada;
     readonly List<AcaoFisica> acoesPeca = new List<AcaoFisica>();
@@ -44,6 +46,15 @@ public partial class GameUI
         barraPeca.offsetMin = barraPeca.offsetMax = Vector2.zero;
         txtPecaResultado = UIFactory.Texto(painelPeca, "", 19, UIFactory.CorSuave);
         painelPeca.gameObject.SetActive(false);
+
+        // Legenda do close de câmera (embaixo, no meio): a pista está na peça, o texto é curto
+        painelClose = UIFactory.Painel(raiz, "LegendaClose", UIFactory.Fundo);
+        UIFactory.Ancorar(painelClose, new Vector2(0.5f, 0f), new Vector2(0, 70), new Vector2(900, 0));
+        painelClose.pivot = new Vector2(0.5f, 0f);
+        UIFactory.Vertical(painelClose, 4, 14);
+        UIFactory.AjustarAoConteudo(painelClose);
+        txtClose = UIFactory.Texto(painelClose, "", 21, UIFactory.CorTexto, FontStyles.Normal, TextAlignmentOptions.Center);
+        painelClose.gameObject.SetActive(false);
     }
 
     // Chamado pelo Update. Devolve true se o jogador está mirando uma peça (aí o E é dela).
@@ -161,7 +172,9 @@ public partial class GameUI
         string r = a.executar();
         if (!a.observacao) MissionManager.Instance?.RegistrarAcao(a.rotulo);
         Registrar(r);
-        MostrarResultadoPeca(r);
+        bool fazClose = a.observacao && a.close && !a.abreComputador && pecaMirada != null && !string.IsNullOrEmpty(r);
+        if (fazClose) CloseDePeca.Abrir(pecaMirada, a.pistaVisual ?? r);
+        if (!fazClose || a.pistaVisual == null) MostrarResultadoPeca(r);   // pista visual: o texto fica só no registro (Tab)
         // A ação pode ter fechado o chamado (página de teste ok, por exemplo): a notificação já avisa
         if (MissionManager.Instance == null || MissionManager.Instance.chamadoAtivo == null) resultadoPeca = null;
     }
@@ -171,5 +184,18 @@ public partial class GameUI
         if (string.IsNullOrEmpty(texto)) return;
         resultadoPeca = texto;
         resultadoAte = Time.time + 6f;
+    }
+}
+
+public partial class GameUI
+{
+    // Durante o close de câmera: só a legenda; o painel da peça e o aviso de interação somem
+    void AtualizarLegendaClose(bool ativo)
+    {
+        if (painelClose == null) return;
+        if (painelClose.gameObject.activeSelf != ativo) painelClose.gameObject.SetActive(ativo);
+        if (!ativo) return;
+        if (painelPeca.gameObject.activeSelf) painelPeca.gameObject.SetActive(false);
+        txtClose.text = $"{CloseDePeca.Legenda}\n<size=75%><color=#9AA6B8>[E] ou mexa o mouse para voltar</color></size>";
     }
 }

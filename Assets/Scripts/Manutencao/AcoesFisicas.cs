@@ -12,6 +12,8 @@ public class AcaoFisica
     public bool abreComputador;        // abre o "Windows" do cliente
     public bool observacao;            // só olhar (não conta como mexer)
     public string peca;                // peça 3D do equipamento onde a ação acontece (mirar + E)
+    public bool close = true;          // observação: a câmera faz um close na peça (CloseDePeca)
+    public string pistaVisual;         // a pista está na peça (visor, LEDs): no close aparece só esta legenda, o texto vai para o registro
 
     public AcaoFisica(string rotulo, Func<string> executar, float segurar = 0f, Item? requer = null)
     {
@@ -49,7 +51,7 @@ public static class AcoesFisicas
     static void Impressora(EstadoEquipamentos e, List<AcaoFisica> l)
     {
         PecaAtual = "visor";
-        l.Add(new AcaoFisica("Olhar o visor", () => $"Visor: \"{e.VisorImpressora()}\"") { observacao = true });
+        l.Add(new AcaoFisica("Olhar o visor", () => $"Visor: \"{e.VisorImpressora()}\"") { observacao = true, pistaVisual = "Leia o visor da impressora." });
         var locacao = ContratosManager.Instance != null ? ContratosManager.Instance.DoChamado(MM != null ? MM.chamadoAtivo : null) : null;
         if (e.impLigada && locacao != null)
             l.Add(new AcaoFisica("Ler o contador de páginas (menu Informações)", () =>
@@ -164,7 +166,7 @@ public static class AcoesFisicas
                     return $"Cartucho {(e.cartuchoNaMaoUsado ? "que estava na impressora" : "novo")}: {peso}." +
                            (e.cartuchoNaMaoComLacre ? " <color=#F5B83F>O lacre (fita) ainda está nele!</color>" : " Sem lacre.") +
                            (e.impCilindroRiscado && e.cartuchoNaMaoUsado ? " O cilindro verde tem um risco fino de ponta a ponta." : "");
-                }) { observacao = true });
+                }) { observacao = true, close = false });
                 if (!e.cartuchoNaMaoChacoalhado)
                     l.Add(new AcaoFisica("Chacoalhar o cartucho (de lado a lado)", () =>
                     {
@@ -313,7 +315,7 @@ public static class AcoesFisicas
         {
             l.Add(new AcaoFisica("Testar a saúde do disco (pendrive de diagnóstico)", () =>
                 e.pcHdRuim ? "<color=#F2545B>Disco em estado CRÍTICO:</color> 1.243 setores realocados e subindo. Vai parar a qualquer momento."
-                           : "Disco saudável: nenhum setor realocado.", 2f, Item.PendriveDrivers) { observacao = true });
+                           : "Disco saudável: nenhum setor realocado.", 2f, Item.PendriveDrivers) { observacao = true, close = false });
             if (e.pcHdRuim && !e.pcBackupFeito)
                 l.Add(new AcaoFisica("Copiar os arquivos do cliente para o seu notebook (backup)", () =>
                 {

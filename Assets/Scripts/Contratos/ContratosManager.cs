@@ -14,6 +14,7 @@ public class EquipamentoPatrimonio
     public int diaChegada;        // chega do fornecedor nesse dia
     public int contratoId = -1;   // -1 = no estoque
     public float desgaste;        // 0 a 1 (equipamento velho dá mais defeito)
+    public string etiqueta = "";  // Etapa 6: impressora usada recuperada na bancada (etiqueta de patrimônio)
     public TipoEquipamentoLocacao Tipo => CatalogoLocacao.Tipo(tipoId);
 }
 
@@ -171,6 +172,22 @@ public class ContratosManager : MonoBehaviour
         var t = CatalogoLocacao.Tipo(tipoId);
         float mult = Parcerias.Ativa(Parcerias.Impressoras) ? 1f - Parcerias.Desconto(Parcerias.Impressoras) : 1.15f;
         return Mathf.Round(t.custoCompra * CatalogoLocacao.Condicao(condicao).multCusto * mult * EventosAleatorios.MultEquipamento);
+    }
+
+    // Etapa 6: impressora laser usada recuperada na bancada entra na frota como recondicionada (custo já pago no lote)
+    public const string TipoImpressoraUsada = "laser-pb";
+    public string ReceberImpressoraUsada(string etiqueta, bool limpa)
+    {
+        int guardados = patrimonio.FindAll(x => x.contratoId < 0).Count;
+        var sede = SedeManager.Instance;
+        if (sede != null && guardados >= sede.CapacidadeEstoque)
+            return $"Sem espaço no estoque ({guardados}/{sede.CapacidadeEstoque}). Compre uma estante para a sede.";
+        patrimonio.Add(new EquipamentoPatrimonio
+        {
+            id = proximoId++, tipoId = TipoImpressoraUsada, condicao = 1, custoPago = 0f,
+            diaCompra = Hoje, diaChegada = Hoje, desgaste = limpa ? 0.35f : 0.45f, etiqueta = etiqueta ?? ""
+        });
+        return null;
     }
 
     public List<EquipamentoPatrimonio> EmEstoque(string tipoId) =>

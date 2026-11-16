@@ -70,8 +70,26 @@ catálogo, mas a **ordem de trabalho** passa a ser esta. Cada etapa puxa os iten
    (a velha sai, a nova entra) e **toner reserva** deixado ao lado da impressora (itens da mochila, sem cobrar o
    cliente). Janela de manutenção mostra o que falta. Testes `TestesLocacao`; atalhos em
    *TI Service/Teste (Play)/Locação física* (passo a passo, inteiro e fotos em `Builds/Capturas/locacao`).
-6. 🔜 **Bancada e usados como objetos** — testar, recuperar, apagar dados, etiquetar patrimônio, vender ou locar.
-7. ⬜ **Notebook e problemas de software** (senha, e-mail, vírus, lentidão, impressora padrão). Antes: reorganizar
+6. ✅ **Bancada e usados como objetos** (16/11/2026) — o lote comprado no tablet **chega em caixas** encostadas na parede
+   do escritório (etiqueta "LOTE USADO" com o tipo); **E abre a caixa** (o equipamento sobe e a caixa desmonta), **E pega**
+   (um por vez, na frente da câmera), **E na bancada** põe em cima; mirar o equipamento mostra as ações (roda do mouse,
+   segurar E, como nas peças dos clientes). **Testar**: ligar na tomada e ver a pista — **monitor de bancada** novo com
+   "sem sinal" ou a **área de trabalho do antigo dono** (planilhas, fotos), bipes de memória, LED, fumaça e cheiro de
+   queimado na sucata, **folha com listra** na impressora, monitor piscando, roteador sem luz ou com todas piscando.
+   **Diagnóstico** do computador sem vídeo com a **placa POST** (código 55 = memória, apagada = fonte), o **testador de
+   fonte** ou trocando peças de bancada (sem ferramenta, demora). **Recuperar**: a peça ruim sai voando para a mochila e a
+   nova entra (memória, fonte e cilindro da mochila; capacitores, fonte externa e bateria de notebook comprados no balcão);
+   **limpar** (a poeira some, vale 10% a mais). **Apagar dados** com **tela de progresso** no monitor (LGPD; impressora:
+   padrão de fábrica). **Etiqueta de patrimônio** física com número (TIS-0001...). **Destinos**: anunciar (foto com flash,
+   plaquinha "À VENDA", o comprador retira no dia seguinte; com dados ainda pode dar multa), **colocar na frota de
+   locação** (impressora limpa de dados e etiquetada vira patrimônio recondicionado do `ContratosManager`) ou levar a
+   sucata na mão até o **lixo eletrônico** (sucata de computador: aproveitar o pente de memória antes). **Peça velha dos
+   consertos** dos chamados (memória, fonte, HD, cilindro, bateria CR2032) volta para a mochila como "Peça velha" e vai
+   para o lixo eletrônico (ou a estante). O tablet só mostra o estado, onde está e o próximo passo. Modelos reaproveitados
+   do projeto (impressora, roteador, switch; `Resources/Usados/ModelosUsados`), resto em primitivas. Testes
+   `TestesUsados`; atalhos em *TI Service/Teste (Play)/Usados na bancada* (lote de teste, bancada, próximo, passo, ciclo
+   inteiro, fotos em `Builds/Capturas/usados`).
+7. 🔜 **Notebook e problemas de software** (senha, e-mail, vírus, lentidão, impressora padrão). Antes: reorganizar
    o código para **uma definição por equipamento** (estado, ações, quebrar/resolvido e peças num lugar só).
 8. ⬜ **Rede física** — rack, patch panel, cabeamento com antes/depois (Fase 5).
 
@@ -208,10 +226,11 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ✅ **Garantia/RMA**: peça errada ou com defeito descoberta ao abrir a caixa; troca automática sem custo, chega dias depois
 - ✅ **Equipamentos usados**: a cada 4 dias aparece um lote de empresa que fechou (aba Loja); testar, recuperar,
       apagar os dados (LGPD: vender sem apagar pode dar multa), vender ou levar a sucata ao ponto de coleta
-- ⬜ Usados como objetos no escritório e opção de colocar em locação — antes: lote de empresa que fechou e equipamentos
-      descartados para testar, recuperar e revender ou colocar em locação
+- ✅ Usados como objetos no escritório e opção de colocar em locação (Etapa 6): caixas do lote, bancada com teste,
+      diagnóstico, troca de peça, limpeza, etiqueta de patrimônio, anúncio ou frota de locação
 - ✅ **Logística reversa**: caixa no escritório recebe os toners usados (R$ 8 cada da recicladora + reputação)
-- ⬜ Descarte de equipamentos: apagar dados de verdade (LGPD) antes de revender; lixo eletrônico no ponto de coleta
+- ✅ Descarte de equipamentos (Etapa 6): apagamento com tela de progresso (LGPD) antes de revender; sucata levada na
+      mão até o lixo eletrônico; peças velhas dos consertos também
 
 ## Fase 3 — Impressora completa e locação  (detalhe em `PLANO_FASE_IMPRESSORA.md`)
 - ✅ Peças com mira + E, tampa animada, crimpagem animada em 3D
@@ -261,7 +280,7 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ✅ Problemas de hardware: superaquecimento por poeira, memória ruim (3 bipes, sem vídeo), fonte queimada (não liga)
 - ⬜ Problemas: lentidão, vírus/ransomware, Windows não inicia, HD com setor
       ruim (backup antes de trocar), atualização do Windows quebrou o sistema da contabilidade
-- ⬜ Peças trocadas fisicamente; peça velha volta para a mochila (sucata ou RMA)
+- ✅ Peça velha volta para a mochila (Etapa 6) e vai para o lixo eletrônico do escritório (RMA ainda não)
 - ⬜ Montagem de PC sob encomenda (orçamento → peças → montagem → teste de desempenho)
 - ⬜ **Notebook**: tela, teclado, bateria estufada, dobradiça, limpeza
 

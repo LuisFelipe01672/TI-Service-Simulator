@@ -102,7 +102,7 @@ public static partial class AcoesFisicas
                 ContratosManager.Instance?.PecaTrocada(ContratoDoServico());
                 MM?.chamadoAtivo?.os?.RegistrarPeca("Unidade de imagem (incluso no contrato)", 0f);
                 return "Você soltou as duas travas verdes, puxou a unidade de imagem velha pela alça e encaixou a nova, " +
-                       "sem tocar no cilindro. A velha vai na caixa da nova, para a reciclagem.";
+                       "sem tocar no cilindro. A velha vai na caixa da nova, para a reciclagem." + PecaVelhaNaMochila();
             }, 3f, Item.Cilindro));
         }
         var c = ContratoDoServico();

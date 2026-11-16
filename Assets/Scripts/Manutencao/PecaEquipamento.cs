@@ -8,6 +8,10 @@ public class PecaEquipamento : MonoBehaviour
     public Equipamento equipamento;
     public string id;
     public string nome;
+    // Etapa 6: peça de algo que não é equipamento de cliente (usado na bancada): ações e título próprios
+    public System.Func<List<AcaoFisica>> acoesProprias;
+    public string titulo;
+    public string Titulo => titulo ?? (equipamento != null ? equipamento.Nome : "");
 
     public const float Alcance = 2.2f;
 

@@ -104,7 +104,7 @@ public partial class EquipamentoPecas
     }
 
     // A pista está na folha: perfeita, em branco, clarinha com falhas ou com listra vertical (cilindro)
-    static Texture2D TexturaFolha(ResultadoPagina r)
+    public static Texture2D TexturaFolha(ResultadoPagina r)
     {
         if (texturasFolha.TryGetValue(r, out var t) && t != null) return t;
         const int w = 128, h = 181;

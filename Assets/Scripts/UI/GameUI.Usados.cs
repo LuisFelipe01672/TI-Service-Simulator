@@ -1,7 +1,8 @@
 using UnityEngine;
 
-// Parte da GameUI: equipamentos usados na aba Loja (lote à venda e o que está no escritório para testar,
-// recuperar, apagar dados, vender ou descartar).
+// Parte da GameUI: equipamentos usados na aba Loja. Comprar o lote é pelo tablet; o trabalho é físico (Etapa 6):
+// as caixas chegam no escritório, cada equipamento vai para a bancada (testar, consertar, limpar, apagar dados,
+// etiquetar, anunciar ou pôr na frota) e a sucata vai para o lixo eletrônico. Aqui só aparece o estado.
 public partial class GameUI
 {
     static bool NoEscritorio()
@@ -24,40 +25,46 @@ public partial class GameUI
         {
             var c = Cartao(UIFactory.CartaoClaro);
             UIFactory.Texto(c, $"<b>Lote de {origem}</b>   {UIFactory.Dinheiro(preco)}", 22, UIFactory.CorTexto);
-            UIFactory.Texto(c, $"{itens} equipamentos sem teste, no estado em que estão. Pode ter coisa boa, coisa com conserto e sucata. Disponível só hoje e amanhã.",
-                18, UIFactory.CorSuave);
+            UIFactory.Texto(c, $"{itens} equipamentos sem teste, no estado em que estão. Pode ter coisa boa, coisa com conserto e sucata. Disponível só hoje e amanhã. " +
+                "Chega em caixas no escritório.", 18, UIFactory.CorSuave);
             UIFactory.Botao(LinhaBotoes(c), "Comprar o lote", () => { Toast(EquipamentosUsados.ComprarLote(), UIFactory.Destaque, 4f); AtualizarTablet(); },
                 UIFactory.Destaque, 230, 44, 19);
         }
         if (estoque.Count == 0) return;
 
-        bool aqui = NoEscritorio();
-        if (!aqui) UIFactory.Texto(tabletConteudo, "<color=#F5B83F>Os usados estão no escritório: vá até lá para testar, recuperar e apagar os dados.</color>", 18, UIFactory.CorTexto);
+        UIFactory.Texto(tabletConteudo, "<color=#9AA6B8>O trabalho é na bancada do escritório: pegue o equipamento (E), ponha na bancada e mire nele. " +
+            "Sucata vai para a caixa de lixo eletrônico.</color>", 17, UIFactory.CorTexto);
 
-        foreach (var eq in new System.Collections.Generic.List<EquipUsado>(estoque))
+        foreach (var e in estoque)
         {
-            var e = eq;
             var c = Cartao();
             string estado = !e.testado ? "<color=#9AA6B8>não testado</color>"
-                          : e.condicao == CondicaoUsado.Bom ? $"<color=#3CCB7F>funcionando{(e.recuperado ? " (recuperado)" : "")}</color> — vale {UIFactory.Dinheiro(e.valorBom)}"
-                          : e.condicao == CondicaoUsado.DefeitoLeve ? $"<color=#F5B83F>defeito com conserto</color> — peças {UIFactory.Dinheiro(e.custoConserto)}, depois vale {UIFactory.Dinheiro(e.valorBom)}"
+                          : e.condicao == CondicaoUsado.Bom ? $"<color=#3CCB7F>funcionando{(e.recuperado ? " (recuperado)" : "")}</color> — vale {UIFactory.Dinheiro(EquipamentosUsados.ValorVenda(e))}"
+                          : e.condicao == CondicaoUsado.DefeitoLeve ? (e.diagnosticado ? $"<color=#F5B83F>{EquipamentosUsados.NomeDefeito(e.defeito)}</color> — peça {UIFactory.Dinheiro(EquipamentosUsados.CustoPeca(e))}, depois vale {UIFactory.Dinheiro(e.valorBom)}"
+                                                                                       : "<color=#F5B83F>com defeito, peça não descoberta</color>")
                           : "<color=#F2545B>sucata</color>";
-            string dados = !e.temDados ? "" : e.dadosApagados ? "  ·  <color=#3CCB7F>dados apagados</color>" : "  ·  <color=#F5B83F>com dados do antigo dono</color>";
+            string dados = !e.temDados || !e.testado || e.condicao == CondicaoUsado.Sucata ? "" : e.dadosApagados ? "  ·  <color=#3CCB7F>dados apagados</color>" : "  ·  <color=#F5B83F>com dados do antigo dono</color>";
             UIFactory.Texto(c, $"<b>{e.nome}</b>   {estado}{dados}", 20, UIFactory.CorTexto);
-            var linha = LinhaBotoes(c);
-            void Acao(string rotulo, System.Func<string> f, Color cor, bool precisaEscritorio)
-            {
-                var b = UIFactory.Botao(linha, rotulo, () => { Toast(f(), UIFactory.Destaque, 4f); AtualizarTablet(); }, cor, 210, 42, 17);
-                b.interactable = aqui || !precisaEscritorio;
-            }
-            if (!e.testado) Acao("Testar (20 min)", () => EquipamentosUsados.Testar(e), UIFactory.Destaque, true);
-            else
-            {
-                if (e.condicao == CondicaoUsado.DefeitoLeve) Acao("Recuperar (45 min)", () => EquipamentosUsados.Recuperar(e), UIFactory.Destaque, true);
-                if (e.temDados && !e.dadosApagados && e.condicao != CondicaoUsado.Sucata) Acao("Apagar dados (15 min)", () => EquipamentosUsados.ApagarDados(e), UIFactory.CartaoClaro, true);
-                if (e.condicao == CondicaoUsado.Bom) Acao("Vender", () => EquipamentosUsados.Vender(e), UIFactory.Sucesso, false);
-                if (e.condicao == CondicaoUsado.Sucata) Acao("Levar ao ponto de coleta", () => EquipamentosUsados.Descartar(e), UIFactory.CartaoClaro, false);
-            }
+            string onde = e.local == LocalUsado.Caixa ? "na caixa do lote, no escritório" : e.local == LocalUsado.Bancada ? "na bancada"
+                        : e.local == LocalUsado.Mao ? "na sua mão" : "no chão do escritório";
+            var extras = new System.Collections.Generic.List<string> { onde };
+            if (e.limpo) extras.Add("limpo");
+            if (e.patrimonio > 0) extras.Add("etiqueta " + e.Etiqueta);
+            if (e.anunciado) extras.Add("<color=#3FA9F5>anunciado: o comprador busca amanhã</color>");
+            UIFactory.Texto(c, $"{string.Join("  ·  ", extras)}\n<color=#9AA6B8>Próximo passo: {ProximoPasso(e)}</color>", 17, UIFactory.CorSuave);
         }
+    }
+
+    static string ProximoPasso(EquipUsado e)
+    {
+        if (e.local == LocalUsado.Caixa) return "abrir a caixa e levar à bancada.";
+        if (!e.testado) return e.local == LocalUsado.Bancada ? "ligar e testar." : "levar à bancada e testar.";
+        if (e.condicao == CondicaoUsado.Sucata) return e.tipo == TipoUsado.Computador && !e.pecasAproveitadas ? "aproveitar o pente de memória e levar ao lixo eletrônico." : "levar ao lixo eletrônico.";
+        if (e.condicao == CondicaoUsado.DefeitoLeve) return e.diagnosticado ? "trocar a peça ruim." : "descobrir a peça (placa POST, testador de fonte ou troca na bancada).";
+        if (e.anunciado) return "esperar o comprador.";
+        if (e.PrecisaApagar) return "apagar os dados do antigo dono (LGPD).";
+        if (!e.limpo) return "limpar, etiquetar e anunciar.";
+        if (e.patrimonio == 0) return "colar a etiqueta de patrimônio.";
+        return e.tipo == TipoUsado.Impressora ? "anunciar ou colocar na frota de locação." : "anunciar à venda.";
     }
 }

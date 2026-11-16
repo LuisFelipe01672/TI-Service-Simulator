@@ -42,6 +42,16 @@ Tudo abaixo já passou nos testes de lógica fora da Unity. O que falta conferir
 - [ ] "Agendar visita no cliente": ler o contador no visor, trocar toner baixo, troca preventiva (unidade de imagem
       animada), toner reserva aparece ao lado da impressora; contrato com toner cheio, reserva e leitura do mês
 
+## 4c. Bancada e usados (Etapa 6)
+- [ ] Comprar o lote na Loja: caixas "LOTE USADO" aparecem no escritório, perto da porta
+- [ ] E abre a caixa (estilete), E pega o equipamento, E na bancada põe em cima; E no chão (sem nada mirado) larga
+- [ ] Mirar o equipamento na bancada: ligar e testar (monitor de bancada: sem sinal / área de trabalho do antigo dono;
+      folha com listra na impressora; luzes do roteador/switch; fumaça na sucata)
+- [ ] Computador sem vídeo: placa POST (55), testador de fonte ou troca na bancada; trocar a peça (velha vai para a mochila)
+- [ ] Limpar (poeira some), apagar dados (barra de progresso), etiqueta de patrimônio, anunciar (plaquinha "À VENDA")
+- [ ] Dia seguinte: o comprador levou o anunciado; impressora etiquetada e sem dados vai para a frota (aba Contratos)
+- [ ] Sucata na mão → lixo eletrônico; peças velhas da mochila também vão para lá
+
 ## 5. Fim de jogo
 - [ ] Forçar saldo negativo (Inspector do GameEconomy) e dormir vários dias: avisos em 10 e 20 dias, tela "Sua empresa faliu" no 30º
 - [ ] "Recomeçar do zero" recarrega a cena com jogo novo

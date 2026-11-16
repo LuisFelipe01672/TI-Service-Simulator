@@ -149,7 +149,7 @@ public static partial class AcoesFisicas
                 e.pcTrocasBateria++;
                 MM?.CobrarPeca(Mochila.Info(Item.BateriaCMOS).preco / Mochila.Info(Item.BateriaCMOS).quantidadePorCompra, "Bateria CR2032");
                 return "Você empurrou a trava com a chave de fenda pequena, a bateria velha pulou e a nova encaixou (lado + para cima). " +
-                       "Ao ligar, é só acertar a data (o Windows pega a hora da internet).";
+                       "Ao ligar, é só acertar a data (o Windows pega a hora da internet)." + PecaVelhaNaMochila();
             }, 2f, Item.BateriaCMOS));
     }
 }

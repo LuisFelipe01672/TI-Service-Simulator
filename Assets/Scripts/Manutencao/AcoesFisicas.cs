@@ -46,6 +46,16 @@ public static partial class AcoesFisicas
 
     static MissionManager MM => MissionManager.Instance;
 
+    // Etapa 6: a peça velha retirada num conserto volta para a mochila (vai para o lixo eletrônico do escritório)
+    public static string PecaVelhaNaMochila()
+    {
+        var m = Mochila.Instance;
+        if (m == null) return "";
+        if (!m.Cabe(Item.PecaVelha, 1)) return " <color=#F5B83F>A peça velha não coube na mochila: ficou com o cliente.</color>";
+        m.Adicionar(Item.PecaVelha, 1);
+        return " A peça velha foi para a mochila (descarte no lixo eletrônico do escritório).";
+    }
+
     // ---------- Impressora ----------
 
     static void Impressora(EstadoEquipamentos e, List<AcaoFisica> l)
@@ -250,7 +260,7 @@ public static partial class AcoesFisicas
                     e.impCilindroRiscado = false;
                     MM?.CobrarPeca(Mochila.Info(Item.Cilindro).preco, Mochila.Info(Item.Cilindro).nome);
                     ContratosManager.Instance?.PecaTrocada(ContratosManager.Instance.DoChamado(MM != null ? MM.chamadoAtivo : null));
-                    return "Você soltou as travas, tirou o cilindro riscado e encaixou o novo, sem tocar na superfície verde.";
+                    return "Você soltou as travas, tirou o cilindro riscado e encaixou o novo, sem tocar na superfície verde." + PecaVelhaNaMochila();
                 }, 3f, Item.Cilindro));
 
             ServicosDaVisita(e, l);
@@ -414,7 +424,7 @@ public static partial class AcoesFisicas
                     e.saudeMemoria = 1f;
                     e.pcTrocasMemoria++;
                     MM?.CobrarPeca(Mochila.Info(Item.Memoria).preco, Mochila.Info(Item.Memoria).nome);
-                    return "Você abriu as travas, tirou o pente ruim e encaixou o novo até as duas travas fecharem.";
+                    return "Você abriu as travas, tirou o pente ruim e encaixou o novo até as duas travas fecharem." + PecaVelhaNaMochila();
                 }, 2f, Item.Memoria));
             if (e.pcFonteQueimada || e.pcFonteFraca)
                 l.Add(new AcaoFisica("Trocar a fonte", () =>
@@ -425,7 +435,7 @@ public static partial class AcoesFisicas
                     e.saudeFonte = 1f;
                     e.pcTrocasFonte++;
                     MM?.CobrarPeca(Mochila.Info(Item.Fonte).preco, Mochila.Info(Item.Fonte).nome);
-                    return "Você soltou os 4 parafusos, desligou os conectores da placa e dos discos, e instalou a fonte nova.";
+                    return "Você soltou os 4 parafusos, desligou os conectores da placa e dos discos, e instalou a fonte nova." + PecaVelhaNaMochila();
                 }, 4f, Item.Fonte));
             // Cooler e pasta térmica
             if (!e.pcCoolerFora)
@@ -477,8 +487,9 @@ public static partial class AcoesFisicas
                     e.pcTrocasHd++;
                     MM?.CobrarPeca(Mochila.Info(Item.SSD).preco, Mochila.Info(Item.SSD).nome);
                     if (!e.pcBackupFeito) MM?.RegistrarErro("Trocou o disco SEM fazer backup: o cliente perdeu todos os arquivos!", 6f);
-                    return e.pcBackupFeito ? "HD velho fora, SSD novo parafusado e com os cabos de dados e energia ligados."
-                                           : "SSD novo instalado... mas os arquivos do cliente ficaram no HD que morreu.";
+                    string velho = PecaVelhaNaMochila();
+                    return (e.pcBackupFeito ? "HD velho fora, SSD novo parafusado e com os cabos de dados e energia ligados."
+                                            : "SSD novo instalado... mas os arquivos do cliente ficaram no HD que morreu.") + velho;
                 }, 3f, Item.SSD));
             FerramentasGabineteAberto(e, l);
             PecaAtual = "gabinete";

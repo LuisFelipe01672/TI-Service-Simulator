@@ -42,6 +42,22 @@ public partial class EquipamentoPecas
             ferrLedsAlvo = e.ledsFonte ?? "";
             MostrarFerramenta(cam);
         }
+        AnimarFerramentaNaMao();
+    }
+
+    // Etapa 6: a bancada usa as mesmas ferramentas (placa POST, testador de fonte) fora de um chamado
+    public static void MostrarNaMao(FerramentaDiag tipo, string texto, string leds = "", float valor = 0f, string unidade = "")
+    {
+        var cam = Camera.main;
+        if (cam == null) return;
+        CriarMateriais();
+        ferrTipo = tipo; ferrTexto = texto; ferrLedsAlvo = leds ?? ""; ferrValor = valor; ferrUnidade = unidade; ferrBipe = false;
+        MostrarFerramenta(cam);
+    }
+
+    // Anima a ferramenta que está na mão (idempotente: pode ser chamado mais de uma vez por quadro)
+    public static void AnimarFerramentaNaMao()
+    {
         if (ferramenta == null) return;
 
         float t = Time.time - ferrInicio - 0.6f;   // espera chegar na mão

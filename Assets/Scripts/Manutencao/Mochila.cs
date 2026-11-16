@@ -25,7 +25,9 @@ public enum Item
     TestadorFonte,
     Multimetro,
     PendriveDiagnostico,
-    BateriaCMOS
+    BateriaCMOS,
+    // Etapa 6: peça velha retirada num conserto (vai para o lixo eletrônico)
+    PecaVelha
 }
 
 // Um cabo de rede já feito, guardado na mochila
@@ -108,6 +110,7 @@ public partial class Mochila : MonoBehaviour
     {
         foreach (var i in Catalogo) if (i.item == item) return i;
         if (item == Item.TonerUsado) return new InfoItem(Item.TonerUsado, "Toner usado (para descarte)", "Cartucho vazio retirado de um cliente: vai para a logística reversa.", 0f, 1, false);
+        if (item == Item.PecaVelha) return new InfoItem(Item.PecaVelha, "Peça velha (para descarte)", "Peça retirada num conserto: memória, fonte, cilindro, HD, bateria. Vai para o lixo eletrônico do escritório.", 0f, 1, false);
         return new InfoItem(Item.Notebook, "Notebook", "Seu notebook com o sistema de chamados.", 0f, 1, true);
     }
 

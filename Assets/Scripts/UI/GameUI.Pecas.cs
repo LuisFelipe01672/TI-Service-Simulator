@@ -76,10 +76,11 @@ public partial class GameUI
 
         var mm = MissionManager.Instance;
         var estado = mm != null ? mm.Estado : null;
-        txtPecaTitulo.text = $"{p.nome}  <size=75%><color=#9AA6B8>{p.equipamento.Nome}</color></size>";
+        txtPecaTitulo.text = $"{p.nome}  <size=75%><color=#9AA6B8>{p.Titulo}</color></size>";
 
         acoesPeca.Clear();
-        if (estado != null)
+        if (p.acoesProprias != null) acoesPeca.AddRange(p.acoesProprias());   // usado na bancada (Etapa 6)
+        else if (estado != null && p.equipamento != null)
             foreach (var a in AcoesFisicas.Para(p.equipamento.tipoEquipamento, estado))
                 if (a.peca == p.id) acoesPeca.Add(a);
 
@@ -92,7 +93,7 @@ public partial class GameUI
             indicePeca = (indicePeca % acoesPeca.Count + acoesPeca.Count) % acoesPeca.Count;
         }
 
-        MontarTextoPeca(estado == null);
+        MontarTextoPeca(estado == null && p.acoesProprias == null);
         TratarTeclaPeca();
         return true;
     }
@@ -158,8 +159,11 @@ public partial class GameUI
             return;
         }
 
-        if (equipamentoAtual != pecaMirada.equipamento) logManutencao.Clear();
-        equipamentoAtual = pecaMirada.equipamento;
+        if (pecaMirada.equipamento != null)
+        {
+            if (equipamentoAtual != pecaMirada.equipamento) logManutencao.Clear();
+            equipamentoAtual = pecaMirada.equipamento;
+        }
         if (acao.abreComputador) { AbrirComputador(); return; }
         if (acao.abreCrimpagem) { CrimparNoCliente(true); return; }
         if (acao.segurar > 0f) { acaoSegurandoPeca = acao; progressoPeca = 0f; return; }
@@ -170,13 +174,14 @@ public partial class GameUI
     {
         if (pecaMirada != null) SomManager.SomDaAcao(a.rotulo, pecaMirada.transform.position);
         string r = a.executar();
-        if (!a.observacao) MissionManager.Instance?.RegistrarAcao(a.rotulo);
-        Registrar(r);
+        bool doChamado = pecaMirada == null || pecaMirada.equipamento != null;
+        if (!a.observacao && doChamado) MissionManager.Instance?.RegistrarAcao(a.rotulo);
+        if (doChamado) Registrar(r);
         bool fazClose = a.observacao && a.close && !a.abreComputador && pecaMirada != null && !string.IsNullOrEmpty(r);
         if (fazClose) CloseDePeca.Abrir(pecaMirada, a.pistaVisual ?? r);
         if (!fazClose || a.pistaVisual == null) MostrarResultadoPeca(r);   // pista visual: o texto fica só no registro (Tab)
         // A ação pode ter fechado o chamado (página de teste ok, por exemplo): a notificação já avisa
-        if (MissionManager.Instance == null || MissionManager.Instance.chamadoAtivo == null) resultadoPeca = null;
+        if (doChamado && (MissionManager.Instance == null || MissionManager.Instance.chamadoAtivo == null)) resultadoPeca = null;
     }
 
     void MostrarResultadoPeca(string texto)

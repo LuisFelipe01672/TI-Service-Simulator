@@ -160,7 +160,8 @@ public static partial class MontarCenario
         var criadoEsq = ModeloReal(PH("ClassicNightstand_01"), casa, new Vector3(-3.55f, 0f, -2.72f), 0.5f, 0);
         var criadoDir = ModeloReal(PH("ClassicNightstand_01"), casa, new Vector3(-1.15f, 0f, -2.72f), 0.5f, 0);
         ModeloReal(PH("alarm_clock_01"), casa, new Vector3(-1.15f, Altura(criadoDir), -2.7f), 0.12f, 160, Colisao.Nenhuma);
-        ModeloReal(PH("standing_picture_frame_01"), casa, new Vector3(-3.5f, Altura(criadoEsq), -2.78f), 0.2f, 15, Colisao.Nenhuma);
+        ModeloReal(PH("standing_picture_frame_01"), casa, new Vector3(-3.4f, Altura(criadoEsq), -2.8f), 0.2f, 15, Colisao.Nenhuma);
+        CriarAbajur(casa, new Vector3(-3.66f, Altura(criadoEsq), -2.68f));
         ModeloReal(PH("hanging_picture_frame_01"), casa, new Vector3(-2.35f, 1.35f, -2.97f), 0.7f, 180, Colisao.Nenhuma);
 
         // Tapete aos pés da cama

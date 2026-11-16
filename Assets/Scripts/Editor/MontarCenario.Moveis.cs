@@ -40,6 +40,60 @@ public static partial class MontarCenario
         return go;
     }
 
+    // Abajur de criado-mudo (Fase 1A): base de cerâmica, haste, cúpula de tecido que brilha por dentro quando
+    // acesa e luz quente fraca, só em tempo real. Feito aqui: não há abajur CC0 pronto (Poly Haven só tem
+    // luminária articulada de mesa, que já está no home office).
+    static GameObject CriarAbajur(Transform pai, Vector3 pos)
+    {
+        var go = new GameObject("Abajur");
+        go.transform.SetParent(pai, false);
+        go.transform.localPosition = pos;
+
+        var mCeramica = Mat("Abajur_Ceramica", new Color(0.86f, 0.84f, 0.79f), 0.75f);
+        var mMetal = Mat("Abajur_Metal", new Color(0.72f, 0.6f, 0.38f), 0.7f, 0.9f);   // latão
+        var mApagada = Mat("Abajur_Cupula", new Color(0.92f, 0.88f, 0.78f), 0.1f);
+        var mAcesa = Mat("Abajur_Cupula_Acesa", new Color(0.95f, 0.9f, 0.8f), 0.1f);
+        Brilhar(mAcesa, new Color(1f, 0.78f, 0.5f) * 1.6f);
+
+        // base: um "pote" de cerâmica (o próprio cesto, fechado em cima pela borda)
+        var basePote = new GameObject("Base");
+        basePote.transform.SetParent(go.transform, false);
+        basePote.AddComponent<MeshFilter>().sharedMesh = MalhaCesto(0.16f, 0.055f, 0.045f, 0.03f);
+        basePote.AddComponent<MeshRenderer>().sharedMaterial = mCeramica;
+
+        Caixa(go.transform, "Haste", new Vector3(0, 0.22f, 0), new Vector3(0.012f, 0.13f, 0.012f), mMetal, 1f, false);
+
+        var cupula = new GameObject("Cupula");
+        cupula.transform.SetParent(go.transform, false);
+        cupula.transform.localPosition = new Vector3(0, 0.2f, 0);
+        cupula.AddComponent<MeshFilter>().sharedMesh = MalhaCesto(0.19f, 0.15f, 0.095f, 0.003f, fundo: false);
+        var rCupula = cupula.AddComponent<MeshRenderer>();
+        rCupula.sharedMaterial = mApagada;
+        rCupula.shadowCastingMode = ShadowCastingMode.Off;
+
+        var luzGo = new GameObject("Luz_Abajur");
+        luzGo.transform.SetParent(go.transform, false);
+        luzGo.transform.localPosition = new Vector3(0, 0.27f, 0);
+        var luz = luzGo.AddComponent<Light>();
+        luz.type = LightType.Point;
+        luz.color = new Color(1f, 0.78f, 0.52f);   // lâmpada quente (~2700 K)
+        luz.intensity = 0.9f;
+        luz.range = 2.4f;
+        luz.shadows = LightShadows.None;
+        luz.lightmapBakeType = LightmapBakeType.Realtime;
+
+        var bc = go.AddComponent<BoxCollider>();
+        bc.center = new Vector3(0, 0.2f, 0);
+        bc.size = new Vector3(0.3f, 0.4f, 0.3f);
+
+        var a = go.AddComponent<Abajur>();
+        a.luz = luz;
+        a.cupula = rCupula;
+        a.cupulaAcesa = mAcesa;
+        a.cupulaApagada = mApagada;
+        return go;
+    }
+
     // Tronco de cone aberto em cima, com parede (lado de fora e de dentro), borda e fundo
     static Mesh MalhaCesto(float altura, float rBaixo, float rCima, float parede, bool fundo = true)
     {

@@ -9,6 +9,8 @@ public class Cafeteira : Interactable
     public float intervaloMinutos = 45f;
     public int maximoPorDia = 3;
     public Transform xicara;   // aparece ao lado da cafeteira quando o café fica pronto
+    public float bonusCafeDaManha = 10f;   // o primeiro café do dia, logo ao acordar, rende mais (rotina da manhã)
+    public static event System.Action CafeTomado;
 
     int cafesHoje, diaContado = -1;
     float ultimoCafe = -999f;   // minuto do jogo
@@ -38,11 +40,14 @@ public class Cafeteira : Interactable
         var d = DiaManager.Instance;
         AtualizarDia();
         if (cafesHoje >= maximoPorDia || (d != null && d.Hora * 60f - ultimoCafe < intervaloMinutos)) return;
+        bool cafeDaManha = cafesHoje == 0 && d != null && d.Hora < d.horaInicio + 1.5f;   // logo depois de acordar
+        float ganho = energiaPorCafe + (cafeDaManha ? bonusCafeDaManha : 0f);
         cafesHoje++;
         ultimoCafe = d != null ? d.Hora * 60f : 0f;
-        EnergiaTecnico.Instance?.Recuperar(energiaPorCafe);
+        EnergiaTecnico.Instance?.Recuperar(ganho);
         SomManager.TocarEm("mexer", transform.position, 0.6f, 1.2f);
-        GameUI.Instance?.Toast($"Café passado! +{energiaPorCafe:0} de energia.", UIFactory.Sucesso, 2.5f);
+        GameUI.Instance?.Toast(cafeDaManha ? $"Café da manhã! +{ganho:0} de energia." : $"Café passado! +{ganho:0} de energia.", UIFactory.Sucesso, 2.5f);
+        CafeTomado?.Invoke();
         if (xicara != null)
         {
             xicara.gameObject.SetActive(true);

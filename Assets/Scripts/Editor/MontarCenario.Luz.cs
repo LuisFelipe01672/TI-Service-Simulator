@@ -80,7 +80,7 @@ public static partial class MontarCenario
         // Lâmpadas do teto (as LuzTeto): direto em tempo real, rebote pré-calculado. Sol e postes: tempo real.
         foreach (var luz in Object.FindObjectsByType<Light>(FindObjectsInactive.Include))
         {
-            bool teto = luz.type == LightType.Point && luz.transform.IsChildOf(raiz) && luz.GetComponent<PosteLuz>() == null
+            bool teto = luz.type == LightType.Point && luz.transform.IsChildOf(raiz) && luz.GetComponent<PosteLuz>() == null && luz.GetComponentInParent<Abajur>() == null
                         && comodos.Any(k => k.interior.Contains(luz.transform.position));
             luz.lightmapBakeType = teto ? LightmapBakeType.Mixed : LightmapBakeType.Realtime;
             if (teto) luz.bounceIntensity = 1.2f;

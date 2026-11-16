@@ -257,6 +257,7 @@ public static class TesteGrafico
         Foto("Cliente_Espera", new Vector3(38.0f, 1.7f, 0.5f), new Vector3(43.0f, 0.5f, -2.8f));
         Foto("Cliente_Lixeira", new Vector3(-1.6f + 40f + 0.6f, 1.0f, 2.6f), new Vector3(-1.6f + 40f, 0.15f, 3.7f));
         Foto("Escritorio_Mesa", new Vector3(1.5f, 1.7f, -1.5f), new Vector3(0f, 0.7f, 2.5f));
+        Foto("Casa_Abajur", c + new Vector3(-2.6f, 1.1f, -1.9f), c + new Vector3(-3.6f, 0.65f, -2.7f));
         Debug.Log("[TesteGrafico] Fotos da casa salvas em Builds/Capturas");
     }
 

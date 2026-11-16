@@ -16,6 +16,7 @@ public partial class GameUI : MonoBehaviour
     enum Modal { Nenhum, Tablet, Manutencao, Pausa, Conversa, Resumo, Computador, Crimpagem, Bancada, Falencia, Configuracoes, Celular, Inventario, OS }
     Modal modal = Modal.Nenhum;
     public bool PainelAberto => modal != Modal.Nenhum;
+    public bool VendoChamados => modal == Modal.Tablet || modal == Modal.Celular || modal == Modal.Computador;   // rotina da manhã
 
     // HUD
     TextMeshProUGUI txtSaldo, txtReputacao, txtFase;

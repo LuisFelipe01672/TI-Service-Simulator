@@ -40,3 +40,31 @@ static class AtalhosTesteClosePc
         m?.Invoke(null, new object[] { "Limpar por dentro" });
     }
 }
+
+static class AtalhosTesteCasa
+{
+    [MenuItem("TI Service/Teste (Play)/Casa: abajur (acender/apagar)", false, 108)]
+    static void Abajur()
+    {
+        if (!Application.isPlaying) return;
+        var a = Object.FindAnyObjectByType<global::Abajur>();
+        var j = GameObject.FindWithTag("Player");
+        if (a == null || j == null) { Debug.LogWarning("[Teste] Sem abajur na cena."); return; }
+        var pc = j.GetComponent<PlayerController>();
+        var cc = j.GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = false;
+        j.transform.position = a.transform.position + new Vector3(1.3f, 0.6f, 0.9f);
+        if (cc != null) cc.enabled = true;
+        pc?.OlharPara(a.transform.position + Vector3.up * 0.15f);
+        a.Interagir();
+        Debug.Log("[Teste] Abajur " + (a.aceso ? "aceso" : "apagado"));
+    }
+
+    [MenuItem("TI Service/Teste (Play)/Casa: começar um novo dia (rotina da manhã)", false, 109)]
+    static void NovoDia()
+    {
+        if (!Application.isPlaying || DiaManager.Instance == null) return;
+        DiaManager.Instance.ComecarNovoDia();
+        Debug.Log("[Teste] Novo dia: " + DiaManager.Instance.dia);
+    }
+}

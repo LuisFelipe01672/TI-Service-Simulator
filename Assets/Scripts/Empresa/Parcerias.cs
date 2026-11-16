@@ -34,9 +34,9 @@ public static class Parcerias
 
     public static readonly ParceriaInfo[] Lista =
     {
-        new ParceriaInfo { id = Nuvem, nome = "NuvemBR Distribuidora", area = "E-mail e Office na nuvem",
-            descricao = "Revenda de licenças de e-mail e Office por usuário.", regimeMinimo = Regime.MEI, adesao = 0f, diasAnalise = 3,
-            libera = new[] { TipoServico.Email }, semParceria = "Não dá para vender e-mail/Office." },
+        new ParceriaInfo { id = Nuvem, nome = "NuvemBR Distribuidora", area = "E-mail e pacote de escritório na nuvem",
+            descricao = "Revenda de licenças de e-mail e pacote de escritório por usuário.", regimeMinimo = Regime.MEI, adesao = 0f, diasAnalise = 3,
+            libera = new[] { TipoServico.Email }, semParceria = "Não dá para vender e-mail/pacote de escritório." },
         new ParceriaInfo { id = Antivirus, nome = "ProtegeMax", area = "Antivírus e monitoramento remoto",
             descricao = "Console de antivírus e monitoramento das máquinas dos clientes (suporte gerenciado).", regimeMinimo = Regime.MEI, adesao = 300f, diasAnalise = 2,
             libera = new[] { TipoServico.Suporte }, semParceria = "Não dá para vender suporte gerenciado." },

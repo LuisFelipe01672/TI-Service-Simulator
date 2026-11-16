@@ -61,6 +61,8 @@ public class Problema
     public Problema Ferramenta(Item i) { ferramentaIdeal = i; return this; }
     public Problema Remoto(string como = null) { remoto = true; comoRemoto = como; return this; }
     public Problema SemInternet() { derrubaInternet = true; return this; }
+    public string motivoPresencial;                            // por que não dá de longe (o técnico ouve isso no remoto)
+    public Problema SoPresencial(string motivo) { motivoPresencial = motivo; return this; }
 }
 
 public static class CatalogoProblemas
@@ -99,6 +101,18 @@ public static class CatalogoProblemas
     public const string TrocarMemoriaComErro = "Trocar memória com erro";
     public const string TrocarBateria = "Trocar bateria da placa-mãe";
     public const string Checkup = "Check-up completo";
+    // Etapa 7: software e notebook
+    public const string DefinirPadrao = "Definir a impressora padrão";
+    public const string DesbloquearConta = "Desbloquear a conta";
+    public const string CorrigirEmail = "Corrigir o servidor de saída do e-mail";
+    public const string LimparInicializacao = "Limpar a inicialização";
+    public const string RemoverVirus = "Remover vírus e propaganda";
+    public const string DesfazerAtualizacao = "Desfazer a atualização";
+    public const string LimparTecla = "Limpar a tecla";
+    public const string TrocarCarregador = "Trocar o carregador";
+    public const string LimparVentoinha = "Limpar a ventoinha do notebook";
+    public const string TrocarBateriaEstufada = "Trocar a bateria estufada";
+    public const string TrocarDobradica = "Trocar a dobradiça";
     public static bool EhCheckup(Problema p) => p != null && p.solucao == Checkup;
 
     // Etapa 5: serviços da locação feitos no local. Ficam FORA das listas sorteáveis (só o ContratosManager cria).
@@ -483,7 +497,7 @@ public static class CatalogoProblemas
             "A placa de rede sumiu depois de uma atualização.",
             "O computador esqueceu que tem internet.",
             new[] {
-                "Desde a atualização do Windows de ontem à noite.",
+                "Desde a atualização do sistema de ontem à noite.",
                 "Só deixei atualizar, como o aviso pediu.",
                 "Nem aparece o ícone de rede direito.",
                 "Só o meu.",
@@ -508,6 +522,103 @@ public static class CatalogoProblemas
                 e.memoria = Random.Range(0.94f, 0.99f);
                 e.diasLigado = Random.Range(15, 40);
             }),
+
+        // ---------- Etapa 7: software (tela do cliente) ----------
+        new Problema(TipoEquipamento.Computador, DefinirPadrao,
+            "Mando imprimir e abre uma janela pedindo para salvar um arquivo.",
+            "A impressora não imprime, ela quer salvar o papel no computador?",
+            new[] {
+                "Desde ontem, depois que eu salvei um boleto em PDF.",
+                "Só usei a opção de imprimir em PDF uma vez, para mandar um boleto por e-mail.",
+                "Aparece \"Salvar saída de impressão como\" e pede um nome.",
+                "Só no meu computador; dos outros sai normal.",
+                "Reiniciei e continua pedindo para salvar." },
+            Pergunta.MexeramEmAlgo, "Não mexi em nada, só mandei imprimir.")
+            .Remoto("Pelo acesso remoto: definiu a impressora do escritório como padrão e desligou a troca automática da padrão.")
+            .Causa(e => e.swGerenciarPadraoAuto ? "A impressão voltou a virar PDF: o sistema trocou a impressora padrão sozinho de novo" : null)
+            .Quebra(e => { e.swPadraoErrado = true; e.swGerenciarPadraoAuto = true; }),
+
+        new Problema(TipoEquipamento.Computador, DesbloquearConta,
+            "Errei a senha umas vezes e agora o computador não deixa entrar.",
+            "O computador fala que eu tô bloqueada. Eu fiz alguma coisa errada?",
+            new[] {
+                "Desde hoje cedo. Voltei de férias e não lembrava a senha.",
+                "A senha estava num papelzinho colado no monitor, mas a faxina jogou fora.",
+                "\"A conta foi bloqueada. Muitas tentativas de senha incorreta.\"",
+                "Só a minha conta; o pessoal entra normal.",
+                "Reiniciei, mas volta na mesma tela de senha." },
+            Pergunta.MexeramEmAlgo, "Não perdi papel nenhum, a senha que mudou sozinha.")
+            .SoPresencial("Com a conta bloqueada o cliente nem entra no sistema para aceitar o acesso remoto.")
+            .Quebra(e => { e.swContaBloqueada = true; e.swSenhaRedefinida = false; e.swAdminLogado = false; }),
+
+        new Problema(TipoEquipamento.Computador, CorrigirEmail,
+            "Meus e-mails não saem: ficam todos parados na caixa de saída.",
+            "Eu mando os e-mails e eles não chegam em ninguém.",
+            new[] {
+                "Desde segunda, quando o provedor mudou alguma coisa.",
+                "Chegou um aviso do provedor sobre \"segurança no envio\", mas eu não entendi.",
+                "\"O servidor de saída não respondeu\" e o e-mail fica na caixa de saída.",
+                "Receber eu recebo normal. Só não sai nada.",
+                "Fechei e abri o e-mail várias vezes, reiniciei também." },
+            Pergunta.MensagemErro, "Não aparece erro nenhum, só não chega.")
+            .Remoto("Pelo acesso remoto: mudou o servidor de saída para a porta 587 com autenticação e enviou as mensagens presas.")
+            .Quebra(e => { e.swEmailPresos = Random.Range(2, 7); e.swEmailPorta = 25; e.swEmailAutenticacao = Random.value < 0.5f; }),
+
+        new Problema(TipoEquipamento.Computador, LimparInicializacao,
+            "O computador demora uma eternidade para ficar usável depois que liga.",
+            "Ele liga, mas fica um tempão rodando a bolinha antes de deixar eu fazer qualquer coisa.",
+            new[] {
+                "Foi piorando de uns meses para cá.",
+                "Só fui instalando uns programinhas grátis que o pessoal indica.",
+                "Não dá erro; aparece um monte de janelinha abrindo sozinha quando liga.",
+                "Só o meu, os outros ligam rapidinho.",
+                "Eu reinicio e piora: tem que esperar tudo abrir de novo." },
+            Pergunta.MexeramEmAlgo, "Nunca instalei nada.")
+            .Remoto("Pelo acesso remoto: desativou os programas desnecessários na inicialização e reiniciou.")
+            .Quebra(e =>
+            {
+                int n = Random.Range(8, 12);
+                for (int i = 0; i < n; i++)
+                    e.swInicializacao.Add(new ProgramaInicio(EstadoEquipamentos.ProgramasInuteis[i], i % 3 == 0 ? "Alto" : "Médio", false));
+            }),
+
+        // ---------- Etapa 7: notebook ----------
+        new Problema(TipoEquipamento.Notebook, LimparTecla,
+            "Uma tecla do notebook parou de funcionar.",
+            "O notebook come as letras, as palavras saem faltando pedaço.",
+            new[] {
+                "Desde ontem, depois do lanche da tarde.",
+                "Eu como na mesa às vezes... caiu um farelinho de biscoito, mas eu assoprei.",
+                "Não dá mensagem, a letra A simplesmente não sai.",
+                "É o meu notebook, só eu uso.",
+                "Reiniciei e continua sem a letra A." },
+            Pergunta.MexeramEmAlgo, "Nunca comi perto do notebook.")
+            .Quebra(e => { e.nbTeclaFalhando = true; }),
+
+        new Problema(TipoEquipamento.Notebook, TrocarCarregador,
+            "O notebook não carrega mais: só funciona até a bateria acabar.",
+            "O notebook tá ligado na tomada mas a bateria só desce.",
+            new[] {
+                "Faz uns três dias. Antes já falhava se mexesse no fio.",
+                "O cabo do carregador estava descascando, meu marido passou fita isolante.",
+                "No ícone da bateria diz \"conectado, não está carregando\".",
+                "Só nesse notebook; o carregador é dele mesmo.",
+                "Reiniciei e troquei de tomada, nada." },
+            Pergunta.MexeramEmAlgo, "Ninguém mexeu no carregador, está novinho.")
+            .Ferramenta(Item.Multimetro)
+            .Quebra(e => { e.nbCarregadorRuim = true; e.nbCarga = Random.Range(0.06f, 0.2f); }),
+
+        new Problema(TipoEquipamento.Notebook, LimparVentoinha,
+            "O notebook esquenta muito e desliga sozinho.",
+            "O notebook fica pelando embaixo e apaga do nada.",
+            new[] {
+                "Faz umas semanas, piora à tarde.",
+                "Eu uso ele em cima da cama às vezes, no cobertor.",
+                "Não aparece nada, a tela só apaga.",
+                "É só esse notebook.",
+                "Depois que esfria ele liga, e daqui a pouco desliga de novo." },
+            Pergunta.MexeramEmAlgo, "Uso sempre na mesa, certinho.")
+            .Quebra(e => { e.nbPoeira = Random.Range(0.85f, 1f); }),
     };
 
     public static readonly Problema[] Dificeis = {
@@ -533,7 +644,7 @@ public static class CatalogoProblemas
             "Do nada aparece uma tela azul com umas letras e ele reinicia.",
             new[] {
                 "Umas três semanas. Às vezes uma vez por dia, às vezes nenhuma.",
-                "Nada, só atualizações do Windows mesmo.",
+                "Nada, só atualizações do sistema mesmo.",
                 "Tela azul. Já apareceu MEMORY_MANAGEMENT e outra vez um nome diferente.",
                 "Só esse. E os arquivos às vezes abrem corrompidos.",
                 "Reinicio e volta a funcionar... até a próxima." },
@@ -638,6 +749,72 @@ public static class CatalogoProblemas
                 e.modemEmBridge = false;
                 e.pcIpErrado = true;
             }),
+
+        // ---------- Etapa 7: software (tela do cliente) ----------
+        new Problema(TipoEquipamento.Computador, RemoverVirus,
+            "Aparecem propagandas sem parar e o navegador abre um site estranho.",
+            "O computador está cheio de anúncio pulando na tela, acho que pegou vírus.",
+            new[] {
+                "Desde que baixei um conversor de PDF grátis na semana passada.",
+                "Baixei um programinha para juntar PDF, cliquei em \"avançar\" em tudo.",
+                "\"PARABÉNS! Você ganhou um celular\" e outras janelas pulando.",
+                "Só no meu; e agora o computador está bem mais lento.",
+                "Reiniciei e as propagandas voltam sozinhas." },
+            Pergunta.MexeramEmAlgo, "Não baixei nada, apareceu do nada.")
+            .Remoto("Pelo acesso remoto: varredura completa, ameaças em quarentena, programa de propaganda desinstalado e página inicial restaurada.")
+            .Quebra(e => { e.swAmeacas = true; e.swProgramaPropaganda = true; e.swPaginaTrocada = true; e.swVarreduraFeita = false; e.memoria = 0.7f; }),
+
+        new Problema(TipoEquipamento.Computador, DesfazerAtualizacao,
+            "Depois de uma atualização, o sistema da contabilidade não abre mais.",
+            "O programa das notas não abre, dá um erro esquisito de banco de dados.",
+            new[] {
+                "Desde hoje cedo. O computador ficou atualizando ontem à noite.",
+                "Ninguém mexeu, ele atualizou sozinho na hora de desligar.",
+                "\"Erro 0x80 — componente de banco de dados incompatível. Contate o suporte.\"",
+                "Os outros dois computadores ainda não atualizaram e estão funcionando.",
+                "Reiniciei três vezes, o erro continua." },
+            Pergunta.DesdeQuando, "Faz uns dias, não sei dizer.")
+            .Remoto("Pelo acesso remoto: desinstalou a atualização TIOS-2611, ocultou ela e pausou as atualizações até a correção do fabricante.")
+            .Causa(e => e.swAtualizacaoVaiVoltar ? "A atualização reinstalou sozinha de madrugada e o sistema contábil parou de novo" : null)
+            .Quebra(e => { e.swAtualizacaoRuim = true; e.swAtualizacaoVaiVoltar = true; }),
+
+        // ---------- Etapa 7: notebook ----------
+        new Problema(TipoEquipamento.Notebook, TrocarBateriaEstufada,
+            "O touchpad do notebook está estufado e ele balança na mesa.",
+            "O notebook está meio inchado embaixo, o mouse dele está levantando.",
+            new[] {
+                "Começou faz umas duas semanas, foi aumentando.",
+                "Ele fica na tomada o dia inteiro, nunca tiro.",
+                "Não dá mensagem; às vezes o touchpad clica sozinho.",
+                "É o notebook da gerente.",
+                "Reiniciei, mas o estufado continua." },
+            Pergunta.MexeramEmAlgo, "Ninguém deixou ele na tomada, eu sempre tiro.")
+            .Quebra(e => { e.nbBateriaEstufada = true; e.nbCarga = Random.Range(0.1f, 0.3f); }),
+
+        new Problema(TipoEquipamento.Notebook, TrocarDobradica,
+            "A tela do notebook está bamba e não para em pé.",
+            "A tampa do notebook está caindo para trás, vai quebrar.",
+            new[] {
+                "Desde que ele caiu da mesa, faz uns dez dias.",
+                "Ele caiu aberto, pela tela. Fechei com força para ver se encaixava.",
+                "Não dá mensagem; faz um estalo quando abro.",
+                "É o notebook que a gente leva para as visitas.",
+                "Não adianta reiniciar, o problema é a tampa." },
+            Pergunta.MexeramEmAlgo, "Ele não caiu, é defeito de fábrica.")
+            .Quebra(e => { e.nbDobradicaQuebrada = true; }),
+
+        new Problema(TipoEquipamento.Notebook, RemoverVirus,
+            "O notebook está cheio de propaganda e o navegador abre sozinho num site de ofertas.",
+            "O notebook fica abrindo anúncio, deve ser vírus.",
+            new[] {
+                "Desde que instalei um programa para baixar vídeos.",
+                "Meu filho instalou um programa de vídeos nele no fim de semana.",
+                "Pula uma janela \"Seu notebook está lento! Clique aqui\".",
+                "Só nesse notebook.",
+                "Reiniciei, as janelas voltam." },
+            Pergunta.MexeramEmAlgo, "Ninguém instalou nada nele.")
+            .Remoto("Pelo acesso remoto: varredura completa, ameaças em quarentena, programa de propaganda desinstalado e página inicial restaurada.")
+            .Quebra(e => { e.swAmeacas = true; e.swProgramaPropaganda = true; e.swPaginaTrocada = true; e.swVarreduraFeita = false; }),
     };
 
     public static Problema Sortear(DificuldadeChamado dif)

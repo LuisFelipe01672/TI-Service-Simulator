@@ -77,6 +77,7 @@ public partial class EstadoEquipamentos
         if (pelaRede)
         {
             if (pcSemImpressora) return "Nenhuma impressora instalada neste computador. Adicione a impressora pelo IP primeiro.";
+            if (swPadraoErrado) return "Abriu a janela \"Salvar saída de impressão como...\" pedindo um nome de arquivo: a impressora padrão é \"Imprimir em arquivo PDF\". Nada saiu na impressora.";
             if (!spoolerRodando) return "Erro: o serviço Spooler de Impressão não está em execução.";
             if (!PcNaRede) return "Erro: este computador está sem rede.";
             if (!ImpressoraOnline) return "Impressora offline. O documento ficou na fila.";

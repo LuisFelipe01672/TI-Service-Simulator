@@ -53,7 +53,7 @@ public class Alerta
     public string acao;          // efeito especial ao resolver ("teste-backup", "reexecutar-backup", "troca-equipamento"...)
 }
 
-// Serviços recorrentes (suporte gerenciado, e-mail/Office, backup, bot, locação de notebook e mini PC)
+// Serviços recorrentes (suporte gerenciado, e-mail/pacote de escritório, backup, bot, locação de notebook e mini PC)
 // e a central de monitoramento que gera os alertas do dia a dia.
 public class ServicosManager : MonoBehaviour
 {
@@ -437,7 +437,7 @@ public class ServicosManager : MonoBehaviour
                     int q = Random.Range(0, 4);
                     if (q == 0) NovoAlerta(c, "Disco quase cheio", "Uma máquina está com 95% do disco ocupado.", 20);
                     else if (q == 1) NovoAlerta(c, "Antivírus bloqueou uma ameaça", "Arquivo suspeito em quarentena; verificar a máquina.", 25, critico: true);
-                    else if (q == 2) NovoAlerta(c, "Máquina sem atualizações", "Uma máquina não atualiza o Windows há 30 dias.", 30);
+                    else if (q == 2) NovoAlerta(c, "Máquina sem atualizações", "Uma máquina não atualiza o sistema há 30 dias.", 30);
                     else NovoAlerta(c, "Computador sem comunicar", "Uma máquina parou de responder ao monitoramento.", 60, visita: true);
                 }
                 break;

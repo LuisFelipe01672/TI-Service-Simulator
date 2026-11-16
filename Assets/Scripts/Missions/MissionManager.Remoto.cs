@@ -44,8 +44,15 @@ public partial class MissionManager
         if (!SolucaoRemota(c.problema))
         {
             Gastar(25f);
+            string porque = c.problema?.motivoPresencial;
+            if (porque != null)
+            {
+                c.anotacoes.Add("Remoto não deu: " + porque);
+                mensagem = $"Não deu para atender {c.nomeCliente} de longe: {porque} Precisa ir ao local.";
+                return ResultadoRemoto.PrecisaVisita;
+            }
             c.anotacoes.Add("Remoto: conectou, mas o defeito é físico (cabo, toner ou peça). Precisa de visita.");
-            mensagem = $"Conectou no PC de {c.nomeCliente}, mas o defeito é físico (cabo, toner ou peça). Precisa ir ao local.";
+            mensagem = $"Conectou no {c.EquipamentoTexto().ToLowerInvariant()} de {c.nomeCliente}, mas o defeito é físico (cabo, toner ou peça). Precisa ir ao local.";
             return ResultadoRemoto.PrecisaVisita;
         }
 
@@ -58,7 +65,7 @@ public partial class MissionManager
         c.os = NovaOS(c);
         c.os.diagnostico = $"Resolvido por acesso remoto: {c.problema?.solucao.ToLowerInvariant()}.";
         c.os.RegistrarAcao("Ligou para o cliente e conectou pelo programa de acesso remoto");
-        c.os.RegistrarAcao($"Acesso remoto: {c.problema?.solucao}");
+        c.os.RegistrarAcao(c.problema?.comoRemoto ?? $"Acesso remoto: {c.problema?.solucao}");
         float original = c.recompensa;
         c.recompensa = Mathf.Round(original * FatorPagamentoRemoto);
         c.anotacoes.Add($"Resolvido por acesso remoto: {c.problema?.solucao}.");

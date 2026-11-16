@@ -4,7 +4,8 @@ public enum TipoEquipamento
 {
     Impressora,
     Roteador,
-    Computador
+    Computador,
+    Notebook      // Etapa 7: notebook do cliente (no fim: o save guarda o tipo pelo número)
 }
 
 // Equipamento do cliente. Ao apertar E perto dele, abre a manutenção (ações com as mãos) na GameUI.

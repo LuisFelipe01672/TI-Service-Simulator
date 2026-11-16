@@ -31,11 +31,27 @@ public class SalaCliente : MonoBehaviour
     public string Nome =>
         tipo == TipoSala.Clinica ? "Clínica" : tipo == TipoSala.Loja ? "Loja" : "Escritório de contabilidade";
 
-    public Transform Ancora(TipoEquipamento t) =>
-        t == TipoEquipamento.Impressora ? ancoraImpressora : t == TipoEquipamento.Roteador ? ancoraRoteador : ancoraComputador;
+    public Transform Ancora(TipoEquipamento t)
+    {
+        switch (t)
+        {
+            case TipoEquipamento.Impressora: return ancoraImpressora;
+            case TipoEquipamento.Roteador: return ancoraRoteador;
+            case TipoEquipamento.Computador: case TipoEquipamento.Notebook: return ancoraComputador;
+            default: throw new System.ArgumentOutOfRangeException(nameof(t), $"Sala sem lugar para {t}");
+        }
+    }
 
-    public Transform[] Caminho(TipoEquipamento t) =>
-        t == TipoEquipamento.Impressora ? caminhoImpressora : t == TipoEquipamento.Roteador ? caminhoRoteador : caminhoComputador;
+    public Transform[] Caminho(TipoEquipamento t)
+    {
+        switch (t)
+        {
+            case TipoEquipamento.Impressora: return caminhoImpressora;
+            case TipoEquipamento.Roteador: return caminhoRoteador;
+            case TipoEquipamento.Computador: case TipoEquipamento.Notebook: return caminhoComputador;
+            default: throw new System.ArgumentOutOfRangeException(nameof(t), $"Sala sem caminho para {t}");
+        }
+    }
 
     // ---------- Qual sala é de qual cliente ----------
 
@@ -92,14 +108,17 @@ public class SalaCliente : MonoBehaviour
     // Leva impressora, roteador e computador para os lugares desta sala (peças, cabos e LEDs vão junto: são filhos)
     public void ReceberEquipamentos()
     {
+        NotebookCliente.Garantir();
         foreach (var e in FindObjectsByType<Equipamento>())
         {
             var a = Ancora(e.tipoEquipamento);
             if (a == null) continue;
+            if (e.tipoEquipamento == TipoEquipamento.Notebook) continue;   // vai depois, ao lado do monitor
             e.transform.SetPositionAndRotation(a.position, a.rotation);
         }
         Atual = this;
         Physics.SyncTransforms();
+        NotebookCliente.Posicionar(this);
         Debug.Log($"[Salas] Equipamentos na sala: {Nome}.");
     }
 }

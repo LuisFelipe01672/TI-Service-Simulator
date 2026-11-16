@@ -27,7 +27,11 @@ public enum Item
     PendriveDiagnostico,
     BateriaCMOS,
     // Etapa 6: peça velha retirada num conserto (vai para o lixo eletrônico)
-    PecaVelha
+    PecaVelha,
+    // Etapa 7: peças de notebook
+    BateriaNotebook,
+    CarregadorNotebook,
+    DobradicaNotebook
 }
 
 // Um cabo de rede já feito, guardado na mochila
@@ -96,13 +100,16 @@ public partial class Mochila : MonoBehaviour
         new InfoItem(Item.Multimetro, "Multímetro digital", "Mede tensão (tomada, fonte, bateria da placa-mãe) e continuidade (fusível, cabo).", 85f, 1, true),
         new InfoItem(Item.TestadorFonte, "Testador de fonte ATX", "Liga no conector de 24 pinos: LEDs e visor mostram cada tensão da fonte e o sinal Power Good.", 70f, 1, true),
         new InfoItem(Item.PlacaPOST, "Placa POST (diagnóstico de placa-mãe)", "Vai num slot da placa-mãe e mostra no visor o código do passo em que o computador parou.", 60f, 1, true),
-        new InfoItem(Item.PendriveDiagnostico, "Pendrive de diagnóstico", "Dá boot fora do Windows: teste de memória, saúde do disco (S.M.A.R.T.) e sensores de temperatura.", 55f, 1, true),
+        new InfoItem(Item.PendriveDiagnostico, "Pendrive de diagnóstico", "Dá boot fora do sistema: teste de memória, saúde do disco (S.M.A.R.T.) e sensores de temperatura.", 55f, 1, true),
         new InfoItem(Item.BateriaCMOS, "Bateria da placa-mãe CR2032 (5 un.)", "Bateria de 3 V que guarda a data e a configuração da placa-mãe.", 20f, 5, false),
         new InfoItem(Item.ArComprimido, "Pincel e ar comprimido", "Para tirar a poeira de dentro do gabinete e do cooler sem estragar nada.", 45f, 1, true),
         new InfoItem(Item.PastaTermica, "Pasta térmica (seringa, 5 aplicações)", "Vai entre o processador e o cooler. Pasta velha e seca = computador que esquenta mesmo limpo.", 25f, 5, false),
         new InfoItem(Item.SSD, "SSD 480 GB", "Para trocar HD com setores ruins. Faça o backup antes!", 220f, 1, false),
         new InfoItem(Item.Memoria, "Pente de memória 8 GB", "Para trocar memória com defeito (computador que liga, bipa e não dá vídeo).", 160f, 1, false),
         new InfoItem(Item.Fonte, "Fonte ATX 500 W", "Para trocar fonte queimada (computador que não dá nenhum sinal de vida).", 190f, 1, false),
+        new InfoItem(Item.BateriaNotebook, "Bateria de notebook", "Bateria interna compatível. Bateria estufada sai na hora (e vai para o descarte, nunca para o lixo comum).", 210f, 1, false),
+        new InfoItem(Item.CarregadorNotebook, "Carregador universal de notebook 90 W", "Com pontas trocáveis e saída de 19 V. Para carregador com cabo rompido ou fonte queimada.", 95f, 1, false),
+        new InfoItem(Item.DobradicaNotebook, "Par de dobradiças de notebook", "Dobradiças da tela com os parafusos. A velha costuma quebrar a bucha da carcaça junto.", 65f, 1, false),
         new InfoItem(Item.Cilindro, "Cilindro (unidade de imagem)", "Peça da impressora a laser que dura milhares de páginas. Riscado = listra vertical na folha.", 150f, 1, false),
     };
 

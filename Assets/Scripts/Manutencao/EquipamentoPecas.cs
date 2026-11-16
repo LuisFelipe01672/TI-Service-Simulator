@@ -56,6 +56,7 @@ public partial class EquipamentoPecas : MonoBehaviour
             case TipoEquipamento.Impressora: MontarImpressora(); break;
             case TipoEquipamento.Roteador: MontarRoteador(); break;
             case TipoEquipamento.Computador: MontarComputador(); break;
+            case TipoEquipamento.Notebook: MontarNotebook(); break;
             default: MontarGenerico(); break;   // equipamento sem visual próprio: peças da definição sobre o colisor
         }
     }
@@ -311,6 +312,12 @@ public partial class EquipamentoPecas : MonoBehaviour
             if (telaViva != null && telaViva.activeSelf != pcLigado) telaViva.SetActive(pcLigado);   // desligado: tela preta
             AtualizarGabinete(e);
             AtualizarTelaDiagnostico(e);
+            AtualizarTelaSoftware(e);
+        }
+        else if (eq.tipoEquipamento == TipoEquipamento.Notebook)
+        {
+            AtualizarNotebook(e);
+            AtualizarTelaSoftware(e);
         }
     }
 

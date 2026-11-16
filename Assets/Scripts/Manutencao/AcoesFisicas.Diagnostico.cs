@@ -46,7 +46,7 @@ public static partial class AcoesFisicas
                 ConferirLaudo(e);
                 return erros > 0
                     ? $"Pediu para salvar tudo, reiniciou pelo pendrive e rodou o teste por 20 minutos: <color=#F2545B>{erros} erros</color>, sempre no mesmo pente (slot 2)."
-                    : "Pediu para salvar tudo, reiniciou pelo pendrive e rodou o teste por 20 minutos: nenhum erro. Voltou para o Windows.";
+                    : "Pediu para salvar tudo, reiniciou pelo pendrive e rodou o teste por 20 minutos: nenhum erro. Voltou para o TI OS.";
             }, 3f, Item.PendriveDiagnostico) { observacao = true, close = false });
 
             l.Add(new AcaoFisica("Dar boot pelo pendrive: disco e sensores (S.M.A.R.T.)", () =>
@@ -149,7 +149,7 @@ public static partial class AcoesFisicas
                 e.pcTrocasBateria++;
                 MM?.CobrarPeca(Mochila.Info(Item.BateriaCMOS).preco / Mochila.Info(Item.BateriaCMOS).quantidadePorCompra, "Bateria CR2032");
                 return "Você empurrou a trava com a chave de fenda pequena, a bateria velha pulou e a nova encaixou (lado + para cima). " +
-                       "Ao ligar, é só acertar a data (o Windows pega a hora da internet)." + PecaVelhaNaMochila();
+                       "Ao ligar, é só acertar a data (o TI OS pega a hora da internet)." + PecaVelhaNaMochila();
             }, 2f, Item.BateriaCMOS));
     }
 }

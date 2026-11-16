@@ -28,17 +28,17 @@ public static class CatalogoServicos
     {
         new ServicoInfo(TipoServico.Suporte, "Suporte gerenciado", "máquina",
             "Antivírus + monitoramento remoto em cada máquina. Alertas chegam na sua central antes do cliente perceber."),
-        new ServicoInfo(TipoServico.Email, "E-mail e Office na nuvem", "conta",
-            "Contas de e-mail e Office por usuário. Você cria usuários, reseta senhas e cuida das caixas."),
+        new ServicoInfo(TipoServico.Email, "E-mail e pacote de escritório na nuvem", "conta",
+            "Contas de e-mail e pacote de escritório por usuário. Você cria usuários, reseta senhas e cuida das caixas."),
         new ServicoInfo(TipoServico.Backup, "Backup gerenciado", "GB",
             "Cópia diária para a nuvem. Falhas aparecem na central; teste de restauração todo mês. Salva o cliente num ataque de ransomware."),
         new ServicoInfo(TipoServico.Bot, "Bot de atendimento no WhatsApp", "bot",
             "Atendimento automático com menus. Até 5 usuários, 2 números de WhatsApp e 2 contas de Instagram."),
         new ServicoInfo(TipoServico.Notebook, "Locação de notebook", "notebook",
-            "Notebook preparado na bancada (formatado, imagem padrão, antivírus, Office) e entregue no cliente.")
+            "Notebook preparado na bancada (formatado, imagem padrão, antivírus, pacote de escritório) e entregue no cliente.")
             { exigeEquipamento = true, custoEquipamento = 3200f, porPrazo = true },
         new ServicoInfo(TipoServico.MiniPc, "Locação de mini PC", "mini PC",
-            "Mini PC com Windows Pro preparado na bancada. Combos com antivírus e Office.")
+            "Mini PC com sistema original preparado na bancada. Combos com antivírus e pacote de escritório.")
             { exigeEquipamento = true, custoEquipamento = 1800f, porPrazo = true },
         new ServicoInfo(TipoServico.Firewall, "Firewall gerenciado", "firewall",
             "Firewall em comodato com licença de proteção, VPN e filtro de conteúdo. Você monitora e ajusta as regras.")

@@ -37,6 +37,9 @@ public partial class Mochila
             case Item.PendriveDiagnostico: return 0.02f;
             case Item.BateriaCMOS: return 0.003f;
             case Item.PecaVelha: return 0.4f;
+            case Item.BateriaNotebook: return 0.3f;
+            case Item.CarregadorNotebook: return 0.35f;
+            case Item.DobradicaNotebook: return 0.08f;
             default: return 0f;   // caixa de cabo (305 m) fica na bancada, não na mochila
         }
     }

@@ -131,7 +131,7 @@ public partial class GameUI
             if (sm.Novos(tipo) == 0) continue;
             var t = tipo;
             UIFactory.Texto(bancadaConteudo, $"PREPARAR {info.unidade.ToUpper()}S PARA ENTREGA ({sm.Novos(tipo)} esperando)", 17, UIFactory.Destaque, FontStyles.Bold);
-            var b = UIFactory.Botao(bancadaConteudo, $"Preparar 1 {info.unidade}: formatar, imagem, antivírus, Office, testar",
+            var b = UIFactory.Botao(bancadaConteudo, $"Preparar 1 {info.unidade}: formatar, imagem, antivírus, pacote de escritório, testar",
                 () => rotinaSegurar = StartCoroutine(Preparar(t)), UIFactory.CartaoClaro, 680, 48, 18);
             b.interactable = !segurando;
         }
@@ -140,7 +140,7 @@ public partial class GameUI
     IEnumerator Preparar(TipoServico tipo)
     {
         segurando = true;
-        string[] etapas = { "Formatando o disco", "Instalando a imagem padrão", "Instalando o antivírus", "Instalando o Office", "Testando tudo" };
+        string[] etapas = { "Formatando o disco", "Instalando a imagem padrão", "Instalando o antivírus", "Instalando o pacote de escritório", "Testando tudo" };
         float[] tempos = { 3f, 2f, 1f, 1f, 1f };
         var txt = UIFactory.Texto(bancadaConteudo, "", 20, UIFactory.Alerta, FontStyles.Bold);
         for (int i = 0; i < etapas.Length; i++)

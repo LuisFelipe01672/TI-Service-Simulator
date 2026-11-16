@@ -41,7 +41,7 @@ public partial class EstadoEquipamentos
         preventivaPendente = usoPeca >= 0.7f;
     }
 
-    // Windows: Impressoras > Adicionar > por endereço TCP/IP
+    // TI OS: Impressoras > Adicionar > por endereço TCP/IP
     public string AdicionarImpressoraPeloIp(out bool ok)
     {
         ok = false;
@@ -54,7 +54,7 @@ public partial class EstadoEquipamentos
                    $"({IpDhcpNovaImpressora}). Fixe o IP no painel dela primeiro.";
         pcSemImpressora = false;
         ok = true;
-        return $"Achou a impressora em {ipImpressora}. O Windows baixou o driver do modelo certo e ela virou a impressora padrão. " +
+        return $"Achou a impressora em {ipImpressora}. O TI OS baixou o driver do modelo certo e ela virou a impressora padrão. " +
                "Agora mande uma página de teste pelo computador.";
     }
 

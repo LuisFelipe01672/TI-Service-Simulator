@@ -17,7 +17,7 @@ public partial class EstadoEquipamentos
     public bool pcPastaLimpa, pcPastaNova;    // etapas da troca da pasta
     public bool pcHdRuim;                     // setores ruins: lento, trava, faz clique
     public bool pcBackupFeito;                // arquivos do cliente copiados antes de trocar o disco
-    public bool pcSemSistema;                 // disco novo, ainda sem Windows
+    public bool pcSemSistema;                 // disco novo, ainda sem sistema
     public int pcTrocasHd;
     public float pcSegundosQuente;            // há quanto tempo está ligado superaquecendo
     public const float SegundosAteDesligarPorCalor = 25f;
@@ -96,8 +96,9 @@ public partial class EstadoEquipamentos
         diasLigado = 0;
         pcIpLiberado = false;
         if (!pcIpFixo) { pcIp = "192.168.0.23"; pcIpErrado = dhcpDuplo; }
-        // O Windows reinstala sozinho o driver que foi desinstalado
+        // O sistema reinstala sozinho o driver que foi desinstalado
         if (!driverInstalado) { driverInstalado = true; driverOk = true; }
+        ReiniciarSoftware();
     }
 
     public string ProcurarHardware()

@@ -52,6 +52,22 @@ Tudo abaixo já passou nos testes de lógica fora da Unity. O que falta conferir
 - [ ] Dia seguinte: o comprador levou o anunciado; impressora etiquetada e sem dados vai para a frota (aba Contratos)
 - [ ] Sucata na mão → lixo eletrônico; peças velhas da mochila também vão para lá
 
+## 4d. Notebook e problemas de software (Etapa 7)
+Atalhos: *TI Service/Teste (Play)/Notebook e software* (um chamado de cada problema, passos e fotos em `Builds/Capturas/notebook`).
+- [ ] Chamado de notebook: o notebook aparece na mesa do computador, ao lado do monitor, num lugar livre, com a tela TI OS
+- [ ] Bateria estufada: touchpad levantado e o notebook balançando; desligar, tirar da tomada, virar e abrir a tampa de baixo
+      (o notebook vira de barriga para cima), tirar a bateria inchada (vai para a mochila), pôr a nova, fechar, ligar
+- [ ] Tecla A: testar no bloco de notas (a letra some), tirar a capinha, soprar, encaixar (clique)
+- [ ] Carregador: luz apagada e fita isolante no cabo; multímetro mostra 0 V; trocar pelo universal (luz verde)
+- [ ] Superaquecimento: ar quente na lateral, desliga sozinho; abrir por baixo e limpar a ventoinha
+- [ ] Dobradiça: a tela tomba para trás; soltar a moldura (fica na mesa), trocar as dobradiças, encaixar a moldura
+- [ ] Software no monitor do cliente: tela de conta bloqueada, propagandas pulando, erro do sistema contábil, caixa de
+      saída do e-mail, janela de salvar PDF, otimizador na inicialização — cada um some quando resolvido
+- [ ] Na tela do cliente (TI OS): entrar como Administrador e redefinir/desbloquear; e-mail porta 587 + autenticação e
+      Enviar; antivírus (verificação, quarentena), desinstalar a barra de ofertas, restaurar o navegador, reiniciar;
+      Gerenciador de Tarefas » Inicialização; Atualizações (desinstalar e ocultar/pausar); impressora padrão
+- [ ] Remoto: os de software resolvem de longe; senha bloqueada e defeitos físicos pedem visita
+
 ## 5. Fim de jogo
 - [ ] Forçar saldo negativo (Inspector do GameEconomy) e dormir vários dias: avisos em 10 e 20 dias, tela "Sua empresa faliu" no 30º
 - [ ] "Recomeçar do zero" recarrega a cena com jogo novo

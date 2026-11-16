@@ -239,7 +239,7 @@ public static class EquipamentosUsados
         switch (e.tipo)
         {
             case TipoUsado.Computador:
-                if (bom) return "Ligou e entrou no Windows antigo: na área de trabalho estão as planilhas e fotos do antigo dono.";
+                if (bom) return "Ligou e entrou no sistema antigo: na área de trabalho estão as planilhas e fotos do antigo dono.";
                 if (sucata) return "Estalo, cheiro de queimado e fumaça saindo da traseira: placa-mãe em curto. É sucata.";
                 return e.defeito == DefeitoUsado.Memoria
                     ? "Ventoinhas giram e o LED acende, mas o monitor fica sem sinal e o gabinete apita. Descubra a peça."

@@ -9,9 +9,9 @@ public class DefinicaoComputador : DefinicaoEquipamento
 
     public override void Acoes(EstadoEquipamentos e, ListaAcoes l) => AcoesFisicas.Computador(e, l);
 
-    // Navega, sem travar, com o hardware em ordem (e, no check-up, com o laudo inteiro)
+    // Navega, sem travar, com o hardware e o sistema em ordem (e, no check-up, com o laudo inteiro)
     public override bool Funcionando(EstadoEquipamentos e) =>
-        e.PcNaInternet && e.memoria < 0.8f && e.PcHardwareOk && (!e.checkup || e.LaudoCompleto);
+        e.PcNaInternet && e.memoria < 0.8f && e.PcHardwareOk && (!e.checkup || e.LaudoCompleto) && e.SoftwareOk;
 
     public override bool Fechado(EstadoEquipamentos e) => !e.pcGabineteAberto && !e.pcCoolerFora;
     public override bool Ligado(EstadoEquipamentos e) => e.pcLigado;

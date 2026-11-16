@@ -4,12 +4,12 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Parte da GameUI: o computador do cliente, um "Windows" simplificado com as ferramentas que um técnico usa:
+// Parte da GameUI: o computador do cliente, o TI OS (sistema fictício do jogo) com as ferramentas que um técnico usa:
 // Prompt de Comando (ipconfig, ping, net start...), Configurações de rede, Serviços, Impressoras e fila,
 // Gerenciador de Dispositivos, Gerenciador de Tarefas e o navegador (painel do roteador em 192.168.0.1).
 public partial class GameUI
 {
-    enum App { Inicio, Prompt, Rede, Servicos, Impressoras, Dispositivos, Tarefas, Navegador }
+    enum App { Inicio, Prompt, Rede, Servicos, Impressoras, Dispositivos, Tarefas, Navegador, Email, Antivirus, Programas, Atualizacoes, SistemaContabil, Contas }
 
     RectTransform computador, pcConteudo, pcMenu;
     TextMeshProUGUI txtPcTitulo;
@@ -51,6 +51,13 @@ public partial class GameUI
         BotaoApp("Gerenciador de Dispositivos", App.Dispositivos);
         BotaoApp("Gerenciador de Tarefas", App.Tarefas);
         BotaoApp("Navegador", App.Navegador);
+        // Etapa 7: programas do dia a dia do cliente (problemas de software)
+        BotaoApp("E-mail", App.Email);
+        BotaoApp("Sistema Contábil Ômega", App.SistemaContabil);
+        BotaoApp("Escudo Antivírus", App.Antivirus);
+        BotaoApp("Programas instalados", App.Programas);
+        BotaoApp("Atualizações do sistema", App.Atualizacoes);
+        BotaoApp("Contas de usuário", App.Contas);
         UIFactory.Botao(pcMenu, "Reiniciar o computador", PedirReinicio, UIFactory.Hex("#7A2E35"), 276, 46, 18);
 
         // Área do aplicativo
@@ -72,7 +79,7 @@ public partial class GameUI
         var e = MissionManager.Instance?.Estado;
         if (e == null) return;
         AbrirModal(Modal.Computador, computador);
-        if (terminal.Count == 0) terminal.Add("Microsoft Windows [versão 10.0]  ·  digite \"ajuda\" para ver os comandos");
+        if (terminal.Count == 0) terminal.Add("TI OS [versão 11.2]  ·  digite \"ajuda\" para ver os comandos");
         avisoPc = "";
         MontarComputador();
     }
@@ -109,15 +116,23 @@ public partial class GameUI
         var mm = MissionManager.Instance;
         var e = mm?.Estado;
         if (e == null) { FecharModal(); return; }
-        txtPcTitulo.text = $"Computador de {mm.chamadoAtivo.contato}  ·  {AppNome(appAtual)}" +
+        txtPcTitulo.text = $"{mm.chamadoAtivo.EquipamentoTexto()} de {mm.chamadoAtivo.contato}  ·  {AppNome(appAtual)}" +
                            (e.PcNaInternet ? "   <color=#7CFFB0>• Internet</color>" : e.PcNaRede ? "   <color=#FFD54A>• Sem internet</color>" : "   <color=#FF8A8A>• Sem rede</color>");
 
         UIFactory.Limpar(pcConteudo);
         if (pcReiniciando) { TextoPc("Reiniciando...", 40, true); return; }
         if (!string.IsNullOrEmpty(avisoPc)) TextoPc($"<color=#B23A48>{avisoPc}</color>", 20);
+        if (e.swContaBloqueada && !e.swAdminLogado) { MontarLogin(e); if (mm.chamadoAtivo == null) FecharModal(); return; }
+        if (e.swPopups) TextoPc("<color=#B23A48><b>(!) PARABÉNS!!! Você ganhou um celular — clique aqui</b></color>   <size=80%>(janela de propaganda que não fecha)</size>", 19);
 
         switch (appAtual)
         {
+            case App.Email: MontarEmail(e); break;
+            case App.Antivirus: MontarAntivirus(e); break;
+            case App.Programas: MontarProgramas(e); break;
+            case App.Atualizacoes: MontarAtualizacoes(e); break;
+            case App.SistemaContabil: MontarSistemaContabil(e); break;
+            case App.Contas: MontarContas(e); break;
             case App.Prompt: MontarPrompt(); break;
             case App.Rede: MontarRede(e); break;
             case App.Servicos: MontarServicos(e); break;
@@ -145,6 +160,12 @@ public partial class GameUI
             case App.Dispositivos: return "Gerenciador de Dispositivos";
             case App.Tarefas: return "Gerenciador de Tarefas";
             case App.Navegador: return "Navegador";
+            case App.Email: return "E-mail";
+            case App.Antivirus: return "Escudo Antivírus";
+            case App.Programas: return "Programas instalados";
+            case App.Atualizacoes: return "Atualizações do sistema";
+            case App.SistemaContabil: return "Sistema Contábil Ômega";
+            case App.Contas: return "Contas de usuário";
             default: return "Área de trabalho";
         }
     }
@@ -213,7 +234,7 @@ public partial class GameUI
         else if (c.StartsWith("ping"))
         {
             string destino = c.Length > 5 ? c.Substring(5).Trim() : "8.8.8.8";
-            if (destino == "google.com") destino = "142.250.79.46";
+            if (destino == "buscador.com.br") destino = "142.250.79.46";
             Saida($"Disparando {destino} com 32 bytes de dados:");
             string r = e.Ping(destino);
             for (int i = 0; i < 4; i++) Saida(r);
@@ -258,7 +279,7 @@ public partial class GameUI
         BotaoPc(l, "Parar", () => { e.spoolerRodando = false; avisoPc = "Spooler de Impressão parado."; }, UIFactory.Hex("#6B7A90"), 160);
         BotaoPc(l, "Reiniciar", () => { e.spoolerRodando = true; avisoPc = "Spooler de Impressão reiniciado."; }, null, 160);
         TextoPc("Cliente DHCP — Em execução", 20);
-        TextoPc("Windows Update — Em execução", 20);
+        TextoPc("Atualizações do TI OS — Em execução", 20);
         TextoPc("Antivírus — Em execução", 20);
     }
 
@@ -299,6 +320,7 @@ public partial class GameUI
             if (e.fila.Count > 0) BotaoPc(LinhaPc(), "Cancelar todos os documentos", () => e.fila.Clear(), UIFactory.Hex("#B23A48"), 320);
         }
 
+        MontarImpressoraPadrao(e);
         BotaoPc(LinhaPc(), "Imprimir página de teste pelo computador", () =>
         {
             avisoPc = e.Imprimir(true, out bool boa);
@@ -350,6 +372,7 @@ public partial class GameUI
             TextoPc("   Navegador (4 abas) ......... 0,8 GB", 20);
             TextoPc("   Programa de e-mail ......... 0,2 GB", 20);
         }
+        MontarInicializacao(e);
         if (mem < 80) MissionManager.Instance?.Verificar();
     }
 
@@ -359,11 +382,21 @@ public partial class GameUI
     {
         var l = LinhaPc();
         BotaoPc(l, "192.168.0.1 (roteador)", () => { paginaNavegador = "roteador"; logadoRoteador = false; senhaDigitada = ""; }, UIFactory.Hex("#6B7A90"), 300);
-        BotaoPc(l, "google.com", () => paginaNavegador = "google", UIFactory.Hex("#6B7A90"), 200);
+        BotaoPc(l, "buscador.com.br", () => paginaNavegador = "busca", UIFactory.Hex("#6B7A90"), 200);
 
-        if (paginaNavegador == "google")
+        if (e.swPaginaTrocada && paginaNavegador != "roteador")
         {
-            if (e.PcNaInternet) { TextoPc("<b>Google</b>", 44); TextoPc("A página abriu normalmente.", 22); MissionManager.Instance?.Verificar(); }
+            TextoPc("<color=#B23A48><b>ofertas-imperdiveis.com</b></color> — SUPER PROMOÇÕES PARA VOCÊ!!! (a página inicial e a busca foram trocadas)", 24);
+            BotaoPc(LinhaPc(), "Configurações do navegador » Restaurar as configurações padrão", () =>
+            {
+                avisoPc = e.RestaurarPaginaInicial();
+                MissionManager.Instance?.Verificar();
+            }, null, 620);
+            return;
+        }
+        if (paginaNavegador == "busca")
+        {
+            if (e.PcNaInternet) { TextoPc("<b>Buscador</b>", 44); TextoPc("A página abriu normalmente.", 22); MissionManager.Instance?.Verificar(); }
             else TextoPc("Não é possível acessar esse site.  ERR_INTERNET_DISCONNECTED", 24);
             return;
         }
@@ -452,7 +485,7 @@ public partial class GameUI
         e.ReiniciarPc();
         pcReiniciando = false;
         terminal.Clear();
-        terminal.Add("Microsoft Windows [versão 10.0]  ·  digite \"ajuda\" para ver os comandos");
+        terminal.Add("TI OS [versão 11.2]  ·  digite \"ajuda\" para ver os comandos");
         avisoPc = "O computador reiniciou.";
         if (modal == Modal.Computador) MontarComputador();
         MissionManager.Instance?.Verificar();

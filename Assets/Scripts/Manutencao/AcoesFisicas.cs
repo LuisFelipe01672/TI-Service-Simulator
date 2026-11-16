@@ -9,7 +9,7 @@ public class AcaoFisica
     public Item? requer;               // ferramenta/peça necessária
     public Func<string> executar;      // devolve o que aconteceu
     public bool abreCrimpagem;         // abre o minigame de crimpar
-    public bool abreComputador;        // abre o "Windows" do cliente
+    public bool abreComputador;        // abre o TI OS do cliente
     public bool observacao;            // só olhar (não conta como mexer)
     public string peca;                // peça 3D do equipamento onde a ação acontece (mirar + E)
     public bool close = true;          // observação: a câmera faz um close na peça (CloseDePeca)
@@ -325,12 +325,12 @@ public static partial class AcoesFisicas
             e.pcLigado = true;
             e.pcSegundosQuente = 0f;
             e.ReiniciarPc();
-            if (e.PcHardwareOk) MM?.Verificar();   // o Windows subiu: o cliente confere na hora
+            if (e.PcHardwareOk) MM?.Verificar();   // o sistema subiu: o cliente confere na hora
             return e.PcSuperaquecendo ? "O computador ligou, mas a ventoinha já está berrando e sai ar muito quente pelas grades."
                  : e.pcBateriaFraca ? "Ligou com a mensagem \"CMOS checksum error - Defaults loaded. Press F1\". Depois do F1, o relógio mostra 01/01/2009."
-                 : e.pcFonteFraca ? "Ligou e o Windows iniciou... mas, ao abrir o sistema da empresa, a tela apagou e ele reiniciou sozinho."
+                 : e.pcFonteFraca ? "Ligou e o TI OS iniciou... mas, ao abrir o sistema da empresa, a tela apagou e ele reiniciou sozinho."
                  : e.pcHdRuim ? "Ligou... e ficou minutos em \"Verificando o disco\". Dá para ouvir um clique-clique lá dentro."
-                 : "O computador ligou e o Windows iniciou.";
+                 : "O computador ligou e o TI OS iniciou.";
         }, e.pcLigado ? 3f : 0f));
 
         // Gabinete: por dentro (Fase 4)
@@ -357,8 +357,8 @@ public static partial class AcoesFisicas
             {
                 e.pcSemSistema = false;
                 MM?.ConsumirTempo(60f);
-                return e.pcBackupFeito ? "Windows instalado, drivers no lugar e os arquivos do cliente restaurados do backup."
-                                       : "Windows instalado e drivers no lugar. (Não havia backup para restaurar.)";
+                return e.pcBackupFeito ? "TI OS instalado, drivers no lugar e os arquivos do cliente restaurados do backup."
+                                       : "TI OS instalado e drivers no lugar. (Não havia backup para restaurar.)";
             }, 5f, Item.PendriveDrivers));
         if (!e.pcGabineteAberto)
             l.Add(new AcaoFisica("Virar o gabinete e tirar a tampa lateral (2 parafusos)", () =>

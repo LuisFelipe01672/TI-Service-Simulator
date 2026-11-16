@@ -149,4 +149,58 @@ public class TelaComputador : MonoBehaviour
     }
 
     public bool SobreposicaoVisivel => sobreposicao != null && sobreposicao.gameObject.activeSelf;
+
+    // ---------- Etapa 7: pistas de software (ficam até o problema sumir) ----------
+    RectTransform pista;
+    string chavePista;
+
+    // Mostra uma janela do sistema por cima da área de trabalho (ou a tela inteira, no bloqueio) e propagandas pulando.
+    // chave null = sem pista. Só refaz quando a chave muda.
+    public void Pista(string chave, string titulo, string texto, Color barra, bool telaCheia = false, int popups = 0)
+    {
+        if (chave == chavePista) return;
+        chavePista = chave;
+        if (canvasRt == null) Montar();
+        if (pista != null) Destroy(pista.gameObject);
+        pista = null;
+        if (chave == null) return;
+
+        pista = UIFactory.Vazio(canvasRt, "Pista");
+        UIFactory.Esticar(pista);
+        if (telaCheia)
+        {
+            var fundo = UIFactory.Painel(pista, "Bloqueio", new Color(0.03f, 0.1f, 0.16f, 1f));
+            UIFactory.Esticar(fundo);
+            var t = UIFactory.Texto(fundo, $"<size=140%><b>{titulo}</b></size>\n\n{texto}", 44, Color.white, FontStyles.Normal, TextAlignmentOptions.Center);
+            UIFactory.Esticar(t.rectTransform, 60);
+        }
+        else if (!string.IsNullOrEmpty(titulo))
+        {
+            var jan = UIFactory.Painel(pista, "Janela", new Color(0.93f, 0.94f, 0.96f, 1f));
+            jan.anchorMin = new Vector2(0.18f, 0.25f); jan.anchorMax = new Vector2(0.82f, 0.8f);
+            jan.offsetMin = jan.offsetMax = Vector2.zero;
+            var b = UIFactory.Painel(jan, "Barra", barra);
+            b.anchorMin = new Vector2(0, 1); b.anchorMax = new Vector2(1, 1); b.pivot = new Vector2(0.5f, 1);
+            b.sizeDelta = new Vector2(0, 70);
+            var tt = UIFactory.Texto(b, "  " + titulo, 34, Color.white, FontStyles.Bold);
+            UIFactory.Esticar(tt.rectTransform);
+            tt.alignment = TextAlignmentOptions.Left;
+            var corpo = UIFactory.Texto(jan, texto, 32, new Color(0.1f, 0.14f, 0.2f), FontStyles.Normal, TextAlignmentOptions.TopLeft);
+            UIFactory.Esticar(corpo.rectTransform, 24);
+            corpo.margin = new Vector4(10, 80, 10, 10);
+        }
+        string[] anuncios = { "PARABÉNS!!! Você ganhou um celular", "Seu PC está LENTO! Clique aqui", "OFERTA 90% OFF só hoje",
+                              "Vírus detectado! Baixe o Limpador Pro", "Ganhe dinheiro em casa" };
+        for (int i = 0; i < popups; i++)
+        {
+            var p = UIFactory.Painel(pista, "Propaganda" + i, i % 2 == 0 ? new Color(0.95f, 0.85f, 0.1f, 1f) : new Color(0.85f, 0.12f, 0.15f, 1f));
+            float x = 0.05f + (i * 0.37f) % 0.62f, y = 0.12f + (i * 0.29f) % 0.6f;
+            p.anchorMin = new Vector2(x, y); p.anchorMax = new Vector2(x + 0.33f, y + 0.24f);
+            p.offsetMin = p.offsetMax = Vector2.zero;
+            var t = UIFactory.Texto(p, $"<b>{anuncios[i % anuncios.Length]}</b>\n<size=70%>[ X ]</size>", 30,
+                                    i % 2 == 0 ? new Color(0.5f, 0f, 0f) : Color.white, FontStyles.Normal, TextAlignmentOptions.Center);
+            UIFactory.Esticar(t.rectTransform, 10);
+        }
+        if (sobreposicao != null) sobreposicao.SetAsLastSibling();
+    }
 }

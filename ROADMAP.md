@@ -89,9 +89,25 @@ catálogo, mas a **ordem de trabalho** passa a ser esta. Cada etapa puxa os iten
    do projeto (impressora, roteador, switch; `Resources/Usados/ModelosUsados`), resto em primitivas. Testes
    `TestesUsados`; atalhos em *TI Service/Teste (Play)/Usados na bancada* (lote de teste, bancada, próximo, passo, ciclo
    inteiro, fotos em `Builds/Capturas/usados`).
-7. 🔜 **Notebook e problemas de software** (senha, e-mail, vírus, lentidão, impressora padrão). Antes: reorganizar
-   o código para **uma definição por equipamento** (estado, ações, quebrar/resolvido e peças num lugar só).
-8. ⬜ **Rede física** — rack, patch panel, cabeamento com antes/depois (Fase 5).
+7. ✅ **Notebook e problemas de software** (16/11/2026) — antes, o código virou **uma definição por equipamento**
+   (`Manutencao/Equipamentos/`: nome, peças, ações, "está funcionando?" e checklist; tipo sem definição dá erro em vez
+   de cair no roteador; `EstadoEquipamentos` num arquivo por equipamento; cada `Problema` do catálogo carrega o próprio
+   defeito, causa raiz, ferramenta ideal e se dá para resolver de longe — acabaram as chaves de texto e os switches).
+   **Notebook do cliente** como 4º equipamento: aparece na mesa do computador, num lugar livre ao lado do monitor, com
+   a tela TI OS na tampa; **bateria estufada** (touchpad levantado, balança na mesa; desligar, tirar da tomada, virar de
+   barriga para cima, abrir a tampa de baixo, trocar), **tecla falhando** (teste no bloco de notas, capinha, ar
+   comprimido), **carregador** (luz apagada, fita isolante, multímetro com 0 V, carregador universal), **superaquecimento**
+   (ar quente, desliga sozinho, limpar ventoinha por baixo) e **dobradiça** (tela tombando, moldura, dobradiças + epóxi);
+   peças novas na loja. **Problemas de software** com pista no monitor 3D e solução na tela do cliente: **conta
+   bloqueada** (entrar como administrador, redefinir e desbloquear; só presencial), **e-mail preso na caixa de saída**
+   (porta 587 + autenticação), **vírus/propaganda** (propagandas pulando, varredura, quarentena, desinstalar a barra,
+   restaurar o navegador, reiniciar), **lentidão pela inicialização** (Gerenciador de Tarefas » Inicialização sem
+   desligar o antivírus), **atualização que quebrou o sistema contábil** (desinstalar e ocultar; sem ocultar ela volta:
+   retrabalho) e **impressora padrão virando PDF** (definir a padrão e desligar a troca automática). Mais **seis casos
+   de atendimento remoto**. Marcas reais tiradas dos textos (TI OS, buscador, pacote de escritório). Testes
+   `TestesEquipamentos` e `TestesNotebookSoftware`; atalhos em *TI Service/Teste (Play)/Notebook e software*.
+   Notebook em primitivas: candidatos CC-BY no Sketchfab (tela separada, dá para animar) esperando a aprovação do dono.
+8. 🔜 **Rede física** — rack, patch panel, cabeamento com antes/depois (Fase 5).
 
 Regras desta ordem: **sistemas novos de gestão ficam congelados até a etapa 5** (o que existe precisa ganhar corpo
 físico primeiro). A cidade (Fase 6) pode começar por uma rua pequena com 3–4 endereços — decisão do dono quando

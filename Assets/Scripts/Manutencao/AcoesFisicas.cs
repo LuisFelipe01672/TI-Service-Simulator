@@ -24,7 +24,7 @@ public class AcaoFisica
 
 // Lista das ações possíveis em cada equipamento, de acordo com o estado atual dele.
 // A janela de manutenção (e, depois, as peças 3D) usa isso.
-public static class AcoesFisicas
+public static partial class AcoesFisicas
 {
     // Peça das ações criadas a seguir (cada AcaoFisica guarda a peça atual ao ser criada).
     // Ids: Impressora: visor, traseira, tampa, cartucho, botao, energia
@@ -279,6 +279,7 @@ public static class AcoesFisicas
         PecaAtual = "traseira";
         l.Add(new AcaoFisica("Olhar atrás do gabinete", () => DescreverCabo(e.pcCabo, e.pcLigado, "computador")) { observacao = true });
         AcoesCabo(e.pcCabo, "do computador", l);
+        FerramentasPcFechado(e, l);
         PecaAtual = "energia";
         l.Add(new AcaoFisica(e.pcLigado ? "Desligar no botão (forçado)" : "Ligar o computador", () =>
         {
@@ -291,6 +292,7 @@ public static class AcoesFisicas
             if (e.pcGabineteAberto) return "Feche a tampa do gabinete antes de ligar.";
             if (e.pcFonteQueimada) return "Você apertou o botão e nada: nem luz, nem ventoinha. Completamente morto.";
             if (e.pcMemoriaRuim) return "Ligou, a ventoinha girou... e três bipes compridos. A tela continua preta.";
+            if (e.pcMemoriaSolta) return "Ligou: luz acesa, ventoinha girando... e a tela continua preta. Nenhum apito (este gabinete não tem alto-falante).";
             if (e.pcCoolerFora) return "Não ligue sem o cooler: o processador queima em segundos.";
             if (e.pcSemSistema) return "Ligou, mas a tela mostra: \"Nenhum dispositivo de inicialização\". O disco novo está vazio.";
             e.pcLigado = true;
@@ -298,6 +300,8 @@ public static class AcoesFisicas
             e.ReiniciarPc();
             if (e.PcHardwareOk) MM?.Verificar();   // o Windows subiu: o cliente confere na hora
             return e.PcSuperaquecendo ? "O computador ligou, mas a ventoinha já está berrando e sai ar muito quente pelas grades."
+                 : e.pcBateriaFraca ? "Ligou com a mensagem \"CMOS checksum error - Defaults loaded. Press F1\". Depois do F1, o relógio mostra 01/01/2009."
+                 : e.pcFonteFraca ? "Ligou e o Windows iniciou... mas, ao abrir o sistema da empresa, a tela apagou e ele reiniciou sozinho."
                  : e.pcHdRuim ? "Ligou... e ficou minutos em \"Verificando o disco\". Dá para ouvir um clique-clique lá dentro."
                  : "O computador ligou e o Windows iniciou.";
         }, e.pcLigado ? 3f : 0f));
@@ -313,9 +317,6 @@ public static class AcoesFisicas
             : "Gabinete normal: luz acesa, ventoinha baixinha.") { observacao = true });
         if (e.pcLigado)
         {
-            l.Add(new AcaoFisica("Testar a saúde do disco (pendrive de diagnóstico)", () =>
-                e.pcHdRuim ? "<color=#F2545B>Disco em estado CRÍTICO:</color> 1.243 setores realocados e subindo. Vai parar a qualquer momento."
-                           : "Disco saudável: nenhum setor realocado.", 2f, Item.PendriveDrivers) { observacao = true, close = false });
             if (e.pcHdRuim && !e.pcBackupFeito)
                 l.Add(new AcaoFisica("Copiar os arquivos do cliente para o seu notebook (backup)", () =>
                 {
@@ -347,6 +348,10 @@ public static class AcoesFisicas
                               : e.pcPoeira > 0.3f ? "Tem poeira acumulada, mas nada grave." : "Está limpo por dentro.";
                 string fonte = e.pcFonteQueimada ? " A fonte tem um capacitor estufado e marca de queimado." : "";
                 string mem = e.pcMemoriaRuim ? " Os pentes de memória parecem encaixados, mas um deles tem os contatos escurecidos." : "";
+                string pctPoeira = e.pcPoeira > 0.7f ? "entupido de poeira" : e.pcPoeira > 0.3f ? "poeira acumulada" : "limpo";
+                e.Anotar(ItemLaudo.Interno, "Inspeção interna", $"{pctPoeira}; pasta térmica {(e.pcPastaSeca ? "seca" : "sem sinais de problema")}; " +
+                    $"capacitores {(e.pcFonteQueimada ? "estufados na fonte" : "sem estufamento")}.");
+                if (e.checkup) MM?.Verificar();
                 string pasta = !e.pcCoolerFora ? (e.pcPastaSeca ? " O cooler está limpo e bem preso; só tirando para ver a pasta térmica." : "")
                              : e.pcPastaNova ? " O processador está com um grão de pasta nova no centro."
                              : e.pcPastaLimpa ? " O processador está limpo, brilhando, sem pasta."
@@ -364,23 +369,32 @@ public static class AcoesFisicas
             l.Add(new AcaoFisica("Tirar os pentes de memória e limpar os contatos", () =>
             {
                 e.pcTrocasMemoria++;
+                if (e.pcMemoriaSolta)
+                {
+                    e.pcMemoriaSolta = false;
+                    return "Um dos pentes saiu fácil demais: estava meio fora do slot. Contatos limpos e os dois encaixados até as travas fecharem (clique).";
+                }
                 return e.pcMemoriaRuim ? "Você limpou os contatos com borracha e encaixou de novo. (Só testando para saber se resolveu.)"
                                        : "Contatos limpos e pentes encaixados de novo até o clique.";
             }, 2f));
-            if (e.pcMemoriaRuim)
+            if (e.pcMemoriaRuim || e.pcMemoriaIntermitente)
                 l.Add(new AcaoFisica("Trocar o pente de memória com defeito", () =>
                 {
                     if (!Mochila.Instance.Usar(Item.Memoria)) return "Você não tem pente de memória.";
                     e.pcMemoriaRuim = false;
+                    e.pcMemoriaIntermitente = false;
+                    e.saudeMemoria = 1f;
                     e.pcTrocasMemoria++;
                     MM?.CobrarPeca(Mochila.Info(Item.Memoria).preco, Mochila.Info(Item.Memoria).nome);
                     return "Você abriu as travas, tirou o pente ruim e encaixou o novo até as duas travas fecharem.";
                 }, 2f, Item.Memoria));
-            if (e.pcFonteQueimada)
+            if (e.pcFonteQueimada || e.pcFonteFraca)
                 l.Add(new AcaoFisica("Trocar a fonte", () =>
                 {
                     if (!Mochila.Instance.Usar(Item.Fonte)) return "Você não tem fonte nova.";
                     e.pcFonteQueimada = false;
+                    e.pcFonteFraca = false;
+                    e.saudeFonte = 1f;
                     e.pcTrocasFonte++;
                     MM?.CobrarPeca(Mochila.Info(Item.Fonte).preco, Mochila.Info(Item.Fonte).nome);
                     return "Você soltou os 4 parafusos, desligou os conectores da placa e dos discos, e instalou a fonte nova.";
@@ -430,6 +444,7 @@ public static class AcoesFisicas
                 {
                     if (!Mochila.Instance.Usar(Item.SSD)) return "Você não tem SSD.";
                     e.pcHdRuim = false;
+                    e.saudeDisco = 1f;
                     e.pcSemSistema = true;
                     e.pcTrocasHd++;
                     MM?.CobrarPeca(Mochila.Info(Item.SSD).preco, Mochila.Info(Item.SSD).nome);
@@ -437,6 +452,8 @@ public static class AcoesFisicas
                     return e.pcBackupFeito ? "HD velho fora, SSD novo parafusado e com os cabos de dados e energia ligados."
                                            : "SSD novo instalado... mas os arquivos do cliente ficaram no HD que morreu.";
                 }, 3f, Item.SSD));
+            FerramentasGabineteAberto(e, l);
+            PecaAtual = "gabinete";
             l.Add(new AcaoFisica("Colocar a tampa e voltar o gabinete no lugar", () =>
             {
                 if (e.pcCoolerFora) return "Recoloque o cooler do processador antes de fechar.";

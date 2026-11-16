@@ -104,7 +104,7 @@ public partial class MissionManager : MonoBehaviour
         else if (fase == 2) dif = Random.value < 0.5f ? DificuldadeChamado.Facil : DificuldadeChamado.Medio;
         else                dif = Random.value < 0.4f ? DificuldadeChamado.Medio : DificuldadeChamado.Dificil;
 
-        Problema p = CatalogoProblemas.Sortear(dif);
+        Problema p = CatalogoProblemas.SortearDisponivel(dif, CatalogoProblemas.PodeFazerCheckup(Mochila.Instance));
         Personalidade jeito = CatalogoProblemas.SortearPersonalidade(fase);
 
         string[] clientes = fase == 1 ? clientesFase1 : fase == 2 ? clientesFase2 : clientesFase3;
@@ -138,7 +138,7 @@ public partial class MissionManager : MonoBehaviour
     // dif Fácil = problemas de impressora; Médio = problemas de computador
     public void AdicionarChamadoDeContrato(int contratoId, string empresa, DificuldadeChamado dif = DificuldadeChamado.Facil, string solucao = null)
     {
-        var p = CatalogoProblemas.Sortear(dif);
+        var p = CatalogoProblemas.SortearDisponivel(dif, false);   // contrato: defeito, não check-up
         // defeito já conhecido (ex.: peça que passou da vida útil)
         if (solucao != null)
             foreach (var lista in new[] { CatalogoProblemas.Faceis, CatalogoProblemas.Medios, CatalogoProblemas.Dificeis })
@@ -226,15 +226,29 @@ public partial class MissionManager : MonoBehaviour
         if (!CatalogoProblemas.Resolvido(ch.problema, ch.estado)) return false;
         if (ch.aguardandoAssinatura) return true;
         ch.aguardandoAssinatura = true;
+        bool checkup = CatalogoProblemas.EhCheckup(ch.problema);
         if (ch.os != null)
         {
             ch.os.equipamento = ch.EquipamentoTexto();
-            ch.os.diagnostico = $"Defeito no(a) {ch.EquipamentoTexto().ToLowerInvariant()}. Solução: {ch.problema.solucao.ToLowerInvariant()}.";
+            ch.os.diagnostico = checkup
+                ? $"Check-up completo do computador ({ch.estado.idadePcAnos} anos): {ch.estado.Recomendacoes().Count} recomendação(ões) no laudo."
+                : $"Defeito no(a) {ch.EquipamentoTexto().ToLowerInvariant()}. Solução: {ch.problema.solucao.ToLowerInvariant()}.";
+            AtualizarLaudo(ch);
         }
-        GameUI.Instance?.Toast($"<b>{ch.contato}</b> conferiu: \"Funcionou! Muito obrigado!\"\n" +
-                               $"Arrume o local e fale com {ch.contato} para conferir o checklist e assinar a OS.", UIFactory.Sucesso, 5f);
+        GameUI.Instance?.Toast(checkup
+            ? $"<b>Laudo completo!</b> Todas as peças foram medidas.\nFeche tudo e fale com {ch.contato} para entregar o laudo e assinar a OS."
+            : $"<b>{ch.contato}</b> conferiu: \"Funcionou! Muito obrigado!\"\n" +
+              $"Arrume o local e fale com {ch.contato} para conferir o checklist e assinar a OS.", UIFactory.Sucesso, 5f);
         Debug.Log($"[MissionManager] Defeito resolvido (OS {ch.os?.numero}): falta a assinatura do cliente.");
         return true;
+    }
+
+    // Medições das ferramentas viram o laudo da OS (no check-up é o próprio serviço; nos outros, o teste de prova)
+    static void AtualizarLaudo(Chamado ch)
+    {
+        if (ch?.os == null || ch.estado == null) return;
+        ch.os.laudo = new List<string>(ch.estado.medicoes);
+        ch.os.recomendacoes = ch.estado.Recomendacoes();
     }
 
     // Uma ação que causou estrago (resetar sem precisar, desligar sem salvar...)
@@ -377,6 +391,7 @@ public partial class MissionManager : MonoBehaviour
             ch.os.comentario = comentario;
             ch.os.valorServico = servico;
             ch.os.causaPendente = causa ?? "";
+            AtualizarLaudo(ch);
             if (string.IsNullOrEmpty(ch.os.diagnostico) && ch.problema != null)
                 ch.os.diagnostico = $"Solução: {ch.problema.solucao.ToLowerInvariant()}.";
             dados.historico.Insert(0, ch.os);

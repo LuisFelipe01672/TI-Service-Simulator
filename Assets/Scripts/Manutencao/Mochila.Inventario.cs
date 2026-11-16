@@ -31,6 +31,11 @@ public partial class Mochila
             case Item.ArComprimido: return 0.4f;
             case Item.PastaTermica: return 0.004f;
             case Item.SSD: return 0.06f;
+            case Item.PlacaPOST: return 0.05f;
+            case Item.TestadorFonte: return 0.25f;
+            case Item.Multimetro: return 0.35f;
+            case Item.PendriveDiagnostico: return 0.02f;
+            case Item.BateriaCMOS: return 0.003f;
             default: return 0f;   // caixa de cabo (305 m) fica na bancada, não na mochila
         }
     }

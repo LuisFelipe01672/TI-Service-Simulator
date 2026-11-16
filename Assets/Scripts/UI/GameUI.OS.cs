@@ -60,6 +60,14 @@ public partial class GameUI
         if (inicio > 0) Linha($"<size=85%>(+{inicio} registro(s) anterior(es))</size>", 16);
         for (int i = inicio; i < os.acoes.Count; i++) Linha("• " + os.acoes[i], 17);
         if (os.acoes.Count == 0) Linha("—");
+        if (os.laudo != null && os.laudo.Count > 0)
+        {
+            Titulo("LAUDO TÉCNICO (medições)");
+            foreach (var m in os.laudo) Linha("• " + m, 16);
+            if (os.recomendacoes != null && os.recomendacoes.Count > 0)
+                foreach (var r in os.recomendacoes) Linha("<color=#B3262E>Recomendação:</color> " + r, 16);
+            else Linha("<color=#1E7A4C>Sem peças no fim da vida.</color>", 16);
+        }
         Titulo("PEÇAS E MATERIAIS");
         if (os.pecas.Count == 0) Linha("Nenhuma.", 17);
         foreach (var p in os.pecas) Linha("• " + p, 17);

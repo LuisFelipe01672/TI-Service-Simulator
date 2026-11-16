@@ -102,6 +102,11 @@ public partial class GameUI
         }
         txtManSub.text = $"\"{ch.DescricaoVisivel}\" — {ch.contato}   ·   {(ch.aguardandoAssinatura ? "Resolvido: falta assinar a OS" : mm.TempoRestante > 0 ? $"SLA: resta {Tempo(mm.TempoRestante)}" : $"SLA estourado há {Tempo(-mm.TempoRestante)}")}";
 
+        // Check-up: o que ainda falta medir para o laudo
+        if (estado.checkup && eq.tipoEquipamento == TipoEquipamento.Computador)
+            txtManSub.text += estado.LaudoCompleto ? "\n<color=#3CCB7F>Laudo completo: feche tudo, ligue e entregue ao cliente.</color>"
+                                                   : $"\n<color=#F5B83F>Laudo: falta medir {estado.FaltaNoLaudo()}.</color>";
+
         var mochila = Mochila.Instance;
         foreach (var acao in AcoesFisicas.Para(eq.tipoEquipamento, estado))
         {

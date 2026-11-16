@@ -25,6 +25,8 @@ public class OrdemServico
     public string comentario = "";
     public bool retrabalho;               // atendimento de retorno (garantia)
     public string causaPendente = "";     // o que ficou sem resolver (o técnico só descobre quando o cliente volta)
+    public List<string> laudo = new List<string>();          // medições das ferramentas (Etapa 4: check-up com laudo)
+    public List<string> recomendacoes = new List<string>();  // peças no fim da vida, apontadas no laudo
 
     // Ação repetida seguida (ex.: imprimir 3 páginas de teste) vira uma linha só com "(x3)"
     public void RegistrarAcao(string texto)

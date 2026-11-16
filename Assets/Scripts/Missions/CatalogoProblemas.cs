@@ -79,6 +79,32 @@ public static class CatalogoProblemas
 
     static string Chave(Problema p) => p.equipamento + ":" + p.solucao;
 
+    // Soluções da Etapa 4 (ferramentas de diagnóstico)
+    public const string EncaixarMemoria = "Encaixar a memória";
+    public const string TrocarFonteFraca = "Trocar fonte fraca";
+    public const string TrocarMemoriaComErro = "Trocar memória com erro";
+    public const string TrocarBateria = "Trocar bateria da placa-mãe";
+    public const string Checkup = "Check-up completo";
+    public static bool EhCheckup(Problema p) => p != null && p.solucao == Checkup;
+
+    // Problemas que ficam bem mais fáceis com uma ferramenta (o card mostra a dica quando o técnico não a tem)
+    public static Item? FerramentaIdeal(Problema p)
+    {
+        if (p == null || p.equipamento != TipoEquipamento.Computador) return null;
+        switch (p.solucao)
+        {
+            case EncaixarMemoria: case "Trocar memória": return Item.PlacaPOST;
+            case TrocarFonteFraca: case "Trocar fonte": return Item.TestadorFonte;
+            case TrocarMemoriaComErro: case "Trocar HD": case Checkup: return Item.PendriveDiagnostico;
+            case TrocarBateria: return Item.Multimetro;
+            default: return null;
+        }
+    }
+
+    // O check-up só é oferecido a quem tem as ferramentas para fazer o laudo inteiro
+    public static bool PodeFazerCheckup(Mochila m) =>
+        m != null && m.Quantidade(Item.PendriveDiagnostico) > 0 && m.Quantidade(Item.Multimetro) > 0;
+
     // Estraga os equipamentos do cliente de acordo com o problema (com variações sorteadas)
     public static void Quebrar(Problema p, EstadoEquipamentos e)
     {
@@ -87,6 +113,8 @@ public static class CatalogoProblemas
         e.pcCabo.metrosNecessarios = Mathf.Round(Random.Range(1f, 4f) * 2f) / 2f;
         e.diasLigado = Random.Range(1, 4);
         e.fila.Clear();
+        // Desgaste das peças pela idade do computador (Etapa 4); o defeito abaixo derruba a peça culpada
+        e.SortearDesgaste(Random.Range(1, 9));
 
         switch (Chave(p))
         {
@@ -142,14 +170,46 @@ public static class CatalogoProblemas
                 break;
             case "Computador:Trocar HD":
                 e.pcHdRuim = true;
+                e.saudeDisco = 0.07f;
                 break;
             case "Computador:Trocar memória":
                 e.pcMemoriaRuim = true;
+                e.saudeMemoria = 0f;
                 e.pcLigado = false;
                 break;
             case "Computador:Trocar fonte":
                 e.pcFonteQueimada = true;
+                e.saudeFonte = 0f;
                 e.pcLigado = false;
+                break;
+            // Etapa 4: defeitos que só a ferramenta certa mostra com clareza
+            case "Computador:" + EncaixarMemoria:
+                e.pcMemoriaSolta = true;
+                e.pcLigado = false;
+                break;
+            case "Computador:" + TrocarFonteFraca:
+                e.pcFonteFraca = true;
+                e.saudeFonte = 0.12f;
+                break;
+            case "Computador:" + TrocarMemoriaComErro:
+                e.pcMemoriaIntermitente = true;
+                e.saudeMemoria = 0.2f;
+                break;
+            case "Computador:" + TrocarBateria:
+                e.pcBateriaFraca = true;
+                e.saudeBateria = 0.05f;
+                break;
+            case "Computador:" + Checkup:
+                e.checkup = true;
+                e.SortearDesgaste(Random.Range(4, 9));   // quem pede check-up costuma ter um computador mais velho
+                // Uma peça perto do fim (é o que dá valor ao laudo)
+                switch (Random.Range(0, 4))
+                {
+                    case 0: e.saudeDisco = Random.Range(0.25f, 0.38f); break;
+                    case 1: e.saudeBateria = Random.Range(0.3f, 0.38f); break;
+                    case 2: e.saudeCooler = Random.Range(0.3f, 0.38f); break;
+                    default: e.pcPoeira = Random.Range(0.4f, 0.65f); break;
+                }
                 break;
             case "Computador:Reinstalar driver":
                 e.driverOk = false;
@@ -196,7 +256,7 @@ public static class CatalogoProblemas
                        !e.impTampaMalFechada && !e.impIpMudou && !e.impDriverErrado &&
                        e.spoolerRodando && !e.FilaTravada && e.ImpressoraOnline && e.PcNaRede;
             case TipoEquipamento.Computador:
-                return e.PcNaInternet && e.memoria < 0.8f && e.PcHardwareOk;
+                return e.PcNaInternet && e.memoria < 0.8f && e.PcHardwareOk && (!e.checkup || e.LaudoCompleto);
             default:
                 return e.PcNaInternet && e.wifiAtivo && e.rotConfigOk && !e.rotTravado && !e.dhcpDuplo;
         }
@@ -300,6 +360,39 @@ public static class CatalogoProblemas
     };
 
     public static readonly Problema[] Medios = {
+        new Problema(TipoEquipamento.Computador, EncaixarMemoria,
+            "O computador liga, mas não aparece imagem nenhuma.",
+            "A luz acende, o ventilador gira, mas a tela fica preta.",
+            new[] {
+                "Desde hoje cedo. Ontem estava normal.",
+                "A moça da limpeza arrastou a mesa ontem e o gabinete caiu de lado.",
+                "Não aparece nada e nem apita, fica só a tela preta.",
+                "Só esse.",
+                "Desliguei da tomada e liguei de novo, igual." },
+            Pergunta.MexeramEmAlgo, "Ninguém encostou nele."),
+
+        new Problema(TipoEquipamento.Computador, TrocarBateria,
+            "O computador perde a data toda vez que fica desligado.",
+            "Ele liga pedindo pra apertar F1 e o relógio volta para 2009.",
+            new[] {
+                "Faz um mês. Toda segunda-feira, depois do fim de semana desligado.",
+                "Nada. O computador é antigo, deve ter uns oito anos.",
+                "\"CMOS checksum error\" e pede F1. Depois o sistema da contabilidade reclama do certificado.",
+                "Só esse; os outros ficam ligados direto.",
+                "Reiniciar não muda, o problema é quando desliga da tomada." },
+            Pergunta.MensagemErro, "Não aparece mensagem, ele só fica com a hora errada."),
+
+        new Problema(TipoEquipamento.Computador, Checkup,
+            "Quero um check-up completo do computador antes que ele dê problema.",
+            "Queria que você desse uma olhada geral no computador, ele é velhinho.",
+            new[] {
+                "Não tem problema nenhum agora; é prevenção, ele já tem uns anos.",
+                "Nunca abriram. Só uso, todo dia.",
+                "Nenhuma mensagem. Só às vezes acho ele mais barulhento.",
+                "É o computador do caixa; se ele parar, a empresa para.",
+                "Desligo todo dia no fim do expediente." },
+            Pergunta.MexeramEmAlgo, "Já trocaram tudo dele ano passado."),
+
         new Problema(TipoEquipamento.Computador, "Limpar por dentro",
             "O computador desliga sozinho no meio do trabalho.",
             "Ele apaga do nada, e faz um barulhão de ventilador.",
@@ -412,6 +505,28 @@ public static class CatalogoProblemas
     };
 
     public static readonly Problema[] Dificeis = {
+        new Problema(TipoEquipamento.Computador, TrocarFonteFraca,
+            "O computador reinicia sozinho quando abro o sistema.",
+            "Ele apaga e liga de novo do nada, principalmente quando estou trabalhando.",
+            new[] {
+                "Começou faz uns dez dias, e está cada vez mais frequente.",
+                "Colocamos uma placa de vídeo nova mês passado para o outro monitor.",
+                "Não aparece nada, a tela apaga e ele já volta ligando.",
+                "Só esse. Parado, ele fica ligado o dia inteiro; é só trabalhar que reinicia.",
+                "Reinicia sozinho, não precisa nem eu reiniciar." },
+            Pergunta.MexeramEmAlgo, "Ninguém mexeu em nada nesse computador."),
+
+        new Problema(TipoEquipamento.Computador, TrocarMemoriaComErro,
+            "O computador dá tela azul de vez em quando.",
+            "Do nada aparece uma tela azul com umas letras e ele reinicia.",
+            new[] {
+                "Umas três semanas. Às vezes uma vez por dia, às vezes nenhuma.",
+                "Nada, só atualizações do Windows mesmo.",
+                "Tela azul. Já apareceu MEMORY_MANAGEMENT e outra vez um nome diferente.",
+                "Só esse. E os arquivos às vezes abrem corrompidos.",
+                "Reinicio e volta a funcionar... até a próxima." },
+            Pergunta.MensagemErro, "Não aparece mensagem nenhuma, ele só trava."),
+
         new Problema(TipoEquipamento.Computador, "Trocar pasta térmica",
             "O computador esquenta muito e desliga sozinho.",
             "Ele fica pelando e apaga, mesmo depois da limpeza.",
@@ -483,6 +598,19 @@ public static class CatalogoProblemas
     {
         var lista = dif == DificuldadeChamado.Facil ? Faceis : dif == DificuldadeChamado.Medio ? Medios : Dificeis;
         return lista[Random.Range(0, lista.Length)];
+    }
+
+    // Sorteia um problema que o técnico consegue atender: o check-up só aparece para quem tem as ferramentas
+    public static Problema SortearDisponivel(DificuldadeChamado dif, bool podeCheckup)
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            var p = Sortear(dif);
+            if (!EhCheckup(p) || podeCheckup) return p;
+        }
+        var lista = dif == DificuldadeChamado.Facil ? Faceis : dif == DificuldadeChamado.Medio ? Medios : Dificeis;
+        foreach (var p in lista) if (!EhCheckup(p)) return p;
+        return lista[0];
     }
 
     // ---------------- Clientes ----------------

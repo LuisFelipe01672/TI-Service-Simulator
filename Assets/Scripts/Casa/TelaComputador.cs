@@ -11,10 +11,19 @@ public class TelaComputador : MonoBehaviour
     public string usuario = "Técnico";
 
     TextMeshProUGUI relogio;
+    RectTransform canvasRt;
+
+    // Tela por cima do sistema (Etapa 4): pendrive de diagnóstico, tela azul. Some sozinha.
+    RectTransform sobreposicao;
+    TextMeshProUGUI sobTitulo, sobTexto;
+    float sobInicio, sobFim;
+    string sobProgresso, sobResultado;
+    // Bateria da placa-mãe fraca: o relógio mostra a data que a placa perdeu (null = hora do jogo)
+    [System.NonSerialized] public string dataForcada;
     const float PixelsPorMetro = 2000f;
     static Texture2D papelDeParede;
 
-    void Start() => Montar();
+    void Start() { if (canvasRt == null) Montar(); }
 
     void Montar()
     {
@@ -27,6 +36,7 @@ public class TelaComputador : MonoBehaviour
         canvas.renderMode = RenderMode.WorldSpace;
         var rt = (RectTransform)go.transform;
         rt.sizeDelta = tamanho * PixelsPorMetro;
+        canvasRt = rt;
 
         // Papel de parede: degradê azul-petróleo com a marca do sistema
         var fundo = new GameObject("PapelDeParede", typeof(RectTransform)).AddComponent<RawImage>();
@@ -91,7 +101,52 @@ public class TelaComputador : MonoBehaviour
 
     void Update()
     {
-        if (relogio != null && DiaManager.Instance != null)
+        if (relogio != null && !string.IsNullOrEmpty(dataForcada)) relogio.text = dataForcada + "  ";
+        else if (relogio != null && DiaManager.Instance != null)
             relogio.text = DiaManager.Instance.HoraTexto() + "  ";
+        AtualizarSobreposicao();
     }
+
+    // Mostra uma tela inteira por cima do sistema: primeiro o progresso (com barra), depois o resultado
+    public void MostrarSobreposicao(string titulo, string progresso, string resultado, Color fundo, float segundos, float segundosProgresso = 3f)
+    {
+        if (canvasRt == null) Montar();
+        if (sobreposicao == null)
+        {
+            sobreposicao = UIFactory.Painel(canvasRt, "Sobreposicao", fundo);
+            UIFactory.Esticar(sobreposicao);
+            sobTitulo = UIFactory.Texto(sobreposicao, "", 58, Color.white, FontStyles.Bold, TextAlignmentOptions.TopLeft);
+            UIFactory.Esticar(sobTitulo.rectTransform, 40);
+            sobTexto = UIFactory.Texto(sobreposicao, "", 46, new Color(0.85f, 0.9f, 0.95f), FontStyles.Normal, TextAlignmentOptions.Left);
+            UIFactory.Esticar(sobTexto.rectTransform, 40);
+        }
+        sobreposicao.GetComponent<Image>().color = fundo;
+        sobreposicao.gameObject.SetActive(true);
+        sobreposicao.SetAsLastSibling();
+        sobTitulo.text = titulo;
+        sobProgresso = progresso;
+        sobResultado = resultado;
+        sobInicio = Time.time;
+        sobFim = Time.time + segundos;
+        sobFimProgresso = segundosProgresso;
+        AtualizarSobreposicao();
+    }
+
+    float sobFimProgresso = 3f;
+
+    void AtualizarSobreposicao()
+    {
+        if (sobreposicao == null || !sobreposicao.gameObject.activeSelf) return;
+        if (Time.time > sobFim) { sobreposicao.gameObject.SetActive(false); return; }
+        float t = Time.time - sobInicio;
+        if (sobFimProgresso <= 0f) { sobTexto.text = string.IsNullOrEmpty(sobProgresso) ? sobResultado : sobProgresso + "\n\n" + sobResultado; return; }
+        if (t < sobFimProgresso)
+        {
+            int barras = Mathf.RoundToInt(30f * t / sobFimProgresso);
+            sobTexto.text = $"{sobProgresso}\n\n[{new string('#', barras)}{new string('.', 30 - barras)}]  {Mathf.RoundToInt(100f * t / sobFimProgresso)}%";
+        }
+        else sobTexto.text = $"{sobProgresso}\n\n[{new string('#', 30)}]  100%\n\n{sobResultado}";
+    }
+
+    public bool SobreposicaoVisivel => sobreposicao != null && sobreposicao.gameObject.activeSelf;
 }

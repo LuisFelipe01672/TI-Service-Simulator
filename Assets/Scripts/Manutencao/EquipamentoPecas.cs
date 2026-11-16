@@ -273,6 +273,7 @@ public partial class EquipamentoPecas : MonoBehaviour
     {
         var e = MissionManager.Instance != null ? MissionManager.Instance.Estado : null;
         AtualizarTestador(e);
+        AtualizarFerramentas(e);
 
         if (eq.tipoEquipamento == TipoEquipamento.Impressora)
         {
@@ -305,6 +306,7 @@ public partial class EquipamentoPecas : MonoBehaviour
             Pintar(botaoLiga, pcLigado ? mVerde : mApagado);
             if (telaViva != null && telaViva.activeSelf != pcLigado) telaViva.SetActive(pcLigado);   // desligado: tela preta
             AtualizarGabinete(e);
+            AtualizarTelaDiagnostico(e);
         }
     }
 

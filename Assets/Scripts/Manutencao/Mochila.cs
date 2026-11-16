@@ -19,7 +19,13 @@ public enum Item
     Fonte,
     ArComprimido,
     PastaTermica,
-    SSD
+    SSD,
+    // Etapa 4: ferramentas de diagnóstico (no fim do enum: o save guarda as quantidades pelo índice)
+    PlacaPOST,
+    TestadorFonte,
+    Multimetro,
+    PendriveDiagnostico,
+    BateriaCMOS
 }
 
 // Um cabo de rede já feito, guardado na mochila
@@ -83,7 +89,13 @@ public partial class Mochila : MonoBehaviour
         new InfoItem(Item.CaixaCabo, "Caixa de cabo de rede Cat6 (305 m)", "Fica na sede. Na bancada você corta do tamanho certo e crimpa as pontas.", 450f, 305, false),
         new InfoItem(Item.Clipe, "Ferramenta de reset (clipe)", "Para apertar o botão de reset escondido do roteador.", 5f, 1, true),
         new InfoItem(Item.Toner, "Cartucho de toner", "Para impressora a laser. O cliente reembolsa a peça usada.", 180f, 1, false),
-        new InfoItem(Item.PendriveDrivers, "Pendrive com drivers", "Instala drivers de rede mesmo sem internet.", 40f, 1, true),
+        new InfoItem(Item.PendriveDrivers, "Pendrive com drivers", "Instala drivers de rede e o sistema mesmo sem internet.", 40f, 1, true),
+        // Ferramentas de diagnóstico (Etapa 4): cada uma revela uma parte da saúde das peças
+        new InfoItem(Item.Multimetro, "Multímetro digital", "Mede tensão (tomada, fonte, bateria da placa-mãe) e continuidade (fusível, cabo).", 85f, 1, true),
+        new InfoItem(Item.TestadorFonte, "Testador de fonte ATX", "Liga no conector de 24 pinos: LEDs e visor mostram cada tensão da fonte e o sinal Power Good.", 70f, 1, true),
+        new InfoItem(Item.PlacaPOST, "Placa POST (diagnóstico de placa-mãe)", "Vai num slot da placa-mãe e mostra no visor o código do passo em que o computador parou.", 60f, 1, true),
+        new InfoItem(Item.PendriveDiagnostico, "Pendrive de diagnóstico", "Dá boot fora do Windows: teste de memória, saúde do disco (S.M.A.R.T.) e sensores de temperatura.", 55f, 1, true),
+        new InfoItem(Item.BateriaCMOS, "Bateria da placa-mãe CR2032 (5 un.)", "Bateria de 3 V que guarda a data e a configuração da placa-mãe.", 20f, 5, false),
         new InfoItem(Item.ArComprimido, "Pincel e ar comprimido", "Para tirar a poeira de dentro do gabinete e do cooler sem estragar nada.", 45f, 1, true),
         new InfoItem(Item.PastaTermica, "Pasta térmica (seringa, 5 aplicações)", "Vai entre o processador e o cooler. Pasta velha e seca = computador que esquenta mesmo limpo.", 25f, 5, false),
         new InfoItem(Item.SSD, "SSD 480 GB", "Para trocar HD com setores ruins. Faça o backup antes!", 220f, 1, false),

@@ -42,7 +42,7 @@ public class CaboRede
 public enum ResultadoPagina { Nenhuma, Perfeita, Branca, Clara, Listra, Lixo, Relatorio }
 
 [System.Serializable]
-public class EstadoEquipamentos
+public partial class EstadoEquipamentos
 {
     // ---------- Impressora ----------
     public bool impLigada = true;
@@ -100,7 +100,8 @@ public class EstadoEquipamentos
     public const float SegundosAteDesligarPorCalor = 25f;
     public bool PcSuperaquecendo => pcPoeira > 0.7f || pcPastaSeca;
     public bool PcHardwareOk => !pcMemoriaRuim && !pcFonteQueimada && !PcSuperaquecendo && !pcGabineteAberto &&
-                                !pcCoolerFora && !pcHdRuim && !pcSemSistema;
+                                !pcCoolerFora && !pcHdRuim && !pcSemSistema &&
+                                !pcFonteFraca && !pcMemoriaIntermitente && !pcMemoriaSolta && !pcBateriaFraca;
     public CaboRede pcCabo = new CaboRede();
     public bool pcIpFixo;
     public string pcIp = "192.168.0.23";

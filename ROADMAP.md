@@ -42,9 +42,21 @@ catálogo, mas a **ordem de trabalho** passa a ser esta. Cada etapa puxa os iten
    vaso com caixa acoplada e pia de coluna (Sketchfab CC-BY), box de vidro com perfil de alumínio e chuveiro elétrico
    com eletroduto e registro (feitos em código). Luz pré-calculada nas salas novas; atalhos em
    *TI Service/Teste (Play)/Salas* (chamado em cada sala, seguir o contato, fotos); testes `TestesSalas`.
-4. 🔜 **Ferramentas de diagnóstico como progressão** (placa POST, testador de fonte, multímetro, pendrive) e saúde
-   das peças; check-up vendável com laudo.
-5. ⬜ **Locação física** — impressora de patrimônio na caixa, instalação e IP no painel, visita mensal no local
+4. ✅ **Ferramentas de diagnóstico como progressão** (16/11/2026) — quatro ferramentas novas na loja, com peso no
+   inventário, que **aparecem na mão do técnico** e mostram o resultado no próprio aparelho: **placa POST** (o visor
+   corre os códigos e para no do defeito: 55 memória, apagado sem energia, A0 normal), **testador de fonte** (LEDs
+   acendendo um a um, vermelho na tensão fora da norma, visor com 12 V/5 V/3,3 V e Power Good), **multímetro** (seletor
+   gira, o número procura e firma; tomada, 12 V da fonte, bateria da placa-mãe e continuidade do fusível com bipe) e
+   **pendrive de diagnóstico** (espetado; teste de memória e S.M.A.R.T./sensores numa **tela própria no monitor**).
+   **Saúde das peças em %** (memória, fonte, disco, cooler, bateria da placa-mãe, cilindro) sorteada pela idade do
+   computador; os defeitos derrubam a peça culpada. **Problemas novos** que a ferramenta certa resolve de cara: pente
+   solto sem vídeo e sem apito (POST), fonte fraca que reinicia sob carga (testador/multímetro), memória com tela azul
+   de vez em quando (pendrive), bateria da placa-mãe que perde a data (multímetro, troca da CR2032). **Check-up com
+   laudo**: serviço novo (só aparece para quem tem pendrive e multímetro), termina quando todas as partes foram
+   medidas; o laudo com medições e recomendações vai na OS que o cliente assina. Testes `TestesDiagnostico`; atalhos em
+   *TI Service/Teste (Play)/Diagnóstico*. Ferramentas feitas por código: no Sketchfab só havia multímetro e pendrive
+   CC-BY (candidatos para trocar o corpo, com aprovação do dono).
+5. 🔜 **Locação física** — impressora de patrimônio na caixa, instalação e IP no painel, visita mensal no local
    (contador no visor, toner reserva, troca preventiva).
 6. ⬜ **Bancada e usados como objetos** — testar, recuperar, apagar dados, etiquetar patrimônio, vender ou locar.
 7. ⬜ **Notebook e problemas de software** (senha, e-mail, vírus, lentidão, impressora padrão). Antes: reorganizar
@@ -92,9 +104,9 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
       queimado, poeira, código na placa POST, leitura do multímetro)
 - ⬜ **Conversa de triagem**: por ligação/mensagem você escolhe perguntas ("o que mudou?", "aparece alguma
       mensagem?", "só nesse computador?"); o cliente responde mal, esquece ou mente ("não mexi em nada")
-- ⬜ **Saúde das peças** em % (HD 34%, bateria do nobreak 10%, cilindro 80%) vista com a ferramenta certa;
-      desgaste com o tempo de uso
-- ⬜ Ferramentas compradas liberam ou aceleram pistas (ver Fases 4 e 5)
+- ✅ **Saúde das peças** em % vista com a ferramenta certa (Etapa 4: memória, fonte, disco, cooler, bateria da
+      placa-mãe; desgaste pela idade do computador) (⬜ bateria do nobreak, cilindro visto pelo menu da impressora)
+- ✅ Ferramentas compradas liberam ou aceleram pistas (Etapa 4: placa POST, testador de fonte, multímetro, pendrive)
 
 **Ordem de serviço (OS) e checklist**
 - ✅ Todo atendimento abre uma **OS**: problema relatado, diagnóstico, o que foi feito, peças, horas
@@ -102,7 +114,8 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ✅ **Checklist do serviço** que o cliente confere no fim — item esquecido vira estrela a menos
       (⬜ itens por tipo de serviço: "testar todos os pontos", "etiquetar")
 - ✅ **Cliente assina a OS** na prancheta (⬜ sem assinatura ele pode contestar a cobrança)
-- ⬜ **Teste de prova** no fim (temperatura e desempenho antes/depois, página de teste, teste de cabo) anexado à OS
+- ✅ **Teste de prova** anexado à OS: as medições das ferramentas viram o laudo da OS (Etapa 4)
+      (⬜ antes/depois de temperatura e desempenho, página de teste)
 - ⬜ **Fotos de antes/depois** anexadas à OS vão para o **portfólio** no celular e atraem clientes
 
 **O técnico (personagem)**
@@ -218,7 +231,7 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ✅ Peças internas animadas: o pente de memória e a fonte saem e voltam na troca
 - ✅ HD com setores ruins: teste de saúde do disco (pendrive), backup antes, troca por SSD (o disco sai e entra o
       SSD), instalar o sistema e restaurar; trocar sem backup = cliente perde os arquivos (erro grave)
-- ⬜ Placa de vídeo trocável, bateria da placa-mãe
+- ⬜ Placa de vídeo trocável (✅ bateria da placa-mãe: medir com multímetro e trocar a CR2032, Etapa 4)
 - ✅ **Limpeza**: manta de poeira visível por dentro; pincel e ar comprimido (ferramenta) limpam; poeira = superaquecimento
 - ✅ PC superaquecendo desliga sozinho depois de ~25 s ligado; a ventoinha gira mais rápido
 - ⬜ Nuvem de poeira saindo na limpeza
@@ -228,9 +241,10 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ⬜ Cabos atrás: rede, energia, vídeo (monitor sem imagem por cabo solto)
 - ⬜ Monitor mostrando o "Windows" do jogo na própria tela 3D (o computador simulado que já existe) — a textura
       original do Computador_Mesa mostra um Windows real: ✅ coberta pela tela do jogo (TelaComputador)
-- ⬜ **Ferramentas de diagnóstico**: testador de fonte, multímetro, **placa POST**, pendrive de diagnóstico (teste
-      de memória, saúde do disco, antivírus), testador de cabo
-- ⬜ **Check-up completo** (serviço vendável): inspeção de todas as peças com laudo de saúde em %
+- ✅ **Ferramentas de diagnóstico**: testador de fonte, multímetro, **placa POST**, pendrive de diagnóstico (teste
+      de memória, saúde do disco), testador de cabo (Etapa 4) (⬜ antivírus no pendrive; modelos 3D do Sketchfab)
+- ✅ **Check-up completo** (serviço vendável): inspeção de todas as peças com laudo de saúde em % (Etapa 4)
+      (⬜ recomendações do laudo virarem orçamento)
 - ⬜ **Compatibilidade de peças**: memória do tipo errado não encaixa, fonte fraca desliga sob carga
 - ✅ Problemas de hardware: superaquecimento por poeira, memória ruim (3 bipes, sem vídeo), fonte queimada (não liga)
 - ⬜ Problemas: lentidão, vírus/ransomware, Windows não inicia, HD com setor

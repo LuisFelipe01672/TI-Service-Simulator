@@ -22,10 +22,16 @@ catálogo, mas a **ordem de trabalho** passa a ser esta. Cada etapa puxa os iten
    abertura). Também: **chamado guiado de toner** no primeiro dia (guia passo a passo no card) e **abas do tablet**
    liberadas pela trilha "Primeiros passos". Save versão 4; 20 testes novos (`Editor/Testes/TestesOSeSLA.cs`);
    atalhos em *TI Service/Teste (Play)/Atendimento*.
-2. 🔜 **Realismo visual da base** — luz pré-calculada nos interiores (light probes, reflection probes baked),
-   texturas dos GLB extraídas e comprimidas (meta: build perto de 200 MB), móveis do cliente sem o kit simples,
-   telas que refletem, close de câmera nas peças, pendências da casa (banheiro, abajur, rotina da manhã).
-3. ⬜ **Três clientes com sala própria** (contabilidade, clínica, loja), o cliente leva o técnico até o equipamento.
+2. ✅ **Realismo visual da base** (16/11/2026) — **executável de 633 MB para 211 MB** (GLB viraram glTF com imagens
+   separadas e comprimidas; `Editor/TexturasModelos.cs` acerta sRGB/compressão/tamanho; build LZ4HC); **luz
+   pré-calculada nos interiores** (casca dos cômodos no lightmap com AO, sondas de luz por cômodo, reflexos baked com
+   projeção em caixa; lâmpadas em Baked Indirect para os interruptores seguirem valendo; sol em tempo real por causa
+   do ciclo do dia; paredes em duas metades, a de fora com a luz do dia); **móveis reais** no cliente e no escritório
+   (mesa de metal de 75 cm, cadeira de escritório, gaveteiro, mesinha, aparador, sofá, plantas, lixeira de plástico);
+   **close de câmera** em toda ação de olhar (fundo desfocado; no visor a pista é o próprio visor); **abajur** e
+   **rotina da manhã** com café da manhã. FPS igual (~360 no quarto). Banheiro ficou para depois (sem vaso/pia CC0:
+   precisa de modelos do Sketchfab). Também pendente: notebook do escritório ainda é do kit simples.
+3. 🔜 **Três clientes com sala própria** (contabilidade, clínica, loja), o cliente leva o técnico até o equipamento.
 4. ⬜ **Ferramentas de diagnóstico como progressão** (placa POST, testador de fonte, multímetro, pendrive) e saúde
    das peças; check-up vendável com laudo.
 5. ⬜ **Locação física** — impressora de patrimônio na caixa, instalação e IP no painel, visita mensal no local
@@ -63,9 +69,9 @@ Decisão do dono (13/11/2026): **fica no Built-in RP**. Teste do cômodo de prov
 Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteGrafico_HomeOffice`, fotos em
 `Builds/Capturas`). Reavaliar URP só se a Unity abandonar o Built-in.
 - ✅ Post-processing v2 no jogo (ACES, bloom, AO, gradação de cor, vinheta)
-- ⬜ Tirar o tom marrom/amarelado da gradação de cor (cores mais neutras, como no teste HDRP)
-- ⬜ Profundidade de campo só nos closes
-- ⬜ Iluminação baked (lightmaps) nos interiores + reflection probes + light probes para personagens
+- ✅ Tirar o tom marrom/amarelado da gradação de cor (cores mais neutras, como no teste HDRP) — Etapa 0
+- ✅ Profundidade de campo só nos closes (CloseDePeca, Etapa 2)
+- ✅ Iluminação baked (lightmaps) nos interiores + reflection probes + light probes para personagens (Etapa 2)
       (validada no cômodo de prova: peças sobrepostas nas quinas, modelos recebem luz por light probes)
 - ⬜ Materiais PBR (ambientCG/Poly Haven) em todo piso, parede, metal e plástico; sujeira/desgaste onde faz sentido
 - ⬜ Modelos realistas (Poly Haven CC0 / Sketchfab CC-BY) substituindo as caixas, cômodo por cômodo
@@ -118,7 +124,7 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ✅ O jogo novo **começa em casa** (ao lado da cama), não no escritório
 - ✅ Quarto realista: cama de casal, 2 criados-mudos, despertador, porta-retrato, quadro, guarda-roupa, persianas,
       tapete, planta, teto de gesso (modelos Poly Haven + Sketchfab; persianas feitas por código)
-- ⬜ Abajur no criado-mudo e luz pré-calculada (baked) na casa
+- ✅ Abajur no criado-mudo e luz pré-calculada (baked) na casa
 - ✅ Home office (visual): mesa de metal, cadeira presidente, PC, luminária, blocos de notas, relógio, estante de aço
       com caixa de ferramentas e caixas, mochila
 - ✅ **PC do jogador** funcionando: E senta na cadeira (câmera desliza até o monitor) e abre o sistema "TI OS";
@@ -137,7 +143,7 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ✅ **Energia do técnico** no HUD: cai com as horas e o trabalho; cansado anda/trabalha mais devagar; dormir cedo
       recupera tudo (tarde ou no escritório, menos); café na cozinha (+20, até 3 por dia) — salva no save
 - ✅ Comer (geladeira) como outra forma de recuperar energia
-- ⬜ Rotina da manhã: acordar → café (bônus de energia) → ver chamados no celular/PC → sair de casa
+- ✅ Rotina da manhã: acordar → café (bônus de energia) → ver chamados no celular/PC → sair de casa
 
 ## Fase 1B — Casa completa (cenário)
 - ✅ Sala realista: sofá de couro, mesa de centro, tapete, rack de madeira com TV de tela plana (feita por código),

@@ -110,3 +110,7 @@ InitTestScene*.unity*
 # os arquivos. Ficam só no PC (baixe em mixamo.com e rode TI Service/5. Configurar personagens).
 /[Aa]ssets/Models/Mixamo/
 /[Aa]ssets/Models/Mixamo.meta
+
+# Unity-MCP (AI Game Developer): DLLs restauradas pelo prÃ³prio plugin ao abrir o projeto
+/[Aa]ssets/[Pp]lugins/NuGet/
+/[Aa]ssets/[Pp]lugins/NuGet.meta

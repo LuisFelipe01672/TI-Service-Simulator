@@ -31,7 +31,7 @@ Repositório: `LuisFelipe01672/TI-Service-Simulator` no GitHub — **público**,
 
 ## Push (só com pedido)
 ```powershell
-cd "C:\Projetos\TI Service Simulator"
+cd "C:\Projetos\TI-Service-Simulator"
 git log origin/main..HEAD --name-only --pretty=format: | Select-String "Contexto|privado|Builds/|save\.json|Models/Mixamo/"
 git push origin main
 ```

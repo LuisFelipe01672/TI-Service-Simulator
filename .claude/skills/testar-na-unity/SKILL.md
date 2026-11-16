@@ -5,7 +5,7 @@ description: Testar o TI Service Simulator dentro da Unity (compilar, ler o Cons
 
 # Testar o TI Service Simulator na Unity
 
-Projeto: `C:\Projetos\TI Service Simulator` (Unity 6000.4.10f1, Built-in RP). Windows, PowerShell.
+Projeto: `C:\Projetos\TI-Service-Simulator` (Unity 6000.4.10f1, Built-in RP). Windows, PowerShell.
 
 ## 1. Abrir a Unity (licença)
 - O Unity Hub é a versão da **Microsoft Store** (fica em `C:\Program Files\WindowsApps\UnityTechnologies.UnityHub_*`).

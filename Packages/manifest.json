@@ -46,7 +46,8 @@
     "com.unity.timeline": "1.8.12",
     "com.unity.ugui": "2.0.0",
     "com.unity.visualscripting": "1.9.11",
-    "com.yasirkula.ingamedebugconsole": "https://github.com/yasirkula/UnityIngameDebugConsole.git"
+    "com.yasirkula.ingamedebugconsole": "https://github.com/yasirkula/UnityIngameDebugConsole.git",
+    "com.ivanmurzak.unity.mcp": "1.11.3"
   },
   "scopedRegistries": [
     {
@@ -54,6 +55,14 @@
       "url": "https://registry.npmjs.org/",
       "scopes": [
         "com.kyrylokuzyk"
+      ]
+    },
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.ivanmurzak",
+        "extensions.unity"
       ]
     }
   ]

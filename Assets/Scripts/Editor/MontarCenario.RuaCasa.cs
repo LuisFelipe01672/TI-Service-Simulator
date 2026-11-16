@@ -150,7 +150,7 @@ public static partial class MontarCenario
     const string PastaPolyHaven = "Assets/Models/PolyHaven/";
     const string PastaSketchfab = "Assets/Models/Sketchfab/";
     static string PH(string id) => PastaPolyHaven + id + "/" + id + ".gltf";
-    static string SF(string nome) => PastaSketchfab + nome + ".glb";
+    static string SF(string nome) => PastaSketchfab + nome + "/" + nome + ".gltf";
 
     static void MontarQuarto(Transform casa)
     {

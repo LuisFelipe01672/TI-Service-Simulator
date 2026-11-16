@@ -38,6 +38,9 @@ r.results.map(m => `${m.name} | ${m.license.label} | ${m.faceCount}f | ${m.user.
 ## 4. Trazer para o projeto
 - Copie para `Assets/Models/Sketchfab/` (ou `Assets/Models/PolyHaven/`) com **nome em português**
   (ex.: `Impressora_MFP_Compacta.fbx`, `Cartucho_Toner.glb`).
+- **GLB nunca entra direto** (o glTFast manda as imagens embutidas sem compressão: o build passou de 600 MB).
+  Converta para uma pasta própria: `npx @gltf-transform/cli@4 copy X.glb Assets/Models/Sketchfab/X/X.gltf`.
+  `Editor/TexturasModelos.cs` acerta sozinho sRGB, compressão e tamanho máximo das imagens (lista `Pequenos` = 1024).
 - `.gitattributes` já manda `*.fbx`, `*.glb`, `*.png` para o LFS — confira com `git lfs status`.
 - Atualize **`CREDITOS.md`** (arquivo, link do modelo, autor, alterações). CC-BY exige crédito também numa tela de
   créditos do jogo.

@@ -30,7 +30,9 @@ Roteiro de testes manuais: `ROTEIRO_TESTES_UNITY.md`. Créditos de assets: `CRED
 - **Personagens**: Mixamo em `Assets/Models/Mixamo/` (**fora do Git** — termos da Adobe), configurados pelo menu
   *TI Service/5*; carregados via `Resources/Personagens/BancoPersonagens.asset`. O jogo precisa funcionar sem eles
   (fallback `MontarSimples()`).
-- **Modelos 3D** em `Assets/Models/Sketchfab/` (CC-BY, crédito obrigatório) — GLB via pacote glTFast. Texturas
+- **Modelos 3D** em `Assets/Models/Sketchfab/<Nome>/<Nome>.gltf` (CC-BY, crédito obrigatório) — glTF com imagens
+  separadas via glTFast (GLB embutido vai sem compressão: converta com `gltf-transform copy`); `Editor/TexturasModelos.cs`
+  configura as imagens. Texturas
   acima de 2048 podem falhar no import (DX12): reduza para 2048.
 - **Sons**: gerados por código (`Audio/SonsGerados.cs`); um arquivo em `Resources/Sons/<nome>` substitui o gerado.
 - **Configurações** em PlayerPrefs (`Configuracoes.cs`, janela `UI/JanelaConfiguracoes.cs`).

@@ -30,7 +30,7 @@ public static class GerarExecutavel
             scenes = cenas,
             locationPathName = Path.Combine(Pasta, PlayerSettings.productName + ".exe"),
             target = BuildTarget.StandaloneWindows64,
-            options = BuildOptions.None,
+            options = BuildOptions.CompressWithLz4HC,   // dados do jogo comprimidos (sem perda): download menor
             extraScriptingDefines = new[] { "UNITY_MCP_EXCLUDE_FROM_COMPILATION" },
         };
 
@@ -46,6 +46,11 @@ public static class GerarExecutavel
         var r = relatorio.summary;
         if (r.result == BuildResult.Succeeded)
         {
+            // pasta de depuração do Burst não vai para o jogador
+            string burst = Path.Combine(Pasta, PlayerSettings.productName + "_BurstDebugInformation_DoNotShip");
+            if (Directory.Exists(burst)) Directory.Delete(burst, true);
+            long total = new DirectoryInfo(Pasta).GetFiles("*", SearchOption.AllDirectories).Sum(f => f.Length);
+            Debug.Log($"[Build] Pasta do jogo no disco: {total / (1024 * 1024)} MB");
             Debug.Log($"[Build] Pronto: {Path.GetFullPath(opcoes.locationPathName)} ({r.totalSize / (1024 * 1024)} MB, {r.totalTime.TotalSeconds:0} s)");
             if (!Application.isBatchMode) EditorUtility.RevealInFinder(opcoes.locationPathName);
         }

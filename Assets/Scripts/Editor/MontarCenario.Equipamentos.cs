@@ -63,7 +63,7 @@ public static partial class MontarCenario
         Ancora(v, "Ancora_PortaRede", new Vector3(bTudo.size.x * 0.25f, bInf.min.y + 0.05f, bTudo.max.z), Vector3.one);
 
         // Toner realista (aparece com a tampa aberta): o EquipamentoPecas procura "Cartucho"
-        var toner = AssetDatabase.LoadAssetAtPath<GameObject>(PastaSketchfab + "Cartucho_Toner.glb");
+        var toner = AssetDatabase.LoadAssetAtPath<GameObject>(SF("Cartucho_Toner"));
         if (toner != null)
         {
             var suporte = new GameObject("Cartucho").transform;

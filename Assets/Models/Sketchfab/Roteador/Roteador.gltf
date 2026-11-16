@@ -1,0 +1,303 @@
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0",
+    "extras": {
+      "author": "Grand Dog Studio (https://sketchfab.com/GrandDogStudio)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/3d-router-fc90c018647c4fd1a3a9f62559bf67f0",
+      "title": "3D Router"
+    }
+  },
+  "accessors": [
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 1685,
+      "max": [
+        10.196311950683594,
+        16.51625633239746,
+        6.777800559997559
+      ],
+      "min": [
+        -10.095290184020996,
+        -3.270451307296753,
+        -9.502062797546387
+      ],
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 1685,
+      "bufferView": 0,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC4",
+      "componentType": 5126,
+      "count": 1685,
+      "bufferView": 0,
+      "byteOffset": 24
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 1685,
+      "bufferView": 0,
+      "byteOffset": 40
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 1685,
+      "bufferView": 0,
+      "byteOffset": 48
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 1685,
+      "bufferView": 0,
+      "byteOffset": 56
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5125,
+      "count": 4341,
+      "bufferView": 1,
+      "byteOffset": 0
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 107840,
+      "byteStride": 64,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 107840,
+      "byteLength": 17364,
+      "target": 34963
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "source": 0,
+      "sampler": 0
+    },
+    {
+      "source": 2,
+      "sampler": 0
+    },
+    {
+      "source": 3,
+      "sampler": 0
+    },
+    {
+      "source": 1,
+      "sampler": 0
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/png",
+      "uri": "baseColor_1.png"
+    },
+    {
+      "mimeType": "image/png",
+      "uri": "metallicRoughness_1.png"
+    },
+    {
+      "mimeType": "image/png",
+      "uri": "emissive_1.png"
+    },
+    {
+      "mimeType": "image/png",
+      "uri": "normal_1.png"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "Roteador.bin",
+      "byteLength": 125204
+    }
+  ],
+  "materials": [
+    {
+      "name": "Router",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicRoughnessTexture": {
+          "index": 3
+        }
+      },
+      "emissiveFactor": [
+        1,
+        1,
+        1
+      ],
+      "emissiveTexture": {
+        "index": 1
+      },
+      "normalTexture": {
+        "index": 2
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Router_Router_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TANGENT": 2,
+            "TEXCOORD_0": 3,
+            "TEXCOORD_1": 4,
+            "TEXCOORD_2": 5
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 6
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Sketchfab_model",
+      "rotation": [
+        -0.7071067811865475,
+        0,
+        0,
+        0.7071067811865476
+      ],
+      "children": [
+        1
+      ]
+    },
+    {
+      "name": "d248a8611e664507829a2c0bdabe2f77.fbx",
+      "rotation": [
+        0.7071067811865475,
+        0,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.009999999776482582,
+        0.009999999776482582,
+        0.009999999776482582
+      ],
+      "children": [
+        2
+      ]
+    },
+    {
+      "name": "RootNode",
+      "children": [
+        3,
+        6,
+        8
+      ]
+    },
+    {
+      "name": "Light",
+      "translation": [
+        407.6245422363281,
+        590.38623046875,
+        -100.54539489746094
+      ],
+      "rotation": [
+        0.1690757056862664,
+        0.755880374520583,
+        -0.2721713326537732,
+        0.5709474851882469
+      ],
+      "scale": [
+        100.00000762939455,
+        100,
+        99.99999999999999
+      ],
+      "children": [
+        4
+      ]
+    },
+    {
+      "name": "Object_4",
+      "rotation": [
+        0.7071067811865475,
+        0,
+        0,
+        0.7071067811865476
+      ],
+      "children": [
+        5
+      ]
+    },
+    {
+      "name": "Object_5"
+    },
+    {
+      "name": "Camera",
+      "translation": [
+        735.88916015625,
+        495.8309326171875,
+        692.5791015625
+      ],
+      "rotation": [
+        -0.21255734874038554,
+        0.9047969370606412,
+        -0.08438929537539461,
+        0.3592218298046274
+      ],
+      "scale": [
+        100,
+        100.00000762939452,
+        99.99999237060547
+      ],
+      "children": [
+        7
+      ]
+    },
+    {
+      "name": "Object_7"
+    },
+    {
+      "name": "Router",
+      "children": [
+        9
+      ]
+    },
+    {
+      "name": "Router_Router_0",
+      "mesh": 0
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

@@ -91,6 +91,7 @@ public static partial class MontarCenario
         var spawnCasa = GameObject.Find("SpawnCasa");
         AjustarJogador(spawnCasa != null ? spawnCasa.transform : spawn);
         Iluminacao();
+        PrepararLuzPreCalculada();
 
         Debug.Log("[Cenário] Materiais dos móveis do Kenney: " + string.Join(", ", materiaisKenney.OrderBy(n => n)));
 
@@ -99,6 +100,7 @@ public static partial class MontarCenario
         EditorSceneManager.SaveScene(cena);
         AssetDatabase.SaveAssets();
         Debug.Log("[Cenário] Escritório, cliente, rua e casa montados. Cena salva.");
+        if (!Application.isBatchMode) CalcularLuz();   // termina sozinho e salva a cena de novo ("[Luz] Luz calculada")
     }
 
     // ---------------- Escritório do jogador ----------------

@@ -23,6 +23,8 @@ Roteiro de testes manuais: `ROTEIRO_TESTES_UNITY.md`. Créditos de assets: `CRED
   Evite glifos fora da fonte (▶ ● ⚠): use », •, (!).
 - **Cenário montado por código no editor**: `Editor/MontarCenario*.cs`, menu *TI Service/3. Montar cenário*.
   Mudou o script → rode o menu de novo (ele salva a cena). Não edite a cena à mão.
+  Ao fim ele calcula a luz dos interiores (lightmap + sondas, `MontarCenario.Luz.cs`; espere `[Luz] Luz calculada` no log).
+  Sol e lâmpadas mudam em tempo real (dia/noite, interruptores): só o rebote das lâmpadas é pré-calculado.
 - **Peças de equipamento**: `Manutencao/PecaEquipamento.cs` (mirar + E / segurar E, raycast com
   `QueryTriggerInteraction.Collide`), ações em `Manutencao/AcoesFisicas.cs` filtradas por `peca`, montagem em
   `Manutencao/EquipamentoPecas.cs`.

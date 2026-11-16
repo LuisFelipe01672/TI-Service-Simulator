@@ -306,7 +306,14 @@ public class DiaManager : MonoBehaviour
         RenderSettings.ambientEquatorColor = Color.Lerp(new Color(0.04f, 0.04f, 0.06f), new Color(0.50f, 0.50f, 0.48f), claro);
         RenderSettings.ambientGroundColor = Color.Lerp(new Color(0.02f, 0.02f, 0.02f), new Color(0.30f, 0.28f, 0.24f), claro);
         RenderSettings.reflectionIntensity = Mathf.Lerp(0.3f, 0.8f, dia01);
+
+        // Reflexos pré-calculados dos cômodos foram tirados de dia (janela clara): à noite escurecem junto
+        if (sondasReflexo == null) sondasReflexo = FindObjectsByType<ReflectionProbe>(FindObjectsSortMode.None);
+        foreach (var rp in sondasReflexo)
+            if (rp != null && rp.mode == UnityEngine.Rendering.ReflectionProbeMode.Baked) rp.intensity = Mathf.Lerp(0.35f, 0.8f, claro);
     }
+
+    ReflectionProbe[] sondasReflexo;
 
     // ---------- Calendário ----------
     // O dia 1 do jogo é uma segunda-feira, 2 de março de 2026. Impostos e boletos vencem em datas do mês.

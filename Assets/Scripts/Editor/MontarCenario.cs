@@ -117,27 +117,26 @@ public static partial class MontarCenario
         LuzTeto(sala, "Luz_Teto", new Vector3(0, H - 0.15f, 0.4f), 1.5f, 7.5f, true);
         Sonda(sala, new Vector3(6f, H, 6f));
 
-        Modelo("rugRectangle", sala, new Vector3(0, 0.012f, 0.2f), 0, Colisao.Nenhuma);
-        var mesa = Modelo("desk", sala, new Vector3(0, 0, 2.35f), 180);
+        Caixa(sala, "Tapete", new Vector3(0, 0.006f, 0.2f), new Vector3(2.4f, 0.012f, 1.7f), mCarpete, 1.5f, false);
+        var mesa = ModeloReal(PH("metal_office_desk"), sala, new Vector3(0, 0, 2.5f), LadoMesaMetal, RotMesa);
         float alturaMesa = Altura(mesa);
-        Modelo("chairDesk", sala, new Vector3(0, 0, 1.45f), 180);
-        Modelo("plantSmall1", sala, new Vector3(0.55f, alturaMesa, 2.45f), 0, Colisao.Nenhuma);
-        Modelo("trashcan", sala, new Vector3(1.05f, 0, 2.5f), 0);
+        ModeloReal(SF("Cadeira_Escritorio"), sala, new Vector3(0, 0, 1.6f), 1.15f, RotCadeira);
+        ModeloReal(PH("potted_plant_04"), sala, new Vector3(0.7f, alturaMesa, 2.65f), 0.25f, 0, Colisao.Nenhuma);
+        ModeloReal(PH("desk_lamp_arm_01"), sala, new Vector3(-0.75f, alturaMesa, 2.7f), 0.5f, 160, Colisao.Nenhuma);
+        Lixeira(sala, new Vector3(1.25f, 0, 2.75f));
 
         PosicionarEquipamento("Notebook", sala, new Vector3(-0.1f, alturaMesa, 2.3f), 180,
             v => Modelo("laptop", v, Vector3.zero, 0, Colisao.Nenhuma));
 
         MontarEstoque(sala);
-        Modelo("lampSquareFloor", sala, new Vector3(-2.5f, 0, 2.5f), 0);
 
-        var caixa = Modelo("cardboardBoxClosed", sala, new Vector3(2.45f, 0, 2.45f), 10);
-        Modelo("cardboardBoxClosed", sala, new Vector3(2.4f, Altura(caixa), 2.45f), -15);
-        Modelo("cardboardBoxOpen", sala, new Vector3(1.85f, 0, 2.55f), 25);
+        var caixa = ModeloReal(PH("cardboard_box_01"), sala, new Vector3(2.45f, 0, 2.5f), 0.5f, 10);
+        ModeloReal(PH("cardboard_box_01"), sala, new Vector3(2.42f, Altura(caixa), 2.5f), 0.42f, -15, Colisao.Nenhuma);
+        ModeloReal(PH("cardboard_box_01"), sala, new Vector3(1.85f, 0, 2.6f), 0.42f, 25);
 
-        var aparador = Modelo("sideTable", sala, new Vector3(2.7f, 0, 0.4f), -90);
-        Modelo("kitchenCoffeeMachine", sala, new Vector3(2.7f, Altura(aparador), 0.4f), -90, Colisao.Nenhuma);
-        Modelo("pottedPlant", sala, new Vector3(2.45f, 0, -2.45f), 0);
-        Modelo("coatRackStanding", sala, new Vector3(-2.45f, 0, -2.45f), 0);
+        var aparador = ModeloReal(PH("side_table_01"), sala, new Vector3(2.72f, 0, 0.4f), 0.55f, -90);
+        ModeloReal(SF("Eletrodomesticos"), sala, new Vector3(2.72f, Altura(aparador), 0.4f), 0.32f, -90, Colisao.Nenhuma, soAPeca: "Coffeemachine");
+        ModeloReal(PH("potted_plant_02"), sala, new Vector3(2.5f, 0, -2.5f), 0.8f, 0);
 
         return Ponto("SpawnEscritorio", sala, new Vector3(0, 1f, -1.2f), 0);
     }
@@ -158,40 +157,43 @@ public static partial class MontarCenario
         LuzTeto(sala, "Luz_Teto_3", new Vector3(0f, H - 0.15f, -2.2f), 1.2f, 6.5f, false);
         Sonda(sala, new Vector3(10f, H, 8f));
 
-        Modelo("rugRectangle", sala, new Vector3(0, 0.012f, 0.5f), 90, Colisao.Nenhuma);
-
+        // Móveis realistas (Poly Haven CC0 + Sketchfab CC-BY) no lugar do kit simples (Etapa 2.3)
         // Estação 1: o Computador do chamado
-        var mesa1 = Modelo("desk", sala, new Vector3(-2.8f, 0, 3.35f), 180);
+        var mesa1 = ModeloReal(PH("metal_office_desk"), sala, new Vector3(-2.8f, 0, 3.5f), LadoMesaMetal, RotMesa);
         float h = Altura(mesa1);
-        Modelo("chairDesk", sala, new Vector3(-2.8f, 0, 2.45f), 180);
-        // O monitor da Kenney tem a tela em -z: rotação 0 deixa a tela virada para a cadeira
-        PosicionarEquipamento("Computador", sala, new Vector3(-2.8f, h, 3.45f), 0,
+        ModeloReal(SF("Cadeira_Escritorio"), sala, new Vector3(-2.8f, 0, 2.6f), 1.15f, RotCadeira + 8f);
+        // O visual do computador tem a tela em -z: rotação 0 deixa a tela virada para a cadeira
+        PosicionarEquipamento("Computador", sala, new Vector3(-2.8f, h, 3.55f), 0,
             VisualComputadorReal);
+        ModeloReal(PH("office_notepads"), sala, new Vector3(-2.05f, h, 3.3f), 0.3f, -15, Colisao.Nenhuma);
+        Lixeira(sala, new Vector3(-1.6f, 0, 3.7f));
 
-        // Estação 2: só decoração
-        var mesa2 = Modelo("desk", sala, new Vector3(1.2f, 0, 3.35f), 180);
-        Modelo("chairDesk", sala, new Vector3(1.2f, 0, 2.45f), 200);
-        Modelo("computerScreen", sala, new Vector3(1.2f, Altura(mesa2), 3.45f), 0, Colisao.Nenhuma);
-        Modelo("computerKeyboard", sala, new Vector3(1.2f, Altura(mesa2), 3.05f), 180, Colisao.Nenhuma);
+        // Estação 2: colega do cliente (só decoração; monitor desligado)
+        var mesa2 = ModeloReal(PH("metal_office_desk"), sala, new Vector3(1.2f, 0, 3.5f), LadoMesaMetal, RotMesa);
+        float h2 = Altura(mesa2);
+        ModeloReal(SF("Cadeira_Escritorio"), sala, new Vector3(1.35f, 0, 2.5f), 1.15f, RotCadeira + 25f);
+        var pc2 = ModeloReal(SF("Computador_Mesa"), sala, new Vector3(1.1f, h2, 3.55f), 0.85f, 180, Colisao.Nenhuma);
+        // só a película preta brilhante (cobre a textura original com marca); sem tela viva
+        if (pc2 != null) Object.DestroyImmediate(TelaNoMonitor(pc2, out _).gameObject);
+        ModeloReal(PH("desk_lamp_arm_01"), sala, new Vector3(1.85f, h2, 3.7f), 0.5f, 200, Colisao.Nenhuma);
+        ModeloReal(PH("potted_plant_04"), sala, new Vector3(0.5f, h2, 3.7f), 0.25f, 0, Colisao.Nenhuma);
+        Lixeira(sala, new Vector3(2.4f, 0, 3.7f));
 
-        // Impressora em cima de um armário, na parede leste
-        var armario = Modelo("kitchenCabinet", sala, new Vector3(4.5f, 0, 0.8f), -90);
+        // Impressora em cima de um armário baixo, na parede leste
+        var armario = ModeloReal(PH("modern_wooden_cabinet"), sala, new Vector3(4.62f, 0, 0.8f), 1.3f, -90);
         // O visual da impressora tem a frente em -z: 90° deixa a frente virada para a sala
-        PosicionarEquipamento("Impressora", sala, new Vector3(4.45f, Altura(armario), 0.8f), 90, VisualImpressoraReal);
+        PosicionarEquipamento("Impressora", sala, new Vector3(4.6f, Altura(armario), 0.8f), 90, VisualImpressoraReal);
 
-        // Roteador em cima de um aparador, na parede oeste
-        var aparador = Modelo("sideTable", sala, new Vector3(-4.55f, 0, -1.8f), 90);
-        PosicionarEquipamento("Roteador", sala, new Vector3(-4.5f, Altura(aparador), -1.8f), -90, VisualRoteadorReal);
+        // Roteador em cima de uma mesinha lateral, na parede oeste
+        var aparador = ModeloReal(PH("side_table_01"), sala, new Vector3(-4.7f, 0, -1.8f), 0.55f, 90);
+        PosicionarEquipamento("Roteador", sala, new Vector3(-4.68f, Altura(aparador), -1.8f), -90, VisualRoteadorReal);
 
-        // Decoração
-        Modelo("bookcaseClosedWide", sala, new Vector3(-4.6f, 0, 1.6f), 90);
-        Modelo("loungeSofa", sala, new Vector3(2.6f, 0, -3.45f), 0);
-        Modelo("tableCoffee", sala, new Vector3(2.6f, 0, -2.4f), 0);
-        Modelo("pottedPlant", sala, new Vector3(4.45f, 0, -3.45f), 0);
-        Modelo("pottedPlant", sala, new Vector3(-4.45f, 0, 3.45f), 0);
-        Modelo("lampSquareFloor", sala, new Vector3(4.5f, 0, 3.5f), 0);
-        Modelo("trashcan", sala, new Vector3(-1.5f, 0, 3.5f), 0);
-        Modelo("coatRackStanding", sala, new Vector3(-4.45f, 0, -3.45f), 0);
+        // Arquivo/estante de gavetas, sofá de espera, plantas
+        ModeloReal(PH("drawer_cabinet"), sala, new Vector3(-4.73f, 0, 1.6f), 1.88f, 90);
+        ModeloReal(PH("sofa_02"), sala, new Vector3(2.6f, 0, -3.5f), 1.81f, RotSofa);
+        ModeloReal(PH("modern_coffee_table_01"), sala, new Vector3(2.6f, 0, -2.5f), 1.0f, 90);
+        ModeloReal(PH("potted_plant_02"), sala, new Vector3(4.5f, 0, -3.5f), 0.8f, 0);
+        ModeloReal(PH("potted_plant_01"), sala, new Vector3(-4.45f, 0, 3.5f), 0.9f, 0);
 
         // Onde o jogador chega ao aceitar um chamado (objeto já usado pelo MissionManager)
         var chegada = GameObject.Find("ClienteLocation");
@@ -283,7 +285,10 @@ public static partial class MontarCenario
         void Bloco(float x0, float x1, float y0, float y1)
         {
             if (x1 - x0 < 0.001f || y1 - y0 < 0.001f) return;
-            Caixa(p, "Bloco", new Vector3((x0 + x1) / 2f, (y0 + y1) / 2f, T / 2f), new Vector3(x1 - x0, y1 - y0, T), mat, 2.5f);
+            // Duas metades: a de dentro vai para o lightmap; a de fora segue a luz do dia em tempo real
+            // (uma caixa só levava o lightmap para a face de fora, que ficava escura e parada no tempo)
+            Caixa(p, "Bloco", new Vector3((x0 + x1) / 2f, (y0 + y1) / 2f, T / 4f), new Vector3(x1 - x0, y1 - y0, T / 2f), mat, 2.5f);
+            Caixa(p, "Bloco_Fora", new Vector3((x0 + x1) / 2f, (y0 + y1) / 2f, 3f * T / 4f), new Vector3(x1 - x0, y1 - y0, T / 2f), mat, 2.5f);
         }
 
         float x = -comprimento / 2f;

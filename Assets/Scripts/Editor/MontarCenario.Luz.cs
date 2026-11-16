@@ -49,7 +49,7 @@ public static partial class MontarCenario
         {
             if (r is ParticleSystemRenderer || r is LineRenderer) continue;
             var c = comodos.FirstOrDefault(k => Dentro(r.bounds, k.interior, T + 0.05f));
-            if (c.nome == null)
+            if (c.nome == null || r.name == "Bloco_Fora")
             {
                 // Rua, prédios, gramado, caminho da calçada: sem sonda, segue a luz ambiente do dia
                 r.lightProbeUsage = LightProbeUsage.Off;
@@ -113,6 +113,14 @@ public static partial class MontarCenario
                 rp.hdr = true;
             }
         }
+
+        // Céu do cálculo: o mesmo céu de dia do DiaManager, mais fraco (é a luz que entra pelas janelas;
+        // em jogo o DiaManager troca o ambiente a cada minuto e só afeta o que não tem lightmap)
+        RenderSettings.ambientMode = AmbientMode.Trilight;
+        RenderSettings.ambientSkyColor = new Color(0.60f, 0.68f, 0.82f) * 0.7f;
+        RenderSettings.ambientEquatorColor = new Color(0.50f, 0.50f, 0.48f) * 0.7f;
+        RenderSettings.ambientGroundColor = new Color(0.30f, 0.28f, 0.24f) * 0.7f;
+        RenderSettings.ambientIntensity = 1f;
 
         var ajustes = AssetDatabase.LoadAssetAtPath<LightingSettings>(CaminhoAjustesLuz);
         if (ajustes == null)

@@ -32,7 +32,8 @@ Alteração comum a todos os modelos do Sketchfab: convertidos de GLB para glTF 
   Steel Frame Shelves 03, Metal Toolbox, Desk Lamp Arm 01, Office Notepads, Cardboard Box 01,
   Classic Nightstand 01, Alarm Clock 01, Wall Clock, Throw Pillows 01, Potted Plant 02 e 04,
   Modern Ceiling Lamp 01, Hanging Picture Frame 01, Standing Picture Frame 01, Lightbulb LED, Sofa 02,
-  Modern Coffee Table 01, Round Wooden Table 01, Dining Chair 02, Potted Plant 01, Modern Wooden Cabinet
+  Modern Coffee Table 01, Round Wooden Table 01, Dining Chair 02, Potted Plant 01, Modern Wooden Cabinet,
+  Drawer Cabinet, Side Table 01
 
 - Móveis e objetos: **Kenney** — Furniture Kit (https://kenney.nl)
 - Texturas PBR: **ambientCG** (https://ambientcg.com)

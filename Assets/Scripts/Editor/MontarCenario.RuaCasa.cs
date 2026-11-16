@@ -125,7 +125,7 @@ public static partial class MontarCenario
         float zParede = CentroCasa.z + 3f + T;
         Caixa(casa, "Caminho", new Vector3(1.5f, 0.03f, (CalcadaSulZ1 + zParede) / 2f - CentroCasa.z),
             new Vector3(1.2f, 0.08f, CalcadaSulZ1 - zParede), mCalcada, 1.5f);
-        Modelo("rugDoormat", casa, new Vector3(1.5f, 0.012f, 2.55f), 0, Colisao.Nenhuma);
+        Caixa(casa, "Capacho", new Vector3(1.5f, 0.006f, 2.62f), new Vector3(0.75f, 0.012f, 0.45f), Mat("Capacho", new Color(0.16f, 0.13f, 0.1f), 0.05f), 1f, false);
 
         MontarQuarto(casa);
         MontarHomeOffice(casa);
@@ -134,7 +134,6 @@ public static partial class MontarCenario
         MontarSala(casa);
 
         MontarCozinha(casa);
-        Modelo("coatRackStanding", casa, new Vector3(2.5f, 0f, 2.7f), 0);
 
         // Encomendas (Fase 2): chegam como caixas na frente de casa, ao lado da porta (EncomendaFisica)
         Ponto("PontoEntrega", casa, new Vector3(2.55f, 0f, 3.55f), 180);
@@ -177,7 +176,7 @@ public static partial class MontarCenario
     static void MontarHomeOffice(Transform casa)
     {
         // Mesa no canto noroeste, de frente para a parede norte, com a janela à direita
-        var mesa = ModeloReal(PH("metal_office_desk"), casa, new Vector3(-3.0f, 0f, 2.55f), 1.5f, RotMesa);
+        var mesa = ModeloReal(PH("metal_office_desk"), casa, new Vector3(-3.0f, 0f, 2.53f), LadoMesaMetal, RotMesa);
         float tampo = Altura(mesa);
         ModeloReal(SF("Cadeira_Escritorio"), casa, new Vector3(-3.0f, 0f, 1.75f), 1.15f, RotCadeira);
         var pc = ModeloReal(SF("Computador_Mesa"), casa, new Vector3(-3.1f, tampo, 2.6f), 0.85f, 180, Colisao.Nenhuma);

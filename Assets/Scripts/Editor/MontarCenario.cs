@@ -412,8 +412,8 @@ public static partial class MontarCenario
             luz.intensity = 1.25f;
             luz.shadows = LightShadows.Soft;
             luz.shadowStrength = 0.9f;
-            luz.shadowBias = 0.03f;
-            luz.shadowNormalBias = 0.3f;
+            luz.shadowBias = 0.02f;
+            luz.shadowNormalBias = 0.08f;   // sombra encostando nos objetos (0.3 fazia tudo parecer flutuar)
         }
 
         RenderSettings.ambientMode = AmbientMode.Skybox;
@@ -451,7 +451,7 @@ public static partial class MontarCenario
         camada.Init(recursos);
         camada.volumeTrigger = cam.transform;
         camada.volumeLayer = 1 << 0;   // Default
-        camada.antialiasingMode = PP.PostProcessLayer.Antialiasing.FastApproximateAntialiasing;
+        camada.antialiasingMode = PP.PostProcessLayer.Antialiasing.SubpixelMorphologicalAntialiasing;   // SMAA: menos borrado que o FXAA
         EditorUtility.SetDirty(camada);
 
         if (!AssetDatabase.IsValidFolder("Assets/Settings")) AssetDatabase.CreateFolder("Assets", "Settings");
@@ -474,9 +474,9 @@ public static partial class MontarCenario
         cor.gradingMode.Override(PP.GradingMode.HighDefinitionRange);
         cor.tonemapper.Override(PP.Tonemapper.ACES);
         cor.postExposure.Override(0.45f);
-        cor.temperature.Override(4f);
-        cor.saturation.Override(6f);
-        cor.contrast.Override(6f);
+        cor.temperature.Override(0f);    // neutro (antes puxava para o amarelo)
+        cor.saturation.Override(0f);
+        cor.contrast.Override(3f);
 
         var vinheta = perfil.AddSettings<PP.Vignette>();
         vinheta.enabled.Override(true);

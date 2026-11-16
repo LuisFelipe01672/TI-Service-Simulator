@@ -28,9 +28,9 @@ public class CaboRede
     {
         switch (defeito)
         {
-            case DefeitoCabo.Conector: return "Luzes: 1 2 · 4 5 · 7 8  → os fios 3 e 6 não passam sinal: mau contato no conector.";
-            case DefeitoCabo.Rompido:  return "Luzes: nenhuma acende → o cabo está rompido no meio.";
-            default:                   return "Luzes: 1 2 3 4 5 6 7 8 em sequência → cabo perfeito.";
+            case DefeitoCabo.Conector: return "Luzes: 1 2 · 4 5 · 7 8  » os fios 3 e 6 não passam sinal: mau contato no conector.";
+            case DefeitoCabo.Rompido:  return "Luzes: nenhuma acende » o cabo está rompido no meio.";
+            default:                   return "Luzes: 1 2 3 4 5 6 7 8 em sequência » cabo perfeito.";
         }
     }
 }

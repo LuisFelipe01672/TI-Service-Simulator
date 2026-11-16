@@ -6,10 +6,13 @@ using UnityEngine;
 
 // Salva e carrega o progresso do jogador em JSON (Application.persistentDataPath/save.json).
 // Salva sozinho quando: um chamado é concluído, alguém é contratado, uma fase é desbloqueada e ao sair do jogo.
+// À prova de queda: grava num .tmp e só então troca pelo save (o anterior vira .bak). Se o save não abrir, ele é
+// guardado à parte (.corrompido) e o jogo tenta o .bak — nunca sobrescreve um save que falhou ao carregar.
+// Versão: todo campo novo precisa de valor inicial declarado; mudança de formato ganha um passo em Migrar().
 [Serializable]
 public class SaveData
 {
-    public int versao = 2;
+    public int versao = SaveManager.VersaoAtual;
     public int dia = 1;
     public Mochila.Dados mochila;
     public EmpresaManager.Dados empresa;
@@ -46,7 +49,16 @@ public class SaveManager : MonoBehaviour
 
     // O editor usa outro arquivo: testar na Unity não mexe no save de quem joga pelo executável
     public static string CaminhoSave => Path.Combine(Application.persistentDataPath, Application.isEditor ? "save_editor.json" : "save.json");
-    public static bool ExisteSave => File.Exists(CaminhoSave);
+    static string CaminhoTmp => CaminhoSave + ".tmp";
+    static string CaminhoBak => CaminhoSave + ".bak";
+    public static bool ExisteSave => File.Exists(CaminhoSave) || File.Exists(CaminhoBak);
+
+    // 3 = save à prova de queda + migração em cadeia (formato igual ao 2)
+    public const int VersaoAtual = 3;
+
+    // Save de uma versão mais nova do jogo: não carrega e não deixa sobrescrever
+    static bool bloqueadoPorVersao;
+    static string avisoPendente;
 
     [ShowNonSerializedField] private int chamadosConcluidos;
 
@@ -88,6 +100,7 @@ public class SaveManager : MonoBehaviour
     public void Salvar()
     {
         if (BancoManager.Instance != null && BancoManager.Instance.faliu) return;   // empresa falida não salva
+        if (bloqueadoPorVersao) { Debug.LogWarning("[Save] O save é de uma versão mais nova do jogo: não vou sobrescrever."); return; }
         var data = new SaveData
         {
             saldo = GameEconomy.Instance != null ? GameEconomy.Instance.saldo : 0f,
@@ -120,13 +133,63 @@ public class SaveManager : MonoBehaviour
 
         try
         {
-            File.WriteAllText(CaminhoSave, JsonUtility.ToJson(data, true));
+            GravarSeguro(JsonUtility.ToJson(data, true));
             Debug.Log($"[Save] Jogo salvo em {CaminhoSave}");
         }
         catch (Exception e)
         {
             Debug.LogError($"[Save] Falha ao salvar: {e.Message}");
         }
+    }
+
+    // Grava no .tmp (com flush no disco) e troca de uma vez: queda no meio deixa o save anterior inteiro
+    static void GravarSeguro(string json)
+    {
+        using (var fs = new FileStream(CaminhoTmp, FileMode.Create, FileAccess.Write, FileShare.None))
+        using (var w = new StreamWriter(fs, new System.Text.UTF8Encoding(false)))
+        {
+            w.Write(json);
+            w.Flush();
+            fs.Flush(true);
+        }
+        if (File.Exists(CaminhoSave)) File.Replace(CaminhoTmp, CaminhoSave, CaminhoBak, true);
+        else File.Move(CaminhoTmp, CaminhoSave);
+    }
+
+    // Lê e valida um arquivo de save; null se não abriu
+    static SaveData Ler(string caminho, out string erro)
+    {
+        erro = null;
+        try
+        {
+            if (!File.Exists(caminho)) { erro = "arquivo não existe"; return null; }
+            string json = File.ReadAllText(caminho);
+            if (string.IsNullOrWhiteSpace(json)) { erro = "arquivo vazio"; return null; }
+            var d = JsonUtility.FromJson<SaveData>(json);
+            if (d == null) erro = "conteúdo inválido";
+            return d;
+        }
+        catch (Exception e) { erro = e.Message; return null; }
+    }
+
+    // Passos de migração, um por versão (2→3, 3→4...). Saves antigos sem o campo vêm como versão 0.
+    static void Migrar(SaveData data)
+    {
+        if (data.versao < 3)
+        {
+            // 2→3: só o jeito de gravar mudou. Saves de antes das parcerias viram revenda do que já vendiam.
+            if (data.parcerias == null || data.parcerias.estados == null || data.parcerias.estados.Count == 0) MigrarParcerias(data);
+        }
+        data.versao = VersaoAtual;
+    }
+
+    // O aviso ao jogador espera a interface existir
+    System.Collections.IEnumerator MostrarAviso()
+    {
+        for (int i = 0; i < 300 && GameUI.Instance == null; i++) yield return null;
+        yield return new WaitForSeconds(1.5f);
+        if (avisoPendente != null && GameUI.Instance != null) GameUI.Instance.Toast(avisoPendente, UIFactory.Alerta, 7f);
+        avisoPendente = null;
     }
 
     [Tooltip("Dinheiro com que um jogo novo começa (para comprar as primeiras ferramentas)")]
@@ -172,18 +235,39 @@ public class SaveManager : MonoBehaviour
     public bool Carregar()
     {
         if (!ExisteSave) return false;
+        bloqueadoPorVersao = false;
 
-        SaveData data;
-        try
+        SaveData data = Ler(CaminhoSave, out string erro);
+        if (data == null)
         {
-            data = JsonUtility.FromJson<SaveData>(File.ReadAllText(CaminhoSave));
+            // Guarda o arquivo estragado à parte (nunca é sobrescrito) e tenta a cópia anterior
+            if (File.Exists(CaminhoSave))
+            {
+                string guardado = CaminhoSave + ".corrompido-" + DateTime.Now.ToString("yyyyMMdd-HHmmss");
+                try { File.Move(CaminhoSave, guardado); } catch (Exception e) { Debug.LogError("[Save] Não consegui guardar o save estragado: " + e.Message); }
+                Debug.LogError($"[Save] Save não abriu ({erro}). Guardado em {guardado}.");
+            }
+            data = Ler(CaminhoBak, out string erroBak);
+            if (data == null)
+            {
+                Debug.LogError($"[Save] A cópia anterior também não abriu ({erroBak}). Começando do zero.");
+                avisoPendente = "Não consegui abrir o seu jogo salvo. O arquivo foi guardado à parte e um jogo novo começou.";
+                StartCoroutine(MostrarAviso());
+                return false;
+            }
+            avisoPendente = "O último save estava estragado: o jogo voltou para a cópia anterior.";
+            StartCoroutine(MostrarAviso());
         }
-        catch (Exception e)
+
+        if (data.versao > VersaoAtual)
         {
-            Debug.LogError($"[Save] Save corrompido, começando do zero: {e.Message}");
+            bloqueadoPorVersao = true;
+            Debug.LogError($"[Save] Save da versão {data.versao}, este jogo vai até a {VersaoAtual}. Não carrego nem sobrescrevo.");
+            avisoPendente = "Este save é de uma versão mais nova do jogo. Atualize o jogo para continuar.";
+            StartCoroutine(MostrarAviso());
             return false;
         }
-        if (data == null) return false;
+        Migrar(data);
 
         if (GameEconomy.Instance != null) GameEconomy.Instance.DefinirSaldo(data.saldo);
         if (data.energia >= 0f) { if (EnergiaTecnico.Instance != null) EnergiaTecnico.Instance.energia = data.energia; else EnergiaTecnico.energiaSalva = data.energia; }
@@ -218,7 +302,6 @@ public class SaveManager : MonoBehaviour
         LivroCaixa.Carregar(data.caixa);
         EventosAleatorios.Carregar(data.eventos);
         EquipamentosUsados.Carregar(data.usados);
-        if (data.parcerias == null || data.parcerias.estados == null || data.parcerias.estados.Count == 0) MigrarParcerias(data);
         if (DiaManager.Instance != null) DiaManager.Instance.dia = DiaManager.DiaSalvo;
 
         Debug.Log($"[Save] Jogo carregado (salvo em {data.salvoEm}): R${data.saldo:F2}, reputação {data.reputacao:F0}, fase {data.fase}, {data.equipe?.Count ?? 0} funcionário(s)");
@@ -241,9 +324,22 @@ public class SaveManager : MonoBehaviour
     [Button("Apagar save")]
     void BotaoApagar() => ApagarSave();
 
+    // "Novo jogo" ou falência: o jogo anterior não some de vez, fica guardado como _anterior (o último só)
     public static void ApagarSave()
     {
-        if (ExisteSave) File.Delete(CaminhoSave);
-        Debug.Log("[Save] Save apagado.");
+        try
+        {
+            if (File.Exists(CaminhoSave))
+            {
+                string anterior = CaminhoSave.Replace(".json", "_anterior.json");
+                if (File.Exists(anterior)) File.Delete(anterior);
+                File.Move(CaminhoSave, anterior);
+            }
+            if (File.Exists(CaminhoBak)) File.Delete(CaminhoBak);
+            if (File.Exists(CaminhoTmp)) File.Delete(CaminhoTmp);
+        }
+        catch (Exception e) { Debug.LogError("[Save] Falha ao apagar: " + e.Message); }
+        bloqueadoPorVersao = false;
+        Debug.Log("[Save] Save apagado (o anterior fica guardado como _anterior).");
     }
 }

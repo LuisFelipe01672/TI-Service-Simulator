@@ -7,6 +7,34 @@ realismo (animação em toda ação, pista visual para todo problema), marcas fi
 
 Legenda: ✅ feito · 🔜 próxima · ⬜ a fazer · ❓ decisão do dono
 
+## Ordem de execução (aprovada em 15/11/2026)
+Depois de uma revisão com agents (design, realismo visual e código), as fases abaixo continuam valendo como
+catálogo, mas a **ordem de trabalho** passa a ser esta. Cada etapa puxa os itens ⬜ das fases citadas.
+
+0. ✅ **Base segura** — save à prova de queda (arquivo temporário, cópia .bak, save estragado guardado à parte),
+   versão do save com migração em cadeia; testes automáticos (EditMode) do catálogo de problemas; consertos rápidos
+   (cor neutra e SMAA, sombra encostando nos objetos, material da cozinha, marcas reais, glifos fora da fonte).
+1. 🔜 **Fechar o atendimento** — OS preenchida pelas ações, assinatura do cliente, estrelas e comentário, retrabalho
+   quando a causa fica, prazo virando SLA em horas do jogo (fim do cronômetro em segundos). Logo depois: tutorial do
+   primeiro dia e abas do tablet liberadas aos poucos.
+2. ⬜ **Realismo visual da base** — luz pré-calculada nos interiores (light probes, reflection probes baked),
+   texturas dos GLB extraídas e comprimidas (meta: build perto de 200 MB), móveis do cliente sem o kit simples,
+   telas que refletem, close de câmera nas peças, pendências da casa (banheiro, abajur, rotina da manhã).
+3. ⬜ **Três clientes com sala própria** (contabilidade, clínica, loja), o cliente leva o técnico até o equipamento.
+4. ⬜ **Ferramentas de diagnóstico como progressão** (placa POST, testador de fonte, multímetro, pendrive) e saúde
+   das peças; check-up vendável com laudo.
+5. ⬜ **Locação física** — impressora de patrimônio na caixa, instalação e IP no painel, visita mensal no local
+   (contador no visor, toner reserva, troca preventiva).
+6. ⬜ **Bancada e usados como objetos** — testar, recuperar, apagar dados, etiquetar patrimônio, vender ou locar.
+7. ⬜ **Notebook e problemas de software** (senha, e-mail, vírus, lentidão, impressora padrão). Antes: reorganizar
+   o código para **uma definição por equipamento** (estado, ações, quebrar/resolvido e peças num lugar só).
+8. ⬜ **Rede física** — rack, patch panel, cabeamento com antes/depois (Fase 5).
+
+Regras desta ordem: **sistemas novos de gestão ficam congelados até a etapa 5** (o que existe precisa ganhar corpo
+físico primeiro). A cidade (Fase 6) pode começar por uma rua pequena com 3–4 endereços — decisão do dono quando
+chegar lá (❓). Ideia do dono: partir de uma **cidade já pronta** e adaptar — avaliar traçado real de um bairro brasileiro
+(OpenStreetMap, com crédito), pacotes prontos (Asset Store fica fora do Git) e modelos CC0/CC-BY, sempre leve para 4 GB. Realismo nunca vira tédio: depois de dominar uma tarefa, oferecer "fazer rápido".
+
 ## Visão
 Simulador de técnico de TI brasileiro, do MEI em casa até uma empresa com sede, equipe e contratos. O prazer vem de
 quatro coisas (inspiração em simuladores de trabalho do gênero):

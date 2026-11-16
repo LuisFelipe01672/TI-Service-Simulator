@@ -186,7 +186,7 @@ public partial class GameUI
         var le = imgGo.AddComponent<LayoutElement>();
         le.preferredHeight = 300; le.minHeight = 300;
 
-        UIFactory.Texto(crimpagem, "PADRÃO T568B (pino 1 → 8, trava do conector para baixo)", 16, UIFactory.CorSuave, FontStyles.Bold);
+        UIFactory.Texto(crimpagem, "PADRÃO T568B (pino 1 » 8, trava do conector para baixo)", 16, UIFactory.CorSuave, FontStyles.Bold);
         crimpRef = UIFactory.Vazio(crimpagem, "Referencia");
         UIFactory.Horizontal(crimpRef, 6);
         for (int i = 0; i < 8; i++) Fio(crimpRef, i, $"{i + 1}. {Crimpagem.T568B[i]}", null, 136, 40);

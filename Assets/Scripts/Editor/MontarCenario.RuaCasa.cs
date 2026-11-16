@@ -274,6 +274,7 @@ public static partial class MontarCenario
     static void MontarCozinha(Transform casa)
     {
         var bancada = ModeloReal(SF("Cozinha_Compacta"), casa, new Vector3(3.68f, 0f, 0.95f), 1.61f, RotCozinha);
+        if (bancada != null) TornarOpaco(bancada);   // o modelo veio com o material inteiro em modo transparente
         float topo = bancada != null ? Altura(bancada) * 0.9f : 0.9f;   // tampo (sem o espelho de trás)
 
         var geladeira = ModeloReal(SF("Eletrodomesticos"), casa, new Vector3(3.55f, 0f, 2.45f), 2.02f, RotCozinha,
@@ -353,7 +354,39 @@ public static partial class MontarCenario
 
     // Monitor do modelo Computador_Mesa: acha a malha da tela e põe por cima a tela viva do jogo (TelaComputador).
     // A tela fica virada para a frente do suporte do modelo (pc.transform.forward). 'b' = limites do monitor (mundo).
-    static Transform TelaNoMonitor(GameObject pc, out Bounds b)
+    // Modelos glTF que vieram com material em modo transparente sem precisar (a peça fica "fantasma"):
+    // troca por uma cópia opaca salva em Assets/Materials/Cenario (o material original do GLB não pode ser editado)
+    internal static void TornarOpaco(GameObject modelo)
+    {
+        foreach (var r in modelo.GetComponentsInChildren<Renderer>(true))
+        {
+            var mats = r.sharedMaterials;
+            bool mudou = false;
+            for (int i = 0; i < mats.Length; i++)
+            {
+                var m = mats[i];
+                if (m == null || m.renderQueue < 2450) continue;
+                var copia = CarregarOuCriar(m.name.Replace(" ", "_") + "_Opaco");
+                copia.shader = m.shader;
+                copia.CopyPropertiesFromMaterial(m);
+                foreach (var k in copia.shaderKeywords)
+                    if (k.Contains("ALPHA") || k.Contains("TRANSPARENT") || k.Contains("BLEND")) copia.DisableKeyword(k);
+                if (copia.HasProperty("_SrcBlend")) copia.SetFloat("_SrcBlend", 1f);
+                if (copia.HasProperty("_DstBlend")) copia.SetFloat("_DstBlend", 0f);
+                if (copia.HasProperty("_ZWrite")) copia.SetFloat("_ZWrite", 1f);
+                if (copia.HasProperty("_Mode")) copia.SetFloat("_Mode", 0f);
+                if (copia.HasProperty("baseColorFactor")) { var c = copia.GetColor("baseColorFactor"); c.a = 1f; copia.SetColor("baseColorFactor", c); }
+                copia.SetOverrideTag("RenderType", "Opaque");
+                copia.renderQueue = 2000;
+                EditorUtility.SetDirty(copia);
+                mats[i] = copia;
+                mudou = true;
+            }
+            if (mudou) r.sharedMaterials = mats;
+        }
+    }
+
+    internal static Transform TelaNoMonitor(GameObject pc, out Bounds b)
     {
         Renderer monitor = pc.GetComponentsInChildren<Renderer>()
             .FirstOrDefault(r => r.transform.parent != null && r.transform.parent.name.Contains("Computer"));

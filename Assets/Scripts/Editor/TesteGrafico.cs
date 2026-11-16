@@ -62,7 +62,8 @@ public static class TesteGrafico
         var mesa = Modelo(raiz, Kenney + "desk.fbx", new Vector3(-1.1f, 0, 1.35f), 1.5f, 180, madeira);
         float tampo = TopoY(mesa);
         Modelo(raiz, Kenney + "chairDesk.fbx", new Vector3(-1.1f, 0, 0.6f), 1.05f, 0, tecido);
-        Modelo(raiz, Sketchfab + "Computador_Mesa.glb", new Vector3(-1.2f, tampo, 1.4f), 0.85f, 180);
+        var pcProva = Modelo(raiz, Sketchfab + "Computador_Mesa.glb", new Vector3(-1.2f, tampo, 1.4f), 0.85f, 180);
+        if (pcProva != null) MontarCenario.TelaNoMonitor(pcProva, out _);   // cobre a tela original (marca real)
         Modelo(raiz, Sketchfab + "Telefone_Escritorio.glb", new Vector3(-0.68f, tampo, 1.3f), 0.22f, 200);
         Modelo(raiz, Sketchfab + "Cartucho_Toner.glb", new Vector3(-0.47f, tampo, 1.5f), 0.36f, 160);
         Modelo(raiz, Sketchfab + "Switch_5_Portas.glb", new Vector3(-1.75f, tampo, 1.55f), 0.11f, 180);

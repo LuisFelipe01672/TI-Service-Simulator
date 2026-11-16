@@ -9,6 +9,9 @@ Roteiro de testes manuais: `ROTEIRO_TESTES_UNITY.md`. Créditos de assets: `CRED
 - **Realismo**: toda ação de trabalho tem animação; todo problema deixa pista visual.
 - **Sem marcas reais** e **sem valores exatos** da empresa do dono no repositório (é público). Notas privadas
   ficam em `TI-Service-Contexto/` (fora do Git, só para calibrar).
+- **Pronto antes do zero**: antes de criar algo (modelo, cenário, cidade, som, textura, animação, sistema), procurar
+  algo pronto para adaptar (Sketchfab, Poly Haven, ambientCG, OpenStreetMap, pacotes e skills). Filtros: licença
+  (no Git só CC0/CC-BY/MIT; Asset Store e Mixamo ficam fora do Git), peso (placa de 4 GB) e cara de Brasil/estilo coerente.
 - **Push só quando o dono pedir.** Commit local ao fim de cada etapa testada.
 - Skills do projeto em `.claude/skills/`: `testar-na-unity`, `baixar-modelo-3d`, `publicar-ti-service`.
 
@@ -41,5 +44,11 @@ Roteiro de testes manuais: `ROTEIRO_TESTES_UNITY.md`. Créditos de assets: `CRED
 - **Rodar menus sem clicar**: escreva o caminho do menu (ex.: `Assets/Refresh`,
   `TI Service/Teste gráfico/1. Montar cômodo de prova`) em `Temp/comando_unity.txt`; o editor executa e apaga
   (`Editor/ComandoExterno.cs`). Leia o resultado no `Editor.log`.
+- **Testes automáticos** (EditMode, `Editor/Testes/`): menu *TI Service/Testes/Rodar testes automáticos* (resumo
+  `[Testes] Fim: ...` no Editor.log). Problema novo no catálogo já entra nos testes sozinho.
+- **Unity-MCP** (pacote `com.ivanmurzak.unity.mcp`, janela *Window ▸ AI Game Dev*) no modo **Custom/local**; o
+  `.mcp.json` é local (fora do Git). Nunca usar o modo Cloud.
+- **Save**: grava em `.tmp` e troca (anterior vira `.bak`); save que não abre vira `.corrompido-*`. Campo novo no
+  save precisa de valor inicial; mudança de formato = subir `SaveManager.VersaoAtual` e um passo em `Migrar()`.
 - **Pipeline gráfico: Built-in** (decidido após teste contra HDRP — ver ROADMAP, Pilar gráfico).
 - Detalhes na skill `testar-na-unity`.

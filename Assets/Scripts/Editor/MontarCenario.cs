@@ -33,6 +33,7 @@ public static partial class MontarCenario
     {
         public float centro, largura, baixo, alto;
         public bool porta;
+        public bool vao;      // passagem sem folha (a porta fica do outro lado, na parede vizinha)
     }
 
     static Abertura Janela(float centro, float largura = 1.2f) =>
@@ -85,7 +86,10 @@ public static partial class MontarCenario
         portasAbrem = true;            // escritório: a porta abre e dá para a rua
         var spawn = MontarEscritorio();
         portasAbrem = false;           // cliente: a porta leva de volta (Teleporte)
-        MontarCliente(spawn);
+        CriarMateriaisSalas();
+        MontarCliente(spawn);          // escritório de contabilidade (Etapa 3: um de três clientes)
+        MontarClinica(spawn);
+        MontarLoja(spawn);
         MontarRuaECasaDentro();
         // O jogo começa em casa, ao lado da cama (Fase 1A); sem casa, no escritório
         var spawnCasa = GameObject.Find("SpawnCasa");
@@ -145,7 +149,7 @@ public static partial class MontarCenario
 
     static void MontarCliente(Transform spawnEscritorio)
     {
-        // Escritório de 10 x 8 m longe do quartinho, com carpete
+        // Escritório de contabilidade de 10 x 8 m longe do quartinho, com carpete (o nome "Cliente" fica: o jogo o procura)
         var sala = Sala("Cliente", new Vector3(40, 0, 0), 10f, 8f, mCarpete, 1.5f, mParedeCliente,
             norte: new[] { Janela(-0.4f, 1.4f), Janela(3.3f, 1.4f) },
             sul: new[] { Porta(0f) },
@@ -195,23 +199,17 @@ public static partial class MontarCenario
         ModeloReal(PH("potted_plant_02"), sala, new Vector3(4.5f, 0, -3.5f), 0.8f, 0);
         ModeloReal(PH("potted_plant_01"), sala, new Vector3(-4.45f, 0, 3.5f), 0.9f, 0);
 
-        // Onde o jogador chega ao aceitar um chamado (objeto já usado pelo MissionManager)
+        // Pessoas trabalhando, arquivo morto, pontos dos equipamentos e caminhos do contato (Etapa 3)
+        CompletarContabilidade(sala, spawnEscritorio, h);
+
+        // Local antigo de chegada (fallback do MissionManager em cenas sem SalaCliente): a porta da contabilidade
         var chegada = GameObject.Find("ClienteLocation");
         if (chegada != null)
         {
             Undo.RecordObject(chegada.transform, "Mover chegada");
-            chegada.transform.position = sala.TransformPoint(new Vector3(0, 1f, -2.6f));
+            chegada.transform.position = sala.TransformPoint(new Vector3(0, 1f, -3.2f));
             chegada.transform.rotation = Quaternion.Euler(0, 0, 0);
         }
-
-        // Porta de volta para o escritório
-        var porta = new GameObject("Porta_VoltarEscritorio");
-        porta.transform.SetParent(sala, false);
-        porta.transform.localPosition = new Vector3(0, 1f, -3.75f);
-        var tp = porta.AddComponent<Teleporte>();
-        tp.destino = spawnEscritorio;
-        tp.rotulo = "Voltar ao escritório";
-        tp.distanciaInteracao = 1.8f;
     }
 
     // ---------------- Equipamentos montados com formas simples ----------------
@@ -298,7 +296,7 @@ public static partial class MontarCenario
             Bloco(x, a0, 0, H);
             Bloco(a0, a1, 0, a.baixo);
             Bloco(a0, a1, a.alto, H);
-            if (a.porta) MontarPorta(p, a); else MontarJanela(p, a);
+            if (a.porta) { if (!a.vao) MontarPorta(p, a); } else MontarJanela(p, a);
             x = a1;
         }
         Bloco(x, comprimento / 2f, 0, H);

@@ -588,9 +588,9 @@ public static partial class AtalhosTeste
         foreach (var e in Object.FindObjectsByType<Equipamento>())
         {
             if (e.tipoEquipamento != tipo) continue;
-            var sala = GameObject.Find("Cenario/Cliente");
+            // A frente de todo equipamento é o -z dele (o MontarCenario gira cada um para a frente ficar para o usuário)
             Vector3 centro = e.GetComponent<Collider>() != null ? e.GetComponent<Collider>().bounds.center : e.transform.position;
-            Vector3 dir = sala != null ? sala.transform.position - e.transform.position : -e.transform.forward;
+            Vector3 dir = -e.transform.forward;
             dir.y = 0f;
             dir.Normalize();
             Vector3 pos = new Vector3(centro.x, 1.1f, centro.z) + dir * 0.95f;

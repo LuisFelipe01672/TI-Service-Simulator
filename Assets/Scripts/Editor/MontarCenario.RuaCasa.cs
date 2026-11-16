@@ -22,6 +22,7 @@ public static partial class MontarCenario
         MontarRua();
         portasAbrem = true;
         MontarCasa();
+        MontarBanheiro();
         portasAbrem = false;
         MontarPredios();
     }
@@ -107,7 +108,7 @@ public static partial class MontarCenario
         // 8 x 6 m, porta virada para a rua (norte), um cômodo com quarto, sala e cozinha
         var casa = Sala("Casa", CentroCasa, 8f, 6f, mPisoMadeira, 1.6f, mParedeCasa,
             norte: new[] { Janela(-1.7f), Porta(1.5f) },
-            sul: new[] { Janela(1.8f) },
+            sul: new[] { PortaBanheiro, Janela(1.8f) },   // porta do banheiro (Etapa 3), entre a cama e o sofá
             leste: new[] { Janela(0.3f) },
             oeste: new[] { Janela(0.6f) });
 

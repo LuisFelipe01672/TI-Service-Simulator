@@ -24,7 +24,8 @@ public partial class MissionManager : MonoBehaviour
     [Header("Locais")]
     public Transform[] locaisClientes;
 
-    static readonly string[] clientesFase1 = { "Contabilidade Alfa", "Escritório Beta", "Clínica Gama" };
+    // Cada nome leva a uma sala (SalaCliente.TipoDoCliente): contabilidade, clínica ou loja
+    static readonly string[] clientesFase1 = { "Contabilidade Alfa", "Escritório Beta", "Clínica Gama", "Papelaria Kappa" };
     static readonly string[] clientesFase2 = { "Indústria Delta", "Construtora Épsilon", "Farmácia Zeta" };
     static readonly string[] clientesFase3 = { "Banco Eta", "Hospital Theta", "Multinacional Iota" };
 
@@ -169,6 +170,8 @@ public partial class MissionManager : MonoBehaviour
         chamado.aceitoEm = SLA.Agora();
         chamado.aguardandoAssinatura = false;
         chamado.os = NovaOS(chamado);
+        // Os equipamentos vão para a sala deste cliente antes do resto (sujeira, cliente e OS usam a posição deles)
+        SalaCliente.Para(chamado.nomeCliente)?.ReceberEquipamentos();
         EventBus<ChamadoAceitoEvent>.Raise(new ChamadoAceitoEvent { chamado = chamado });
         Debug.Log($"[MissionManager] Chamado aceito: {chamado.nomeCliente} — {chamado.descricaoProblema} | OS {chamado.os.numero} | SLA {SLA.Texto(chamado.prioridade)} até {SLA.HoraDoPrazo(chamado, SLA.Agora())}");
         TeleportarParaCliente();
@@ -496,10 +499,12 @@ public partial class MissionManager : MonoBehaviour
         if (jogador == null)
             jogador = GameObject.FindWithTag("Player").transform;
 
-        if (locaisClientes != null && locaisClientes.Length > 0 && locaisClientes[0] != null)
-        {
-            Teleporte.MoverJogador(jogador, locaisClientes[0]); // posição e direção do olhar
-            Debug.Log($"[MissionManager] Teleportado para: {locaisClientes[0].position}");
-        }
+        // Cada cliente tem a sua sala (contabilidade, clínica ou loja); cena antiga: o local único
+        var sala = chamadoAtivo != null ? SalaCliente.Para(chamadoAtivo.nomeCliente) : null;
+        Transform destino = sala != null && sala.chegada != null ? sala.chegada
+            : locaisClientes != null && locaisClientes.Length > 0 ? locaisClientes[0] : null;
+        if (destino == null) return;
+        Teleporte.MoverJogador(jogador, destino); // posição e direção do olhar
+        Debug.Log($"[MissionManager] Teleportado para: {(sala != null ? sala.Nome : "local do cliente")} {destino.position}");
     }
 }

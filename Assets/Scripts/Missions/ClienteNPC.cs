@@ -122,15 +122,18 @@ public class ClienteNPC : Interactable
     public static ClienteNPC Criar(Chamado ch)
     {
         var mm = MissionManager.Instance;
-        if (ch == null || mm == null || mm.locaisClientes == null || mm.locaisClientes.Length == 0 || mm.locaisClientes[0] == null)
-            return null;
+        if (ch == null || mm == null) return null;
+        var sala = SalaCliente.Para(ch.nomeCliente);
+        Transform chegada = sala != null && sala.chegada != null ? sala.chegada
+            : mm.locaisClientes != null && mm.locaisClientes.Length > 0 ? mm.locaisClientes[0] : null;
+        if (chegada == null) return null;
 
         // Remove o cliente que tenha sobrado de outro chamado
         if (atual != null) Destroy(atual.gameObject);
 
-        // Fica um pouco à frente e à direita de onde o jogador chega
-        Transform chegada = mm.locaisClientes[0];
-        Vector3 pos = chegada.position + chegada.forward * 2.0f + chegada.right * 0.9f;
+        // Espera na recepção da sala (ou um pouco à frente e à direita de onde o jogador chega)
+        Vector3 pos = sala != null && sala.recepcao != null ? sala.recepcao.position
+            : chegada.position + chegada.forward * 2.0f + chegada.right * 0.9f;
         float chao = chegada.position.y - 1f;
         if (Physics.Raycast(pos + Vector3.up * 1.5f, Vector3.down, out RaycastHit hit, 5f, ~0, QueryTriggerInteraction.Ignore))
             chao = hit.point.y;
@@ -144,10 +147,83 @@ public class ClienteNPC : Interactable
 
         var npc = go.AddComponent<ClienteNPC>();
         npc.chamado = ch;
+        npc.sala = sala;
         npc.distanciaInteracao = 2.6f;
         npc.Montar();
         atual = npc;
         return npc;
+    }
+
+    // ---------- Levar o técnico até o equipamento ----------
+
+    SalaCliente sala;
+    Transform[] caminho;
+    int passo = -1;          // -1: ainda não saiu; caminho.Length: já chegou
+    const float Velocidade = 1.15f;
+
+    bool Andando => caminho != null && passo >= 0 && passo < caminho.Length;
+
+    // O contato mostra onde está o problema: assim que sabe qual é o equipamento (o confuso só depois da conversa)
+    // e o técnico chega perto, ele diz "vem comigo" e vai andando até lá; espera se o técnico ficar para trás.
+    void ConduzirAteEquipamento(float distJogador)
+    {
+        if (sala == null || chamado == null) return;
+        if (passo < 0)
+        {
+            if (!chamado.EquipamentoConhecido || distJogador > 3.2f || GameUI.Instance == null || GameUI.Instance.PainelAberto) return;
+            caminho = sala.Caminho(chamado.equipamento);
+            if (caminho == null || caminho.Length == 0) { passo = int.MaxValue; return; }
+            passo = 0;
+            string nome = chamado.EquipamentoTexto().ToLowerInvariant();
+            string artigo = chamado.equipamento == TipoEquipamento.Impressora ? "a" : "o";
+            GameUI.Instance.Toast($"<b>{chamado.contato}</b>: \"Vem comigo, eu te mostro {artigo} {nome}.\"", UIFactory.Destaque, 3.5f);
+            return;
+        }
+        if (!Andando) return;
+
+        // Técnico ficou para trás: espera olhando para ele
+        if (distJogador > 4.5f)
+        {
+            Tocar(BancoPersonagens.Parado);
+            VirarPara(jogadorT.position, 4f);
+            return;
+        }
+
+        Vector3 alvo = caminho[passo].position;
+        alvo.y = transform.position.y;
+        Vector3 d = alvo - transform.position;
+        if (d.magnitude < 0.08f)
+        {
+            passo++;
+            if (!Andando)
+            {
+                var eq = Equipamento();
+                if (eq != null) VirarPara(eq.transform.position, 100f);
+                string onde = sala.tipo == TipoSala.Loja ? "Aqui atende o caixa todo dia." :
+                              sala.tipo == TipoSala.Clinica ? "Os pacientes já estão esperando..." : "É aqui que a gente usa.";
+                GameUI.Instance?.Toast($"<b>{chamado.contato}</b>: \"É esse aqui. {onde}\"", UIFactory.Destaque, 3f);
+            }
+            return;
+        }
+        Tocar(BancoPersonagens.Andando);
+        transform.position = Vector3.MoveTowards(transform.position, alvo, Velocidade * Time.deltaTime);
+        VirarPara(alvo, 8f);
+        if (corpo != null) corpo.localPosition = new Vector3(0f, Mathf.Abs(Mathf.Sin(Time.time * 9f)) * 0.025f, 0f);
+    }
+
+    Equipamento Equipamento()
+    {
+        foreach (var e in FindObjectsByType<Equipamento>())
+            if (e.tipoEquipamento == chamado.equipamento) return e;
+        return null;
+    }
+
+    void VirarPara(Vector3 ponto, float rapidez)
+    {
+        Vector3 dir = ponto - transform.position;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0004f) return;
+        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), Mathf.Clamp01(Time.deltaTime * rapidez));
     }
 
     Animator animador;
@@ -272,26 +348,31 @@ public class ClienteNPC : Interactable
             return;
         }
 
-        // Respira de leve
-        fase += Time.deltaTime;
-        if (corpo != null) corpo.localPosition = new Vector3(0f, Mathf.Sin(fase * 2f) * 0.008f, 0f);
-
-        // Vira para o jogador quando ele está por perto
         if (jogadorT == null)
         {
             var p = GameObject.FindWithTag("Player");
             if (p != null) jogadorT = p.transform;
         }
-        if (jogadorT != null)
-        {
-            Vector3 dir = jogadorT.position - transform.position;
-            dir.y = 0f;
-            if (dir.sqrMagnitude > 0.04f && dir.sqrMagnitude < 36f)
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 3f);
+        if (jogadorT == null) return;
+        Vector3 dir = jogadorT.position - transform.position;
+        dir.y = 0f;
 
-            // Com o técnico por perto, explica o problema gesticulando; senão, fica esperando
-            Tocar(dir.sqrMagnitude < 3.5f * 3.5f ? BancoPersonagens.ConversandoEmPe : BancoPersonagens.Parado);
+        if (!assinando)
+        {
+            ConduzirAteEquipamento(dir.magnitude);
+            if (Andando) return;
         }
+
+        // Respira de leve
+        fase += Time.deltaTime;
+        if (corpo != null) corpo.localPosition = new Vector3(0f, Mathf.Sin(fase * 2f) * 0.008f, 0f);
+
+        // Vira para o jogador quando ele está por perto
+        if (dir.sqrMagnitude > 0.04f && dir.sqrMagnitude < 36f)
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 3f);
+
+        // Com o técnico por perto, explica o problema gesticulando; senão, fica esperando
+        Tocar(dir.sqrMagnitude < 3.5f * 3.5f ? BancoPersonagens.ConversandoEmPe : BancoPersonagens.Parado);
     }
 
     void OnDestroy()

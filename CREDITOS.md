@@ -25,6 +25,8 @@ Alteração comum a todos os modelos do Sketchfab: convertidos de GLB para glTF 
 | `Assets/Models/Sketchfab/Eletrodomesticos/` | [Kitchen Appliances](https://sketchfab.com/3d-models/kitchen-appliances-0b01a398fe1649aaacd6ebdf85bf5d6c) | [nkilstrup](https://sketchfab.com/nkilstrup) | Usada só a geladeira |
 | `Assets/Models/Sketchfab/Micro_Ondas/` | [Microwave Oven](https://sketchfab.com/3d-models/microwave-oven-3421e492257f40959859104f46128304) | [Mustafa97](https://sketchfab.com/Mustafa97) | — |
 | `Assets/Models/Sketchfab/Telefone_Escritorio/` | [Office Phone](https://sketchfab.com/3d-models/office-phone-4176a01b6d0b4d13ad165c0df278a6b5) | [maxdragonn](https://sketchfab.com/maxdragon) | — |
+| `Assets/Models/Sketchfab/Vaso_Sanitario/` | [Toilet](https://sketchfab.com/3d-models/toilet-132a8ee2af3a40d39d270fbed3d3666c) | [HippoStance](https://sketchfab.com/hippostance) | Texturas em 1024 px; banheiro da casa |
+| `Assets/Models/Sketchfab/Pia_Coluna/` | [Sink](https://sketchfab.com/3d-models/sink-a278d63585494921906ab3500c421ff7) | [lagesnpiet](https://sketchfab.com/lagesnpiet) | Texturas em 1024 px; banheiro da casa |
 
 ## Modelos e texturas CC0 (domínio público, crédito opcional)
 
@@ -36,7 +38,8 @@ Alteração comum a todos os modelos do Sketchfab: convertidos de GLB para glTF 
   Drawer Cabinet, Side Table 01
 
 - Móveis e objetos: **Kenney** — Furniture Kit (https://kenney.nl)
-- Texturas PBR: **ambientCG** (https://ambientcg.com)
+- Texturas PBR: **ambientCG** (https://ambientcg.com) — em `Assets/Textures/ambientCG/`: Carpet016, OfficeCeiling005,
+  PaintedPlaster017, Wood049, WoodFloor051, Tiles002 (porcelanato da clínica, loja e banheiro), Tiles107 (azulejo do banheiro)
 
 ## Personagens e animações
 

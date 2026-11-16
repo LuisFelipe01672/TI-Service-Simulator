@@ -169,7 +169,7 @@ public static partial class AtalhosTeste
         System.IO.Directory.CreateDirectory("Builds/Capturas/salas");
         var poses = new (Vector3 de, Vector3 para, string arquivo)[]
         {
-            (new Vector3(0f, 1.0f, 1.35f), new Vector3(0f, 0.75f, -0.85f), "banheiro_1_porta"),
+            (new Vector3(0f, 1.05f, 0.75f), new Vector3(0f, 0.6f, -0.85f), "banheiro_1_porta"),
             (new Vector3(1.05f, 1.05f, 0.6f), new Vector3(-1.2f, 0.8f, -0.4f), "banheiro_2_box"),
             (new Vector3(-0.2f, 1.05f, 0.65f), new Vector3(1.3f, 1.4f, -0.3f), "banheiro_3_chuveiro"),
             (new Vector3(0.1f, 1.0f, -0.4f), new Vector3(-1.3f, 1.1f, 0.4f), "banheiro_4_pia"),

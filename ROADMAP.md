@@ -29,10 +29,20 @@ catálogo, mas a **ordem de trabalho** passa a ser esta. Cada etapa puxa os iten
    do ciclo do dia; paredes em duas metades, a de fora com a luz do dia); **móveis reais** no cliente e no escritório
    (mesa de metal de 75 cm, cadeira de escritório, gaveteiro, mesinha, aparador, sofá, plantas, lixeira de plástico);
    **close de câmera** em toda ação de olhar (fundo desfocado; no visor a pista é o próprio visor); **abajur** e
-   **rotina da manhã** com café da manhã. FPS igual (~360 no quarto). Banheiro ficou para depois (sem vaso/pia CC0:
-   precisa de modelos do Sketchfab). Também pendente: notebook do escritório ainda é do kit simples.
-3. 🔜 **Três clientes com sala própria** (contabilidade, clínica, loja), o cliente leva o técnico até o equipamento.
-4. ⬜ **Ferramentas de diagnóstico como progressão** (placa POST, testador de fonte, multímetro, pendrive) e saúde
+   **rotina da manhã** com café da manhã. FPS igual (~360 no quarto). Banheiro ficou para depois (feito na Etapa 3, com
+   modelos do Sketchfab). Também pendente: notebook do escritório ainda é do kit simples.
+3. ✅ **Três clientes com sala própria** (16/11/2026) — cada empresa vai para a sala do ramo dela
+   (`Missions/SalaCliente.cs`): **escritório de contabilidade** (três estações, arquivo morto), **clínica** (recepção com
+   balcão alto, sala de espera com pacientes sentados, impressora num aparador nos fundos) e **loja** (prateleiras e
+   gôndola com mercadoria, mesa de promoção, balcão do caixa com o computador, vitrines). Impressora, roteador e
+   computador são um conjunto só que vai para os pontos da sala ao aceitar o chamado. O **contato espera na recepção e
+   leva o técnico até o equipamento** ("vem comigo"; espera se ele ficar para trás; o confuso só depois da conversa).
+   **Gente trabalhando** (digitando, sentada esperando, repondo prateleira) com os personagens do Mixamo; monitores de
+   decoração com uma planilha acesa. **Banheiro da casa** (pendência da Etapa 2): azulejo e porcelanato (ambientCG),
+   vaso com caixa acoplada e pia de coluna (Sketchfab CC-BY), box de vidro com perfil de alumínio e chuveiro elétrico
+   com eletroduto e registro (feitos em código). Luz pré-calculada nas salas novas; atalhos em
+   *TI Service/Teste (Play)/Salas* (chamado em cada sala, seguir o contato, fotos); testes `TestesSalas`.
+4. 🔜 **Ferramentas de diagnóstico como progressão** (placa POST, testador de fonte, multímetro, pendrive) e saúde
    das peças; check-up vendável com laudo.
 5. ⬜ **Locação física** — impressora de patrimônio na caixa, instalação e IP no painel, visita mensal no local
    (contador no visor, toner reserva, troca preventiva).

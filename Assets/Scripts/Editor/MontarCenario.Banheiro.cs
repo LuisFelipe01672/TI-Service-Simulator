@@ -18,7 +18,7 @@ public static partial class MontarCenario
     {
         var mAzulejo = MatPBR("Azulejo_Banheiro", TexturaAzulejo, new Color(0.96f, 0.97f, 0.97f), 0.75f);
         var mPiso = MatPBR("Piso_Banheiro", TexturaPisoCeramico, new Color(0.78f, 0.77f, 0.75f), 0.6f);
-        var sala = Sala("Banheiro", CentroBanheiro, LarguraBanheiro, ProfBanheiro, mPiso, 0.4f, mAzulejo,
+        var sala = Sala("Banheiro", CentroBanheiro, LarguraBanheiro, ProfBanheiro, mPiso, 1.2f, mAzulejo,
             norte: new[] { new Abertura { centro = 0f, largura = 0.8f, alto = 2.1f, porta = true, vao = true } },
             sul: new[] { new Abertura { centro = 0.15f, largura = 0.6f, baixo = 1.6f, alto = 2.05f } },   // basculante
             leste: null, oeste: null);
@@ -92,9 +92,9 @@ public static partial class MontarCenario
         Caixa(sala, "Shampoo", new Vector3(xP - 0.06f, 1.34f, 0.42f), new Vector3(0.05f, 0.16f, 0.04f), mFrasco, 1f, false);
         Caixa(sala, "Sabonete_Liquido", new Vector3(xP - 0.06f, 1.32f, 0.55f), new Vector3(0.05f, 0.12f, 0.04f), Mat("Frasco_Branco", new Color(0.92f, 0.9f, 0.86f), 0.6f), 1f, false);
 
-        // Tapete na saída do box e toalha de banho pendurada no box
+        // Tapete na saída do box e toalha de banho dobrada por cima do trilho do box
         Caixa(sala, "Tapete_Banheiro", new Vector3(0.05f, 0.005f, 0.42f), new Vector3(0.45f, 0.01f, 0.65f), Mat("Tapete_Banheiro", new Color(0.3f, 0.45f, 0.62f), 0.02f), 1f, false);
-        Caixa(sala, "Toalha_Banho", new Vector3(xBox - 0.02f, 1.6f, -0.45f), new Vector3(0.04f, 0.6f, 0.5f), Mat("Toalha_Branca", new Color(0.93f, 0.92f, 0.88f), 0.03f), 1f, false);
+        Caixa(sala, "Toalha_Banho", new Vector3(xBox + 0.02f, 1.66f, -0.45f), new Vector3(0.035f, 0.52f, 0.42f), Mat("Toalha_Branca", new Color(0.93f, 0.92f, 0.88f), 0.03f), 1f, false);
         Lixeira(sala, new Vector3(-0.3f, 0, -0.65f));
     }
 

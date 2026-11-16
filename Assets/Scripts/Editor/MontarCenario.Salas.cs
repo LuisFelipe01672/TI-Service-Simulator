@@ -73,7 +73,7 @@ public static partial class MontarCenario
 
     static void MontarClinica(Transform spawnEscritorio)
     {
-        var sala = Sala("Cliente_Clinica", CentroClinica, 10f, 8f, mPisoClinica, 0.6f, mParedeClinica,
+        var sala = Sala("Cliente_Clinica", CentroClinica, 10f, 8f, mPisoClinica, 2.4f, mParedeClinica,
             norte: new[] { Janela(1.3f, 1.4f) },
             sul: new[] { Porta(0f) },
             leste: new[] { Janela(-1.2f) },
@@ -148,7 +148,7 @@ public static partial class MontarCenario
     {
         // Vitrines dos dois lados da porta; os fundos (norte) sem janela: é a parede do estoque
         var vitrine = new Abertura { largura = 2.6f, baixo = 0.5f, alto = 2.3f };
-        var sala = Sala("Cliente_Loja", CentroLoja, 10f, 8f, mPisoLoja, 0.6f, mParedeLoja,
+        var sala = Sala("Cliente_Loja", CentroLoja, 10f, 8f, mPisoLoja, 2.4f, mParedeLoja,
             norte: null,
             sul: new[] { Mover(vitrine, -2.8f), Porta(0f), Mover(vitrine, 2.8f) },
             leste: new[] { Janela(2.6f) },
@@ -177,6 +177,21 @@ public static partial class MontarCenario
         CaixasNaEstante(sala, ModeloReal(PH("steel_frame_shelves_03"), sala, new Vector3(-1.6f, 0, 0.9f), 1.8f, -90), false);
         CaixasNaEstante(sala, ModeloReal(PH("steel_frame_shelves_03"), sala, new Vector3(-1.04f, 0, 0.9f), 1.8f, 90), false);
         Pessoa(sala, new Vector3(-3.95f, 0, 0.4f), -90, PessoaTrabalhando.Atividade.EmPe, 0);   // repondo a prateleira
+        // Mesa de promoção perto da vitrine, com mercadoria empilhada
+        var promo = ModeloReal(PH("round_wooden_table_01"), sala, new Vector3(-1.3f, 0, -2.1f), 0.9f, 0);
+        if (promo != null)
+        {
+            float topo = Altura(promo);
+            var rndP = new System.Random(5);
+            Material[] coresP = { Mat("Produto_Azul", new Color(0.18f, 0.35f, 0.65f), 0.35f), Mat("Produto_Vermelho", new Color(0.7f, 0.16f, 0.14f), 0.35f),
+                                  Mat("Produto_Amarelo", new Color(0.92f, 0.74f, 0.18f), 0.35f), Mat("Produto_Verde", new Color(0.2f, 0.55f, 0.3f), 0.35f) };
+            for (int i = 0; i < 7; i++)
+            {
+                float a = i * 0.9f, r = i == 0 ? 0f : 0.24f;
+                var c = Caixa(promo.transform, "Produto", new Vector3(Mathf.Cos(a) * r, topo + 0.06f, Mathf.Sin(a) * r), new Vector3(0.14f, 0.12f, 0.1f), coresP[rndP.Next(coresP.Length)], 1f, false);
+                c.transform.localRotation = Quaternion.Euler(0, (float)rndP.NextDouble() * 60f, 0);
+            }
+        }
         Pessoa(sala, new Vector3(-0.15f, 0, 1.3f), -90, PessoaTrabalhando.Atividade.EmPe, 2);   // cliente olhando a gôndola
 
         // Balcão do caixa (78 cm) com o computador virado para dentro; maquininha de cartão e cadeira

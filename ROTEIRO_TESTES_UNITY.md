@@ -68,6 +68,22 @@ Atalhos: *TI Service/Teste (Play)/Notebook e software* (um chamado de cada probl
       Gerenciador de Tarefas » Inicialização; Atualizações (desinstalar e ocultar/pausar); impressora padrão
 - [ ] Remoto: os de software resolvem de longe; senha bloqueada e defeitos físicos pedem visita
 
+## 4e. Rede física (Etapa 8)
+Atalhos: *TI Service/Teste (Play)/Rede física* (visita do rack, visita de cabeamento, passos, reset com clipe, trocar de
+sala, fotos em `Builds/Capturas/rede`). Loja: punch-down e etiquetadora são ferramentas novas.
+- [ ] Projeto de rack ou cabeamento com material entregue: o tablet (Negócios) mostra o andamento e "Ir ao cliente
+      executar"; não tem mais o botão de trabalhar horas nesses dois
+- [ ] Rack de parede no cliente, perto do roteador, sem cobrir quadro/janela; porta de vidro abre e fecha
+- [ ] Rack bagunçado: 8 cordões de 2,5 m pendurados e cruzados, porta não fecha; foto do antes (flash), anotar o mapa,
+      desconectar (cordões velhos no chão), cordões de 0,3 m um por um, organizador, velcro, etiqueta porta a porta,
+      luzes de link no switch, fechar a porta, foto do depois; a OS mostra as duas fotos
+- [ ] Desconectar sem anotar o mapa conta erro; cordão velho de 2,5 m não passa no organizador
+- [ ] Cabeamento: marca de lápis » caixa e canaleta (furadeira, canaleta cresce até 2,25 m e corre até o rack) » cabo
+      (sobra pendurada) » crimpar (minigame) » punch-down no patch panel (a ferramenta bate duas vezes) » testador
+      (luzes 1–8) » etiqueta na tomada e no patch; ponta mal crimpada: testador acusa 3 e 6, refazer
+- [ ] Projeto só entrega quando todos os pontos foram testados e etiquetados (até 4 por visita; a equipe também faz)
+- [ ] Reset do roteador: segurar E no reset com o clipe; o clipe entra no furo, perto dos 10 s as luzes piscam juntas
+
 ## 5. Fim de jogo
 - [ ] Forçar saldo negativo (Inspector do GameEconomy) e dormir vários dias: avisos em 10 e 20 dias, tela "Sua empresa faliu" no 30º
 - [ ] "Recomeçar do zero" recarrega a cena com jogo novo

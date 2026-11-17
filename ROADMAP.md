@@ -107,7 +107,23 @@ catálogo, mas a **ordem de trabalho** passa a ser esta. Cada etapa puxa os iten
    de atendimento remoto**. Marcas reais tiradas dos textos (TI OS, buscador, pacote de escritório). Testes
    `TestesEquipamentos` e `TestesNotebookSoftware`; atalhos em *TI Service/Teste (Play)/Notebook e software*.
    Modelo do notebook: "Laptop" (Aullwen, CC-BY), com a tela girando na dobradiça por código.
-8. 🔜 **Rede física** — rack, patch panel, cabeamento com antes/depois (Fase 5).
+8. ✅ **Rede física** (17/11/2026) — projetos de **organização de rack** e de **cabeamento** deixaram de ser "trabalhar X
+   horas" no tablet: o tablet mostra o andamento e manda o técnico ao cliente (a visita vira um chamado com OS e
+   assinatura; `Chamado.projetoId`). **Rack de parede 12U** feito em código (`Missions/RackCliente.cs`,
+   `EquipamentoPecas.Rack.cs`), 5º equipamento do cliente: vai para um pedaço livre da parede atrás do roteador (sem
+   remontar a cena), com porta de vidro fumê, patch panel de 24 portas, organizador com anéis, switch com LED de link por
+   porta, modem e régua. **Rack bagunçado** (serviço vendável): 8 cordões de 2,5 m pendurados e cruzados (tubos em
+   código), porta que não fecha; **foto do antes** (flash), anotar o mapa das portas (sem ele, desconectar é erro),
+   desconectar, **cordões de 0,3 m** porta a porta (o velho de 2,5 m não passa no organizador), organizador, **velcro**,
+   **etiqueta porta a porta** (etiquetadora), luzes de link, fechar a porta e **foto do depois** — as duas fotos vão na OS.
+   **Cabeamento em 3D**: até 4 pontos por visita na mesma parede do rack (marca de lápis » caixa de sobrepor e
+   **canaleta** até 2,25 m e até o rack » cabo Cat6 » **crimpagem** com o minigame » **punch-down** no patch panel »
+   **testador** com luzes 1–8 (ponta ruim: fios 3 e 6, refazer) » **etiqueta** nas duas pontas); o projeto só é entregue
+   com todos os pontos testados (a equipe também passa pontos). **Reset do roteador com clipe**: o clipe entra no furo de
+   trás enquanto o técnico segura E e as luzes piscam juntas no fim. Ferramentas novas na loja: punch-down e etiquetadora.
+   Testes `TestesRede`; atalhos em *TI Service/Teste (Play)/Rede física*. Modelos `Patch_Panel`/`Switch_Rack_24`
+   ainda não usados (o rack, o patch e o switch são primitivas com as portas no lugar certo para os cordões).
+9. ❓ **Próxima etapa** — a definir com o dono.
 
 Regras desta ordem: **sistemas novos de gestão ficam congelados até a etapa 5** (o que existe precisa ganhar corpo
 físico primeiro). A cidade (Fase 6) pode começar por uma rua pequena com 3–4 endereços — decisão do dono quando
@@ -302,12 +318,13 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 
 ## Fase 5 — Rede, infraestrutura, CFTV e energia
 - ✅ Roteador realista (Roteador.glb) com 4 LEDs por estado, plugue da fonte e furo de reset atrás (âncoras)
-- ⬜ Reset com clipe animado (segurar o clipe no furo)
-- ⬜ Switch de mesa e de rack, rack com patch panel (modelos já baixados)
-- ⬜ **Projeto de cabeamento jogável em 3D**: passar cabo por canaleta, crimpar, conectar no patch panel, testar
-      ponto a ponto, identificar com etiqueta
+- ✅ Reset com clipe animado (segurar o clipe no furo) — Etapa 8
+- ✅ Rack de parede com patch panel, organizador e switch de rack (em código; Etapa 8) · ⬜ switch de mesa e usar os
+      modelos `Patch_Panel`/`Switch_Rack_24` já baixados
+- ✅ **Projeto de cabeamento jogável em 3D**: passar cabo por canaleta, crimpar, conectar no patch panel, testar
+      ponto a ponto, identificar com etiqueta — Etapa 8
 - ⬜ **Trabalho em altura e forro**: escada, abrir placa de forro, poeira; risco de cair se for com pressa
-- ⬜ **Organizar rack bagunçado** (antes/depois) — serviço vendável
+- ✅ **Organizar rack bagunçado** (antes/depois) — serviço vendável — Etapa 8
 - ⬜ Wi-Fi: posicionar access point, sinal fraco nos cantos (mapa de calor), **rede de visitantes separada**
 - ⬜ Firewall em comodato no rack do cliente; **VPN** para quem trabalha de casa
 - ⬜ **Servidor/NAS** no escritório do cliente; **backup 3-2-1** (HD externo + NAS + nuvem) e **teste de restauração**
@@ -315,7 +332,8 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ⬜ **CFTV**: câmeras, DVR/NVR, cabo, fonte; posicionar vendo a área certa, acesso pelo celular do cliente
 - ⬜ **Nobreak**: bateria morta, apitando, dimensionar e instalar; queda de energia e **raio** queimando
       switch/fonte de quem não tem proteção
-- ⬜ Ferramentas: alicate de crimpar, testador de cabo, punch-down, escada, furadeira, passa-fio, detector de tensão
+- ⬜ Ferramentas: alicate de crimpar, testador de cabo, punch-down e etiquetadora (✅ Etapa 8), escada, furadeira,
+      passa-fio, detector de tensão
 - ⬜ **Fiscalização** em obras de cabeamento maiores (documentação, ART/responsável técnico) ❓ calibrar com o dono
 
 ## Fase 6 — Cidade e deslocamento (dirigindo de verdade)

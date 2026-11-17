@@ -114,6 +114,13 @@ public partial class GameUI
             if (falta.Count > 0) txtManSub.text += $"\n<color=#F5B83F>Falta: {string.Join(" · ", falta)}.</color>";
         }
 
+        // Etapa 8: visita de projeto de rede (rack ou pontos): o que ainda falta
+        if (ch.projetoId > 0 && !ch.aguardandoAssinatura)
+        {
+            var falta = ch.solucao == CatalogoProblemas.OrganizarRack ? estado.PendenciasRack() : estado.PendenciasPontos();
+            if (falta.Count > 0) txtManSub.text += $"\n<color=#F5B83F>Falta: {string.Join(" · ", falta)}.</color>";
+        }
+
         var mochila = Mochila.Instance;
         foreach (var acao in AcoesFisicas.Para(eq.tipoEquipamento, estado))
         {
@@ -149,7 +156,7 @@ public partial class GameUI
     {
         if (segurando) return;
         if (a.abreComputador) { AbrirComputador(); return; }
-        if (a.abreCrimpagem) { CrimparNoCliente(); return; }
+        if (a.abreCrimpagem) { CrimparNoCliente(false, a); return; }
         if (a.segurar > 0f) { rotinaSegurar = StartCoroutine(Segurar(a)); return; }
         Concluir(a);
     }
@@ -157,16 +164,19 @@ public partial class GameUI
     IEnumerator Segurar(AcaoFisica a)
     {
         segurando = true;
+        acaoSeguradaJanela = a;
         MontarManutencao();
         float t = 0f;
         while (t < a.segurar)
         {
             t += Time.unscaledDeltaTime * EnergiaTecnico.Ritmo;   // cansado demora mais
+            progressoJanela = t;
             int barras = Mathf.RoundToInt(20f * t / a.segurar);
             txtSegurando.text = $"{a.rotulo}...  [{new string('|', barras)}{new string('.', 20 - barras)}]";
             yield return null;
         }
         segurando = false;
+        acaoSeguradaJanela = null;
         Concluir(a);
     }
 
@@ -361,7 +371,7 @@ public partial class GameUI
 
     // Refazer a ponta do cabo do equipamento do cliente (uma ponta).
     // Pela peça 3D, ao terminar volta para o jogo; pela janela, volta para a janela.
-    void CrimparNoCliente(bool pelaPeca = false)
+    void CrimparNoCliente(bool pelaPeca = false, AcaoFisica acao = null)
     {
         var mm = MissionManager.Instance;
         var e = mm?.Estado;
@@ -372,6 +382,22 @@ public partial class GameUI
         {
             Registrar("<color=#F2545B>Você não tem conectores RJ45.</color> Compre no tablet (Loja).");
             MontarManutencao();
+            return;
+        }
+        if (acao?.aoCrimpar != null)
+        {
+            // Etapa 8: ponta de um ponto de rede novo (a sujeira cai embaixo da tomada)
+            mm.RegistrarAcao(acao.rotulo);
+            var jog = GameObject.FindWithTag("Player");
+            IniciarCrimpagem(acao.rotulo, jog != null ? jog.transform.position : eq.transform.position, ok =>
+            {
+                acao.aoCrimpar(ok);
+                mm.CobrarPeca(1f, "Conector RJ45");
+                string r = "Ponta crimpada e encaixada no espelho da tomada. Teste com o testador para ter certeza.";
+                Registrar(r);
+                if (pelaPeca) { FecharModal(); MostrarResultadoPeca(r); }
+                else AbrirManutencao(eq);
+            }, () => { if (pelaPeca) FecharModal(); else if (eq != null) AbrirManutencao(eq); });
             return;
         }
         mm.RegistrarAcao("Refez a ponta do cabo de rede (crimpagem)");

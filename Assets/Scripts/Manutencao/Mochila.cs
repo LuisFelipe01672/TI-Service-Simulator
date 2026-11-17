@@ -31,7 +31,10 @@ public enum Item
     // Etapa 7: peças de notebook
     BateriaNotebook,
     CarregadorNotebook,
-    DobradicaNotebook
+    DobradicaNotebook,
+    // Etapa 8: rede física (organizar rack, projeto de cabeamento)
+    Etiquetadora,
+    PunchDown
 }
 
 // Um cabo de rede já feito, guardado na mochila
@@ -94,6 +97,8 @@ public partial class Mochila : MonoBehaviour
         new InfoItem(Item.CaboRede, "Cabo de rede pronto 3 m", "Já vem crimpado. Prático, mas só tem 3 m.", 25f, 1, false),
         new InfoItem(Item.CaixaCabo, "Caixa de cabo de rede Cat6 (305 m)", "Fica na sede. Na bancada você corta do tamanho certo e crimpa as pontas.", 450f, 305, false),
         new InfoItem(Item.Clipe, "Ferramenta de reset (clipe)", "Para apertar o botão de reset escondido do roteador.", 5f, 1, true),
+        new InfoItem(Item.PunchDown, "Ferramenta de inserção (punch-down)", "Encaixa os 8 fios do cabo nos contatos da tomada e do patch panel e corta a sobra. Para cabeamento estruturado.", 75f, 1, true),
+        new InfoItem(Item.Etiquetadora, "Etiquetadora eletrônica", "Imprime etiquetas para porta de patch panel, cordão e tomada (P-01, P-02...). Rede sem etiqueta é rede que ninguém entende.", 160f, 1, true),
         new InfoItem(Item.Toner, "Cartucho de toner", "Para impressora a laser. O cliente reembolsa a peça usada.", 180f, 1, false),
         new InfoItem(Item.PendriveDrivers, "Pendrive com drivers", "Instala drivers de rede e o sistema mesmo sem internet.", 40f, 1, true),
         // Ferramentas de diagnóstico (Etapa 4): cada uma revela uma parte da saúde das peças

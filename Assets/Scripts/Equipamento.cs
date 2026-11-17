@@ -5,7 +5,8 @@ public enum TipoEquipamento
     Impressora,
     Roteador,
     Computador,
-    Notebook      // Etapa 7: notebook do cliente (no fim: o save guarda o tipo pelo número)
+    Notebook,     // Etapa 7: notebook do cliente (no fim: o save guarda o tipo pelo número)
+    Rack          // Etapa 8: rack de parede do cliente (organizar o rack, pontos de rede do projeto de cabeamento)
 }
 
 // Equipamento do cliente. Ao apertar E perto dele, abre a manutenção (ações com as mãos) na GameUI.

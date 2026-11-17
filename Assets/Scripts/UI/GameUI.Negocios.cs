@@ -121,6 +121,36 @@ public partial class GameUI
                 case 4:
                 {
                     bool atrasado = DiaManager.Instance != null && DiaManager.Instance.dia > p.prazoDia;
+                    if (ProjetosManager.Fisico(p.tipo))
+                    {
+                        // Etapa 8: o tablet mostra o andamento; o trabalho é feito com as mãos na sala do cliente
+                        var mmP = MissionManager.Instance;
+                        bool naVisita = mmP != null && mmP.chamadoAtivo != null && mmP.chamadoAtivo.projetoId == p.id;
+                        UIFactory.Texto(card, $"Em execução: {ProjetosManager.Andamento(p)} ({ProjetosManager.Progresso(p) * 100:0}%)   ·   " +
+                            (atrasado ? "<color=#F2545B>ATRASADO</color>" : $"prazo {DiaManager.DataDoDia(p.prazoDia):dd/MM}") +
+                            "   ·   a equipe ajuda nos dias úteis", 18, UIFactory.CorTexto);
+                        if (naVisita)
+                        {
+                            var est = mmP.Estado;
+                            var falta = est == null ? new List<string>() : p.tipo == TipoProjeto.Rack ? est.PendenciasRack() : est.PendenciasPontos();
+                            UIFactory.Texto(card, falta.Count == 0 ? "<color=#3CCB7F>Visita pronta: fale com o contato para conferir e assinar a OS.</color>"
+                                                                   : $"<color=#F5B83F>Nesta visita falta:</color> {string.Join(" · ", falta)}", 17, UIFactory.CorSuave);
+                        }
+                        else
+                        {
+                            UIFactory.Texto(card, p.tipo == TipoProjeto.Rack
+                                ? "Próxima visita: organizar o rack (foto do antes, cordões curtos, organizador, velcro, etiquetas, foto do depois)."
+                                : $"Próxima visita: {ProjetosManager.PontosNaVisita(p)} ponto(s) — canaleta, cabo, crimpar, punch-down no patch panel, testar e etiquetar.", 17, UIFactory.CorSuave);
+                            var bIr = UIFactory.Botao(LinhaBotoes(card), "Ir ao cliente executar", () =>
+                            {
+                                string r = pm.IrExecutar(proj);
+                                Toast(r, r.StartsWith("A caminho") ? UIFactory.Destaque : UIFactory.Alerta, 6f);
+                                if (r.StartsWith("A caminho")) FecharModal(); else AtualizarTablet();
+                            }, UIFactory.Destaque, 300, 44, 18);
+                            bIr.interactable = mmP == null || mmP.chamadoAtivo == null;
+                        }
+                        break;
+                    }
                     UIFactory.Texto(card, $"Em execução: {ProjetosManager.Progresso(p) * 100:0}% ({p.horasFeitas:0.#}/{p.horasTotais:0.#} h)   ·   " +
                         (atrasado ? "<color=#F2545B>ATRASADO</color>" : $"prazo {DiaManager.DataDoDia(p.prazoDia):dd/MM}") +
                         "   ·   a equipe ajuda nos dias úteis", 18, UIFactory.CorTexto);

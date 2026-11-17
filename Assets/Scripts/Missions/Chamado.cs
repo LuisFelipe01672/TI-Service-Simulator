@@ -58,6 +58,9 @@ public class Chamado
     [Tooltip("Instalação ou visita mensal de um contrato de locação (contratoId diz qual)")]
     public ServicoLocacao servicoLocacao;
 
+    [Tooltip("Etapa 8: visita de execução de um projeto de rede (organizar rack, cabeamento). 0 = não é projeto")]
+    public int projetoId;
+
     [Tooltip("Cliente empresa: só contrata e paga com nota fiscal")]
     public bool exigeNota;
 

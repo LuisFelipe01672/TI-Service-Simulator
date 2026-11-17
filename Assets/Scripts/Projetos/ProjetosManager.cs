@@ -32,6 +32,7 @@ public class Projeto
     public int diaMaterial, prazoDia;
     public bool avisouAtraso;
     public bool semEntrada;         // órgão público: paga tudo na entrega
+    public int unidadesFeitas;      // Etapa 8: pontos testados e etiquetados / racks organizados (cabeamento e rack)
 
     public InfoProjeto Info => ProjetosManager.Info(tipo);
 }
@@ -230,9 +231,7 @@ public class ProjetosManager : MonoBehaviour
     public string Trabalhar(Projeto p)
     {
         if (p.etapa != 4) return p.etapa == 3 ? "O material ainda não chegou." : "Nada para fazer agora.";
-        if (p.tipo == TipoProjeto.Cabeamento && Mochila.Instance != null &&
-            (Mochila.Instance.Quantidade(Item.AlicateCrimpagem) <= 0 || Mochila.Instance.Quantidade(Item.TestadorCabo) <= 0))
-            return "Para cabeamento você precisa do alicate de crimpagem e do testador de cabo na mochila (Loja).";
+        if (Fisico(p.tipo)) return "Esse projeto é feito com as mãos no cliente: use \"Ir ao cliente executar\".";
         if (!ServicosManager.GastarTempo(120f, out string motivo)) return motivo;
         p.horasFeitas += 2f;
         if (p.horasFeitas >= p.horasTotais) return Concluir(p);
@@ -253,7 +252,67 @@ public class ProjetosManager : MonoBehaviour
         return p;
     }
 
-    public static float Progresso(Projeto p) => p.horasTotais <= 0f ? 0f : Mathf.Clamp01(p.horasFeitas / p.horasTotais);
+    public static float Progresso(Projeto p) =>
+        Fisico(p.tipo) ? (p.tamanhoReal <= 0 ? 0f : Mathf.Clamp01(p.unidadesFeitas / (float)p.tamanhoReal))
+                       : p.horasTotais <= 0f ? 0f : Mathf.Clamp01(p.horasFeitas / p.horasTotais);
+
+    // ---------- Etapa 8: execução física no cliente (cabeamento e organização de rack) ----------
+
+    public const int MaxPontosPorVisita = 4;
+
+    // Feito com as mãos na sala do cliente: o tablet só mostra o andamento e agenda a visita
+    public static bool Fisico(TipoProjeto t) => t == TipoProjeto.Cabeamento || t == TipoProjeto.Rack;
+
+    public static int PontosNaVisita(Projeto p) =>
+        p.tipo == TipoProjeto.Rack ? 1 : Mathf.Clamp(p.tamanhoReal - p.unidadesFeitas, 0, MaxPontosPorVisita);
+
+    public static string Andamento(Projeto p) =>
+        p.tipo == TipoProjeto.Rack ? $"{p.unidadesFeitas} de {p.tamanhoReal} rack(s) organizado(s)"
+                                   : $"{p.unidadesFeitas} de {p.tamanhoReal} pontos testados e etiquetados";
+
+    // Vai até o cliente fazer a próxima parte (vira um chamado aceito na hora)
+    public string IrExecutar(Projeto p)
+    {
+        if (p.etapa != 4) return p.etapa == 3 ? "O material ainda não chegou." : "Nada para fazer agora.";
+        var mm = MissionManager.Instance;
+        if (mm == null) return "Sem sistema de chamados nesta cena.";
+        if (mm.chamadoAtivo != null && mm.chamadoAtivo.projetoId != p.id) return "Termine (ou abandone) o chamado em andamento antes.";
+        if (mm.chamadoAtivo != null) return "Você já está nessa visita.";
+        var ch = mm.AdicionarChamadoProjeto(p);
+        mm.AceitarChamado(ch);
+        if (mm.chamadoAtivo != ch) return "Não deu para ir agora.";
+        var m = Mochila.Instance;
+        var falta = new List<string>();
+        if (m != null)
+        {
+            var precisa = p.tipo == TipoProjeto.Rack ? new[] { Item.Etiquetadora }
+                                                     : new[] { Item.AlicateCrimpagem, Item.TestadorCabo, Item.PunchDown, Item.Etiquetadora };
+            foreach (var it in precisa) if (m.Quantidade(it) <= 0) falta.Add(Mochila.Info(it).nome);
+        }
+        return $"A caminho da <b>{p.empresa}</b>: {(p.tipo == TipoProjeto.Rack ? "organizar o rack" : $"{PontosNaVisita(p)} ponto(s) de rede nesta visita")}." +
+               (falta.Count > 0 ? $" <color=#F5B83F>Falta na mochila: {string.Join(", ", falta)} (Loja).</color>" : "");
+    }
+
+    // Monta o estado da visita (pontos novos numerados a partir do que já foi feito)
+    public void PrepararEstado(Chamado ch)
+    {
+        var p = projetos.Find(x => x.id == ch.projetoId);
+        if (p == null || ch.estado == null) return;
+        if (p.tipo == TipoProjeto.Cabeamento) ch.estado.PrepararPontos(p.unidadesFeitas + 1, Mathf.Max(1, PontosNaVisita(p)));
+    }
+
+    // O cliente assinou a OS da visita: conta o que ficou pronto e, com tudo pronto, entrega o projeto
+    public string VisitaConcluida(Chamado ch)
+    {
+        var p = projetos.Find(x => x.id == ch.projetoId);
+        if (p == null || ch.estado == null || p.etapa != 4) return null;
+        int feitos = 0;
+        if (p.tipo == TipoProjeto.Rack) { if (ch.estado.RackOrganizado) feitos = 1; }
+        else foreach (var pt in ch.estado.pontos) if (pt.Pronto) feitos++;
+        p.unidadesFeitas = Mathf.Min(p.tamanhoReal, p.unidadesFeitas + feitos);
+        if (p.unidadesFeitas >= p.tamanhoReal) return Concluir(p);
+        return $"Visita na <b>{p.empresa}</b>: {Andamento(p)}. Agende a próxima pelo tablet (aba Negócios).";
+    }
 
     string Concluir(Projeto p)
     {
@@ -367,7 +426,14 @@ public class ProjetosManager : MonoBehaviour
             foreach (var p in emExecucao)
             {
                 p.horasFeitas += horas;
-                if (p.horasFeitas >= p.horasTotais) Avisar(Concluir(p), UIFactory.Sucesso, 6f);
+                if (Fisico(p.tipo))
+                {
+                    // A equipe também passa pontos/organiza racks: cada unidade leva as horas dela
+                    float hpu = Mathf.Max(0.1f, p.Info.horasPorUnidade * FocoEmpresa.MultHorasProjeto);
+                    while (p.horasFeitas >= hpu && p.unidadesFeitas < p.tamanhoReal) { p.horasFeitas -= hpu; p.unidadesFeitas++; }
+                    if (p.unidadesFeitas >= p.tamanhoReal && MissionManager.Instance?.chamadoAtivo?.projetoId != p.id) Avisar(Concluir(p), UIFactory.Sucesso, 6f);
+                }
+                else if (p.horasFeitas >= p.horasTotais) Avisar(Concluir(p), UIFactory.Sucesso, 6f);
             }
         }
     }
@@ -390,6 +456,14 @@ public class ProjetosManager : MonoBehaviour
         if (d == null) { NovoJogo(); return; }
         projetos = d.projetos ?? new List<Projeto>();
         proximoId = Mathf.Max(1, d.proximoId); concluidos = d.concluidos;
+        // Saves de antes da Etapa 8: horas já trabalhadas em cabeamento/rack viram unidades feitas (falta ao menos 1)
+        foreach (var p in projetos)
+            if (Fisico(p.tipo) && p.etapa == 4 && p.unidadesFeitas == 0 && p.horasFeitas > 0f)
+            {
+                float hpu = Mathf.Max(0.1f, p.Info.horasPorUnidade);
+                p.unidadesFeitas = Mathf.Clamp(Mathf.FloorToInt(p.horasFeitas / hpu), 0, Mathf.Max(0, p.tamanhoReal - 1));
+                p.horasFeitas = 0f;
+            }
     }
 
     public void NovoJogo() { projetos.Clear(); proximoId = 1; concluidos = 0; }

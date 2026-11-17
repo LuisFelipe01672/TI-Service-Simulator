@@ -68,6 +68,29 @@ public partial class GameUI
                 foreach (var r in os.recomendacoes) Linha("<color=#B3262E>Recomendação:</color> " + r, 16);
             else Linha("<color=#1E7A4C>Sem peças no fim da vida.</color>", 16);
         }
+        // Etapa 8: fotos do antes e do depois (organização de rack)
+        var fAntes = ch.estado != null ? ch.estado.fotoAntes : os.fotoAntes;
+        var fDepois = ch.estado != null ? ch.estado.fotoDepois : os.fotoDepois;
+        if (fAntes != null || fDepois != null)
+        {
+            Titulo("FOTOS");
+            var fotos = UIFactory.Vazio(folha, "Fotos");
+            UIFactory.Horizontal(fotos, 14);
+            foreach (var (tex, nome) in new[] { (fAntes, "ANTES"), (fDepois, "DEPOIS") })
+            {
+                var col = UIFactory.Vazio(fotos, "Foto_" + nome);
+                UIFactory.Vertical(col, 2);
+                UIFactory.Texto(col, nome, 14, cinza, FontStyles.Bold);
+                var img = new GameObject("Imagem", typeof(RectTransform), typeof(RawImage));
+                img.transform.SetParent(col, false);
+                var raw = img.GetComponent<RawImage>();
+                raw.texture = tex;
+                raw.color = tex != null ? Color.white : UIFactory.Hex("#C9CDC4");
+                var le = img.AddComponent<LayoutElement>();
+                le.preferredWidth = 300; le.preferredHeight = 225;
+                if (tex == null) UIFactory.Texto(col, "(sem foto)", 14, cinza);
+            }
+        }
         Titulo("PEÇAS E MATERIAIS");
         if (os.pecas.Count == 0) Linha("Nenhuma.", 17);
         foreach (var p in os.pecas) Linha("• " + p, 17);

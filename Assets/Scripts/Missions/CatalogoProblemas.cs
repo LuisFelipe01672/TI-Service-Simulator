@@ -65,7 +65,7 @@ public class Problema
     public Problema SoPresencial(string motivo) { motivoPresencial = motivo; return this; }
 }
 
-public static class CatalogoProblemas
+public static partial class CatalogoProblemas
 {
     // ---------------- Perguntas ----------------
 
@@ -847,7 +847,7 @@ public static class CatalogoProblemas
     {
         foreach (var lista in new[] { Faceis, Medios, Dificeis })
             foreach (var p in lista) if (p.equipamento == equipamento && p.solucao == solucao) return p;
-        foreach (var p in new[] { InstalacaoLocacao, VisitaLocacao })
+        foreach (var p in new[] { InstalacaoLocacao, VisitaLocacao, OrganizacaoRack, CabeamentoPontos })
             if (p.equipamento == equipamento && p.solucao == solucao) return p;
         return null;
     }

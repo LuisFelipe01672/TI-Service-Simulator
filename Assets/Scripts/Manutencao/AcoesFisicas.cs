@@ -14,6 +14,8 @@ public class AcaoFisica
     public string peca;                // peça 3D do equipamento onde a ação acontece (mirar + E)
     public bool close = true;          // observação: a câmera faz um close na peça (CloseDePeca)
     public string pistaVisual;         // a pista está na peça (visor, LEDs): no close aparece só esta legenda, o texto vai para o registro
+    public string animacao;            // Etapa 8: animação enquanto segura E ("clipe" = clipe no furo de reset do roteador)
+    public Action<bool> aoCrimpar;     // Etapa 8: crimpagem de outra coisa que não o cabo do equipamento (ponto de rede)
 
     public AcaoFisica(string rotulo, Func<string> executar, float segurar = 0f, Item? requer = null)
     {
@@ -511,7 +513,7 @@ public static partial class AcoesFisicas
                 e.ResetFabrica();
                 if (!precisava) MM?.RegistrarErro("Você resetou o roteador sem precisar: a internet e o Wi-Fi de todo mundo caíram!", 3f);
                 return "As luzes piscaram todas juntas: o roteador voltou ao padrão de fábrica. Configure de novo pelo painel (192.168.0.1).";
-            }, 10f, Item.Clipe));
+            }, 10f, Item.Clipe) { animacao = "clipe" });
     }
 
     // ---------- Cabo de rede (impressora e computador) ----------

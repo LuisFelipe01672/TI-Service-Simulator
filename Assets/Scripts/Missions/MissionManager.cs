@@ -195,6 +195,7 @@ public partial class MissionManager : MonoBehaviour
         if (chamado.problema != null) CatalogoProblemas.Quebrar(chamado.problema, chamado.estado);
         if (chamado.tutorial) chamado.estado.tonerDoCliente = true;   // o cliente já comprou o toner
         if (chamado.servicoLocacao != ServicoLocacao.Nenhum) ContratosManager.Instance?.PrepararEstado(chamado);
+        if (chamado.projetoId > 0) ProjetosManager.Instance?.PrepararEstado(chamado);
         Sujeira.LimparTudo();
         chamado.aceitoEm = SLA.Agora();
         chamado.aguardandoAssinatura = false;
@@ -259,7 +260,8 @@ public partial class MissionManager : MonoBehaviour
         if (ch.os != null)
         {
             ch.os.equipamento = ch.EquipamentoTexto();
-            ch.os.diagnostico = CatalogoProblemas.EhServicoLocacao(ch.problema) ? DiagnosticoLocacao(ch)
+            ch.os.diagnostico = CatalogoProblemas.EhServicoProjeto(ch.problema) ? DiagnosticoProjeto(ch)
+                : CatalogoProblemas.EhServicoLocacao(ch.problema) ? DiagnosticoLocacao(ch)
                 : checkup
                 ? $"Check-up completo do computador ({ch.estado.idadePcAnos} anos): {ch.estado.Recomendacoes().Count} recomendação(ões) no laudo."
                 : $"Defeito no(a) {ch.EquipamentoTexto().ToLowerInvariant()}. Solução: {ch.problema.solucao.ToLowerInvariant()}.";
@@ -388,7 +390,14 @@ public partial class MissionManager : MonoBehaviour
         // Pagamento: retorno em garantia não cobra o serviço de novo (só peças novas)
         float servico = ch.retrabalho ? 0f : cometeuErro ? ch.recompensa * 0.3f : ch.recompensa;
         float valor = servico + ch.pecasCobradas;
-        if (ch.servicoLocacao != ServicoLocacao.Nenhum)
+        if (ch.projetoId > 0)
+        {
+            // Etapa 8: visita de um projeto de rede — o valor é o do projeto (entrada e entrega), não da visita
+            string r = ProjetosManager.Instance?.VisitaConcluida(ch);
+            if (r != null) GameUI.Instance?.Toast(r, UIFactory.Sucesso, 6f);
+            servico = 0f;
+        }
+        else if (ch.servicoLocacao != ServicoLocacao.Nenhum)
         {
             // Instalação/visita da locação: a implantação é cobrada pelo contrato; toner e cilindro são da empresa
             string r = ContratosManager.Instance?.ServicoLocacaoConcluido(ch, atraso <= 0f);
@@ -438,6 +447,15 @@ public partial class MissionManager : MonoBehaviour
             ch.os.causaPendente = causa ?? "";
             AtualizarLaudo(ch);
             if (ch.estado != null && CatalogoProblemas.EhServicoLocacao(ch.problema)) ch.os.diagnostico = DiagnosticoLocacao(ch);
+            if (ch.estado != null && CatalogoProblemas.EhServicoProjeto(ch.problema))
+            {
+                ch.os.diagnostico = DiagnosticoProjeto(ch);
+                ch.os.fotoAntes = ch.estado.fotoAntes;
+                ch.os.fotoDepois = ch.estado.fotoDepois;
+                if (ch.estado.fotoAntes != null || ch.estado.fotoDepois != null)
+                    ch.os.fotos = (ch.estado.fotoAntes != null ? "antes" : "") + (ch.estado.fotoAntes != null && ch.estado.fotoDepois != null ? " e " : "") +
+                                  (ch.estado.fotoDepois != null ? "depois" : "");
+            }
             if (string.IsNullOrEmpty(ch.os.diagnostico) && ch.problema != null)
                 ch.os.diagnostico = $"Solução: {ch.problema.solucao.ToLowerInvariant()}.";
             dados.historico.Insert(0, ch.os);
@@ -478,6 +496,7 @@ public partial class MissionManager : MonoBehaviour
         ReputationManager.Instance?.AlterarReputacao(-ReputationManager.Instance.punicaoErro * (chamadoAtivo.retrabalho ? 1.5f : 1f));
         chamadoAtivo = null;
         ContratosManager.Instance?.GarantirChamadosServico();   // instalação/visita continua pendente
+        // projeto de rede: o que foi feito nesta visita se perde (o cliente desconfia); o projeto continua
         if (chamadosDisponiveis.Count < 2)
             GerarChamados();
     }

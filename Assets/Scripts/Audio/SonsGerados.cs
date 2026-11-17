@@ -55,6 +55,9 @@ public static class SonsGerados
             }
             case "caneta": return Criar(nome, 1.4f, (t, i) => Ruido() * 0.16f * (0.55f + 0.45f * Mathf.Sin(t * 42f)) * Mathf.Clamp01(t * 20f) * Mathf.Clamp01((1.4f - t) * 10f));   // assinatura no papel
             case "bip": return Criar(nome, 0.13f, (t, i) => Seno(1250f, t) * Ataque(t, 0.004f) * Mathf.Clamp01((0.13f - t) * 40f) * 0.35f);
+            // Etapa 8: furadeira de impacto (motor zunindo + batidas) para fixar caixa e canaleta
+            case "furadeira": return Criar(nome, 1.3f, (t, i) => (Seno(180f + 40f * Mathf.Min(t * 6f, 1f), t) * 0.25f + Ruido() * 0.18f * (0.6f + 0.4f * Mathf.Sin(t * 260f)))
+                                                              * Mathf.Clamp01(t * 25f) * Mathf.Clamp01((1.3f - t) * 8f));
             case "dormir": return Arpejo(nome, new[] { 784f, 659f, 523f, 392f }, 0.14f, 0.6f);
             case "ambiente_dentro":
             {

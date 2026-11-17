@@ -22,6 +22,23 @@ public partial class GameUI
     string resultadoPeca;
     float resultadoAte;
 
+    // Etapa 8: a ação que o técnico está segurando agora (o equipamento anima: clipe no reset do roteador)
+    AcaoFisica acaoSeguradaJanela;
+    float progressoJanela;
+    public static AcaoFisica AcaoSegurada =>
+        Instance == null ? null : Instance.acaoSegurandoPeca ?? Instance.acaoSeguradaJanela;
+    public static Equipamento EquipamentoSegurado =>
+        Instance == null ? null : Instance.acaoSegurandoPeca != null ? Instance.pecaMirada?.equipamento : Instance.equipamentoAtual;
+    public static float ProgressoSegurado
+    {
+        get
+        {
+            if (Instance == null) return 0f;
+            if (Instance.acaoSegurandoPeca != null) return Instance.progressoPeca / Mathf.Max(0.01f, Instance.acaoSegurandoPeca.segurar);
+            return Instance.acaoSeguradaJanela != null ? Instance.progressoJanela / Mathf.Max(0.01f, Instance.acaoSeguradaJanela.segurar) : 0f;
+        }
+    }
+
     void ConstruirPainelPeca(RectTransform raiz, RectTransform mira)
     {
         miraRt = mira;
@@ -165,7 +182,7 @@ public partial class GameUI
             equipamentoAtual = pecaMirada.equipamento;
         }
         if (acao.abreComputador) { AbrirComputador(); return; }
-        if (acao.abreCrimpagem) { CrimparNoCliente(true); return; }
+        if (acao.abreCrimpagem) { CrimparNoCliente(true, acao); return; }
         if (acao.segurar > 0f) { acaoSegurandoPeca = acao; progressoPeca = 0f; return; }
         ConcluirAcaoPeca(acao);
     }

@@ -57,6 +57,7 @@ public partial class EquipamentoPecas : MonoBehaviour
             case TipoEquipamento.Roteador: MontarRoteador(); break;
             case TipoEquipamento.Computador: MontarComputador(); break;
             case TipoEquipamento.Notebook: MontarNotebook(); break;
+            case TipoEquipamento.Rack: MontarRack(); break;
             default: MontarGenerico(); break;   // equipamento sem visual próprio: peças da definição sobre o colisor
         }
     }
@@ -181,6 +182,7 @@ public partial class EquipamentoPecas : MonoBehaviour
             Transform A(string n) => visual.Find("Ancora_" + n);
             plugue = Cubo(visual, "Plugue", A("Plugue").localPosition, A("Plugue").localScale, mPreto).transform;
             Cubo(visual, "FuroReset", A("FuroReset").localPosition, A("FuroReset").localScale, mPreto);
+            furoReset = A("FuroReset").localPosition;
             PecaEquipamento.Criar(visual, eq, "luzes", "Luzes", A("Luzes").localPosition, A("Luzes").localScale);
             PecaEquipamento.Criar(visual, eq, "etiqueta", "Roteador (etiqueta embaixo)", A("Corpo").localPosition, A("Corpo").localScale);
             PecaEquipamento.Criar(visual, eq, "fonte", "Fonte na tomada", A("Fonte").localPosition, A("Fonte").localScale);
@@ -189,6 +191,7 @@ public partial class EquipamentoPecas : MonoBehaviour
         }
         plugue = Cubo(visual, "Plugue", new Vector3(0.1f, 0.035f, 0.12f), new Vector3(0.03f, 0.025f, 0.03f), mPreto).transform;
         Cubo(visual, "FuroReset", new Vector3(-0.1f, 0.035f, 0.1105f), new Vector3(0.008f, 0.008f, 0.002f), mPreto);
+        furoReset = new Vector3(-0.1f, 0.035f, 0.1105f);
 
         PecaEquipamento.Criar(visual, eq, "luzes", "Luzes", new Vector3(0f, 0.045f, -0.125f), new Vector3(0.26f, 0.05f, 0.05f));
         PecaEquipamento.Criar(visual, eq, "etiqueta", "Roteador (etiqueta embaixo)", new Vector3(0f, 0.035f, 0f), new Vector3(0.34f, 0.08f, 0.17f));
@@ -294,6 +297,7 @@ public partial class EquipamentoPecas : MonoBehaviour
         }
         else if (eq.tipoEquipamento == TipoEquipamento.Roteador)
         {
+            AtualizarClipe();
             bool tomada = e == null || e.rotNaTomada;
             bool iniciando = e != null && e.rotLigaEm > Time.time;
             if (plugue != null) plugue.gameObject.SetActive(tomada);
@@ -301,6 +305,7 @@ public partial class EquipamentoPecas : MonoBehaviour
                 for (int i = 0; i < leds.Length; i++)
                 {
                     bool acesa = tomada && (!iniciando || Mathf.Repeat(Time.time * 4f + i, 2f) < 1f);
+                    if (tomada && clipeNoFuro && clipeProgresso > 0.7f) acesa = Mathf.Repeat(Time.time * 5f, 1f) < 0.5f;   // todas juntas: vai resetar
                     bool semInternet = e != null && i == 3 && e.rotTravado;
                     Pintar(leds[i], !acesa ? mApagado : semInternet ? mLaranja : mVerde);
                 }
@@ -319,6 +324,8 @@ public partial class EquipamentoPecas : MonoBehaviour
             AtualizarNotebook(e);
             AtualizarTelaSoftware(e);
         }
+        else if (eq.tipoEquipamento == TipoEquipamento.Rack)
+            AtualizarRack(e);
     }
 
     static void Pintar(Renderer r, Material m)

@@ -122,6 +122,7 @@ public class SomManager : MonoBehaviour
     {
         string r = rotulo.ToLowerInvariant();
         if (r.Contains("imprimir")) TocarEm("impressora", posicao, 0.9f);
+        else if (r.Contains("fixar a caixa")) TocarEm("furadeira", posicao, 0.8f);
         else if (r.Contains("ligar") || r.Contains("tomada") || r.Contains("reset")) TocarEm("bip", posicao, 0.7f);
         else if (r.Contains("olhar") || r.Contains("ler ") || r.Contains("medir")) { }
         else TocarEm("mexer", posicao, 0.8f, Random.Range(0.9f, 1.1f));

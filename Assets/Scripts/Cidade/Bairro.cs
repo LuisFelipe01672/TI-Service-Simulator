@@ -14,7 +14,7 @@ using UnityEngine;
 //     (clínica) |   (escritório)       |  (contabilidade)
 //   ============+======================+============  Rua das Acácias
 //     (coleta)  |   (casa)             |  (loja / fornecedor)
-public enum TipoEndereco { Casa, Escritorio, Fornecedor, Coleta, Contabilidade, Clinica, Loja }
+public enum TipoEndereco { Casa, Escritorio, Fornecedor, Coleta, Contabilidade, Clinica, Loja, Posto }
 
 public struct Endereco
 {
@@ -90,6 +90,8 @@ public static class Bairro
                        porta = new Vector3(FrenteLesteJacarandas - 0.9f, 1f, PosFornecedorZ) },
         new Endereco { tipo = TipoEndereco.Coleta, nome = "Ponto de coleta de lixo eletrônico", rua = RuaIpe, numero = 210,
                        porta = new Vector3(FrenteOesteIpe + 0.9f, 1f, PosColetaZ) },
+        new Endereco { tipo = TipoEndereco.Posto, nome = "Posto de combustível", rua = RuaJacarandas, numero = 340,
+                       porta = new Vector3(BombaPosto.x - 1.6f, 1f, BombaPosto.z) },
     };
 
     public const float PosFornecedorZ = -30f, PosColetaZ = -30f;
@@ -102,6 +104,45 @@ public static class Bairro
 
     public static TipoEndereco DoTipoSala(TipoSala s) =>
         s == TipoSala.Clinica ? TipoEndereco.Clinica : s == TipoSala.Loja ? TipoEndereco.Loja : TipoEndereco.Contabilidade;
+
+    // ---------------- Vagas na rua (Etapa 9C) ----------------
+    // Estaciona-se junto ao meio-fio, no sentido da mão (no Brasil, mão direita): do lado norte das Acácias o carro
+    // fica virado para o oeste, do lado sul para o leste; na Jacarandás (lado leste) para o norte; na Ipê (lado oeste)
+    // para o sul. 'centro' é o meio do carro no asfalto; 'giro' é para onde a frente aponta (graus, 0 = norte).
+    public const float DistMeioFio = 1.1f;   // do meio-fio ao meio do carro (1,7 m de largura + uns 25 cm)
+
+    public struct Vaga { public TipoEndereco tipo; public Vector3 centro; public float giro; }
+
+    public static Vaga VagaDe(TipoEndereco t)
+    {
+        float zN = AcaciasAsfaltoZ0 - DistMeioFio, zS = AcaciasAsfaltoZ1 + DistMeioFio;
+        switch (t)
+        {
+            // escritório e casa: um pouco a leste da faixa de pedestre (não se para em cima da faixa)
+            case TipoEndereco.Escritorio: return new Vaga { tipo = t, centro = new Vector3(4.6f, 0f, zN), giro = 270f };
+            case TipoEndereco.Casa: return new Vaga { tipo = t, centro = new Vector3(5.6f, 0f, zS), giro = 90f };
+            case TipoEndereco.Contabilidade: return new Vaga { tipo = t, centro = new Vector3(CentroContabilidade.x, 0f, zN), giro = 270f };
+            case TipoEndereco.Clinica: return new Vaga { tipo = t, centro = new Vector3(CentroClinica.x, 0f, zN), giro = 270f };
+            case TipoEndereco.Loja: return new Vaga { tipo = t, centro = new Vector3(CentroLoja.x, 0f, zS), giro = 90f };
+            case TipoEndereco.Fornecedor: return new Vaga { tipo = t, centro = new Vector3(JacarandasX + MeiaPista - DistMeioFio, 0f, PosFornecedorZ), giro = 0f };
+            case TipoEndereco.Coleta: return new Vaga { tipo = t, centro = new Vector3(IpeX - MeiaPista + DistMeioFio, 0f, PosColetaZ), giro = 180f };
+            default: return new Vaga { tipo = t, centro = VagaPosto, giro = 90f };
+        }
+    }
+
+    // ---------------- Posto de combustível (Etapa 9C) ----------------
+    // No fim norte da Rua dos Jacarandás, lado leste. A calçada na frente é rebaixada (guia rebaixada) para o carro
+    // entrar; a ilha das bombas fica paralela à rua, debaixo da cobertura, e a lojinha no fundo do terreno.
+    public static float PostoZ0 => 31.5f;
+    public static float PostoZ1 => 41.5f;
+    public static float PostoX0 => FrenteLesteJacarandas;          // 32: onde a calçada termina
+    public static float PostoX1 => PostoX0 + 16f;                  // 48
+    public static Rect TerrenoPosto => Rect.MinMaxRect(PostoX0, PostoZ0, PostoX1, PostoZ1);
+    public static Vector3 BombaPosto => new Vector3(PostoX0 + 6.5f, 0f, (PostoZ0 + PostoZ1) / 2f + 1.6f);
+    public static Vector3 VagaPosto => new Vector3(BombaPosto.x, 0f, BombaPosto.z - 1.9f);   // carro ao lado da bomba, virado para o leste
+    // Trecho da calçada leste dos Jacarandás rebaixado (entrada e saída do posto)
+    public static float RebaixoZ0 => PostoZ0 + 1f;
+    public static float RebaixoZ1 => PostoZ1 - 1f;
 
     // ---------------- Ruas e calçadas, em pedaços que não se sobrepõem ----------------
     // Nos cruzamentos o asfalto passa reto e as esquinas ficam com a calçada da Rua das Acácias.
@@ -141,7 +182,14 @@ public static class Bairro
                 float a = lado < 0 ? c - MeiaPista - Calcada : c + MeiaPista;
                 float b = a + Calcada;
                 Add(TipoPiso.Calcada, n, a, LimiteSul, b, AcaciasCalcadaSulZ1);
-                Add(TipoPiso.Calcada, n, a, AcaciasCalcadaNorteZ0, b, LimiteNorte);
+                if (c == JacarandasX && lado > 0)
+                {
+                    // guia rebaixada na frente do posto: vira asfalto no nível da rua
+                    Add(TipoPiso.Calcada, n, a, AcaciasCalcadaNorteZ0, b, RebaixoZ0);
+                    Add(TipoPiso.Asfalto, n, a, RebaixoZ0, b, RebaixoZ1);
+                    Add(TipoPiso.Calcada, n, a, RebaixoZ1, b, LimiteNorte);
+                }
+                else Add(TipoPiso.Calcada, n, a, AcaciasCalcadaNorteZ0, b, LimiteNorte);
             }
         }
         return lista;

@@ -22,6 +22,7 @@ public class TexturasModelos : AssetPostprocessor
         "Micro_Ondas", "Patch_Panel", "Switch_Rack_24", "Multimetro", "Pendrive",
         // prédios do bairro (Etapa 9): vistos da rua, de longe
         "Casa_Comum_Brasileira", "Casa_Terrea", "Sobrado_Porta_Enrolar", "Sobrado_Tijolo", "Predio_Hospital", "Orelhao",
+        "Escada_Aluminio",   // Etapa 9C (o carro fica em 2048: o painel é visto de perto)
     };
 
     void OnPreprocessTexture()

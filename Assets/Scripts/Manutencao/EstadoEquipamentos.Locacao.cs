@@ -4,6 +4,7 @@ public partial class EstadoEquipamentos
 {
     // ---------- Instalação ----------
     public bool impNaCaixa;                   // a impressora ainda está lacrada na caixa de papelão
+    public bool impNoEscritorio;              // Etapa 9C: a caixa ainda está no escritório (o técnico leva de carro)
     public bool impComFitas;                  // fitas laranja e calços de transporte ainda presos
     public bool tonerDaCaixa;                 // o toner que veio na caixa ainda não foi instalado
     public bool impIpPendente;                // instalação: a impressora pegou um IP por DHCP; precisa fixar no painel
@@ -64,6 +65,7 @@ public partial class EstadoEquipamentos
         var l = new System.Collections.Generic.List<string>();
         if (instalacaoEmAndamento)
         {
+            if (impNoEscritorio) l.Add("Trazer a caixa da impressora do escritório (no porta-malas) e largar aqui na sala");
             if (impNaCaixa) l.Add("Abrir a caixa e tirar a impressora");
             if (impComFitas) l.Add("Tirar as fitas e calços de transporte");
             if (tonerDaCaixa || !impCartuchoPresente) l.Add("Instalar o toner que veio na caixa (sem esquecer o lacre)");

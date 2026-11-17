@@ -154,8 +154,25 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
      - Medido: exe 222 → 243 MB; FPS no editor com × sem o bairro novo: quarto 181 × 210, porta do escritório 180 ×
        184, esquina da Ipê 109 × 119. 240 testes passando.
      - Ainda é só fachada: distribuidora de peças, ecoponto e hospital (sem interior nem uso no jogo).
-   - 9C ⬜ Carro dirigível (entrar/sair, 1ª pessoa, física simples), estacionar, porta-malas com caixas e escada,
-     combustível e tempo de deslocamento cobrado no orçamento.
+   - 9C ✅ Carro do técnico (17/11/2026), dirigindo de verdade (sem viagem rápida); dá para ir a pé também:
+     - Hatch popular de 3 portas "Milano '95" (CC-BY, Sketchfab) sem emblemas nem placas originais; placa Mercosul
+       fictícia; porta do motorista e tampa traseira recortadas da carroceria e com dobradiça; volante e rodas giram.
+     - `Cidade/CarroTecnico.cs`: E na porta entra (porta abre, senta, bate) e sai; câmera no banco do motorista
+       (olhar em volta com o mouse); WheelCollider, tração dianteira, câmbio automático com ré, freio de mão,
+       faróis com luz de verdade, luz de freio e de ré, buzina, som do motor; painel com km/h, marcha e combustível.
+     - Combustível e km na escala do relógio (1 m no bairro = 60 m na cidade): 11 km/L, tanque de 48 L, reserva;
+       posto na Rua dos Jacarandás, 340 (guia rebaixada, cobertura, bomba com visor, conveniência): completa o
+       tanque e lança em "Combustível e deslocamento" no livro-caixa; pane seca → galão de 5 L a pé.
+     - GPS dirigindo guia até a **vaga em frente** ao endereço (retângulo verde junto ao meio-fio, na mão certa) e
+       a pé até a porta. A OS soma os km e o tempo dirigindo; chamado avulso cobra R$ 1,50/km no fechamento.
+     - Porta-malas (`PortaMalas.cs`, `CargaFisica.cs`): abre/fecha; 4 volumes + escada dobrada (CC-BY, abre no
+       chão) + maleta grande. [G] pega a encomenda da porta de casa e a caixa do lote de usados; a impressora de
+       locação (chamado de instalação) sai do escritório na caixa e é largada na sala do cliente. Tudo no save.
+     - Fim das ruas com barreiras zebradas e limite invisível em volta do bairro.
+     - Medido: exe 243 → 253 MB; FPS no editor (com × sem bairro) quarto 207 × 229, porta 165 × 190, esquina
+       108 × 125 (igual à 9B); dirigindo de casa à loja 194 FPS. 248 testes passando.
+     - Falta: velocímetro do painel com ponteiro (hoje o número fica no HUD), interior escuro à noite, o carro não
+       tem seta nem limpador; trânsito e pedestres ficam para a 9D.
    - 9D ⬜ Vida na rua: trânsito simples, pedestres, dia/noite; clima (chuva atrasa serviço externo) mais tarde.
 10. ⬜ **Wi-Fi corporativo**: posicionar access point, sinal fraco nos cantos (mapa de calor), rede de visitantes separada.
 11. ⬜ **CFTV**: câmeras, DVR/NVR, cabo e fonte; posicionar vendo a área certa; acesso pelo celular do cliente.
@@ -385,14 +402,14 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 
 ## Fase 6 — Cidade e deslocamento (dirigindo de verdade)
 Decisão do dono: **dirigir de verdade** (sem viagem rápida por mapa).
-- ⬜ Carro do técnico dirigível (entrar/sair, volante, câmera em 1ª pessoa, física simples com WheelCollider)
+- ✅ Carro do técnico dirigível (entrar/sair, volante, câmera em 1ª pessoa, física simples com WheelCollider) — Etapa 9C
 - ✅ Cidade com ruas ligando casa, sede, fornecedores, ponto de coleta de lixo eletrônico e clientes; GPS no celular
       (Etapa 9B: bairro a pé; fornecedor e ecoponto ainda só fachada)
-- ⬜ Combustível (posto), estacionar na frente do cliente, carregar caixas/equipamentos/escada no porta-malas
+- ✅ Combustível (posto), estacionar na frente do cliente, carregar caixas/equipamentos/escada no porta-malas — Etapa 9C
 - ⬜ Vários endereços (clínica, contabilidade, loja, escola, prefeitura, condomínio) — cada cliente com sala própria
 - ⬜ Trânsito simples (carros NPC, semáforos); **clima**: chuva atrasa e impede serviço externo, temporal traz raios
       e chamados
-- ⬜ Cobrança de deslocamento/km no orçamento
+- ✅ Cobrança de deslocamento/km no orçamento (R$ 1,50/km no chamado avulso) — Etapa 9C
 - ⬜ Mais tarde: trocar de veículo (moto → carro → van da empresa adesivada)
 
 ## Fase 7 — Clientes e pessoas vivas

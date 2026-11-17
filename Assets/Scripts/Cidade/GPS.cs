@@ -7,6 +7,8 @@ using UnityEngine.UI;
 // - No canto inferior esquerdo: para onde ir, a rua, a distância e a direção ("vire à direita", "siga em frente").
 // - No endereço, uma coluna de luz verde marca a porta (dá para ver por cima dos telhados).
 // - Chegando a 3 m da porta: "Você chegou" e o GPS desliga.
+// - Etapa 9C, dirigindo: o GPS guia até a vaga em frente ao endereço (um retângulo verde no asfalto, junto ao
+//   meio-fio, no sentido da mão); ao chegar avisa para estacionar, e a pé segue até a porta.
 public class GPS : MonoBehaviour
 {
     public static GPS Instance { get; private set; }
@@ -14,7 +16,8 @@ public class GPS : MonoBehaviour
     public bool Ativo { get; private set; }
     public Endereco Destino { get; private set; }
 
-    Transform jogador, marcador;
+    Transform jogador, marcador, marcadorVaga;
+    bool avisouVaga;
     RectTransform painel;
     TextMeshProUGUI texto;
     float proximaAtualizacao;
@@ -59,7 +62,22 @@ public class GPS : MonoBehaviour
         r.receiveShadows = false;
         marcador = go.transform;
         go.SetActive(false);
+
+        // Vaga: retângulo verde rente ao asfalto (só aparece dirigindo)
+        var v = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        v.name = "GPS_Vaga";
+        Destroy(v.GetComponent<Collider>());
+        v.transform.SetParent(transform, false);
+        v.transform.localScale = new Vector3(2f, 0.02f, 4.6f);
+        var rv = v.GetComponent<Renderer>();
+        if (shader != null) rv.sharedMaterial = new Material(shader) { color = new Color(0.25f, 1f, 0.55f, 0.3f) };
+        rv.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        rv.receiveShadows = false;
+        marcadorVaga = v.transform;
+        v.SetActive(false);
     }
+
+    public Bairro.Vaga VagaDestino => Bairro.VagaDe(Destino.tipo);
 
     public void Definir(Endereco e, bool avisar = true)
     {
@@ -67,6 +85,9 @@ public class GPS : MonoBehaviour
         Ativo = true;
         marcador.position = new Vector3(e.porta.x, 15f, e.porta.z);
         marcador.gameObject.SetActive(true);
+        var vaga = Bairro.VagaDe(e.tipo);
+        marcadorVaga.SetPositionAndRotation(vaga.centro + Vector3.up * 0.03f, Quaternion.Euler(0f, vaga.giro, 0f));
+        avisouVaga = false;
         painel.gameObject.SetActive(true);
         proximaAtualizacao = 0f;
         if (avisar)
@@ -78,6 +99,7 @@ public class GPS : MonoBehaviour
     {
         Ativo = false;
         if (marcador != null) marcador.gameObject.SetActive(false);
+        if (marcadorVaga != null) marcadorVaga.gameObject.SetActive(false);
         if (painel != null) painel.gameObject.SetActive(false);
     }
 
@@ -107,8 +129,18 @@ public class GPS : MonoBehaviour
             if (j == null) return;
             jogador = j.transform;
         }
-        float d = Distancia(jogador.position);
-        if (d < DistanciaChegada)
+        bool dirigindo = CarroTecnico.NoCarro;
+        if (marcadorVaga.gameObject.activeSelf != dirigindo) marcadorVaga.gameObject.SetActive(dirigindo);
+        Vector3 alvo = dirigindo ? VagaDestino.centro : Destino.porta;
+        float d = dirigindo ? Vector2.Distance(new Vector2(jogador.position.x, jogador.position.z), new Vector2(alvo.x, alvo.z)) : Distancia(jogador.position);
+        if (dirigindo && d < 5f && !avisouVaga)
+        {
+            avisouVaga = true;
+            GameUI.Instance?.Toast($"<b>{Destino.nome}</b> é aqui: estacione na vaga verde, junto ao meio-fio, e desça (E).", UIFactory.Sucesso, 4f);
+            SomManager.Tocar("clique", 0.6f);
+            Debug.Log($"[GPS] Chegou de carro na vaga de {Destino.nome}.");
+        }
+        if (!dirigindo && d < DistanciaChegada)
         {
             GameUI.Instance?.Toast($"Você chegou: <b>{Destino.nome}</b>", UIFactory.Sucesso, 3f);
             SomManager.Tocar("clique", 0.6f);
@@ -120,10 +152,12 @@ public class GPS : MonoBehaviour
         proximaAtualizacao = Time.unscaledTime + 0.25f;
 
         var cam = Camera.main != null ? Camera.main.transform : jogador;
-        string dir = Direcao(cam.forward, jogador.position, Destino.porta);
+        // Dirigindo, a direção é a do carro (não a da cabeça) e a distância é até a vaga
+        Vector3 frente = dirigindo && CarroTecnico.Instance != null ? CarroTecnico.Instance.transform.forward : cam.forward;
+        string dir = dirigindo && d < 5f ? "estacione aqui" : Direcao(frente, jogador.position, alvo);
         string onde = Bairro.RuaMaisProxima(jogador.position);
         texto.text = $"<color=#3CCB7F><b>GPS</b></color>  {Destino.nome}\n" +
-                     $"<size=85%>{Destino.Linha}</size>\n" +
+                     $"<size=85%>{Destino.Linha}{(dirigindo ? " · <color=#3CCB7F>vaga em frente</color>" : "")}</size>\n" +
                      $"<b>{d:0} m</b> · {dir}  <color=#9AA6B8><size=80%>(você está na {onde})</size></color>";
     }
 }

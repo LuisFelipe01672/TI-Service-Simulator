@@ -103,6 +103,10 @@ public partial class GameUI
         Linha($"<b>Tempo de trabalho:</b> {OrdemServico.HorasTexto(trabalho)}  ·  <b>SLA:</b> " +
               (restante >= 0 ? "<color=#1E7A4C>no prazo</color>" : $"<color=#B3262E>estourado há {OrdemServico.HorasTexto(-restante)}</color>"), 17);
         Linha($"<b>Serviço:</b> {valor}  ·  <b>Peças:</b> {UIFactory.Dinheiro(os.valorPecas)}", 17);
+        if (os.kmRodados > 0.05f)
+            Linha($"<b>Deslocamento:</b> {os.kmRodados:0.0} km de carro ({OrdemServico.HorasTexto(os.minutosDeslocamento)} dirigindo)" +
+                  (ch.contratoId == 0 && ch.projetoId == 0 && ch.servicoLocacao == ServicoLocacao.Nenhum && !ch.retrabalho
+                      ? $" · + {UIFactory.Dinheiro(os.ValorDeslocamento)} (R$ {CatalogoServicos.ValorKm:0.00}/km)" : " · incluso"), 17);
 
         // Checklist que o cliente confere
         UIFactory.Texto(osConteudo, "CHECKLIST (o cliente confere antes de assinar)", 17, UIFactory.Destaque, FontStyles.Bold);

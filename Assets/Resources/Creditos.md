@@ -36,6 +36,8 @@ Alteração comum a todos os modelos do Sketchfab: convertidos de GLB para glTF 
 | `Assets/Models/Sketchfab/Sobrado_Tijolo/` | [Favela brasileira 2](https://sketchfab.com/3d-models/favela-brasileira-2-c87942d7d3ba43648920c7f7cd451afc) | [iagoArt3D](https://sketchfab.com/iagoDev) | Texturas em 1024 px; escala reduzida (9 m de altura); fachada do ecoponto com placa própria |
 | `Assets/Models/Sketchfab/Predio_Hospital/` | [Hospital](https://sketchfab.com/3d-models/hospital-f91637b01dde4749aafd56ea37fa3b21) | [iagoArt3D](https://sketchfab.com/iagoDev) | Texturas em 1024 px; escala reduzida; hospital do bairro (só a fachada) |
 | `Assets/Models/Sketchfab/Orelhao/` | [Orelhao](https://sketchfab.com/3d-models/orelhao-78a74f8c4fd940dfb8cf825c5f57d05d) | [herdyanasofia](https://sketchfab.com/herdyanasofia) | Na calçada da Rua das Acácias |
+| `Assets/Models/Sketchfab/Carro_Milano95/` | [Milano '95 - Low poly model](https://sketchfab.com/3d-models/milano-95-low-poly-model-122a22d210234596ad23623588d0d166) | [Daniel Zhabotinsky](https://sketchfab.com/DanielZhabotinsky) | Carro do técnico (Etapa 9C); emblemas e placas originais removidos, placa Mercosul fictícia feita por código |
+| `Assets/Models/Sketchfab/Escada_Aluminio/` | [Aluminium ladder](https://sketchfab.com/3d-models/aluminium-ladder-d9d7989ac61848a09eeb60708dc0d941) | [scailman](https://sketchfab.com/scailman) | Escada do porta-malas do carro (Etapa 9C) |
 
 ## Modelos e texturas CC0 (domínio público, crédito opcional)
 

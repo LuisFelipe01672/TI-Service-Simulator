@@ -155,6 +155,16 @@ public class UsadosFisicos : MonoBehaviour
                 if (animar) { Tween.LocalPosition(t, alvo, 0.45f, Ease.OutCubic); Tween.LocalRotation(t, giro, 0.45f, Ease.OutCubic); }
                 else { t.localPosition = alvo; t.localRotation = giro; }
                 break;
+            case LocalUsado.Carro:
+                if (NaMao == e) NaMao = null;
+                var pm = PortaMalas.Instance;
+                if (pm == null) { e.local = e.naCaixa ? LocalUsado.Caixa : LocalUsado.Chao; e.naCaixa = false; e.vaga = -1; Posicionar(e, animar); return; }
+                var vagaCarro = pm.VagaDoUsado(e);
+                t.SetParent(vagaCarro, true);
+                Quaternion deitado = Quaternion.Euler(0f, 90f, 0f);
+                if (animar) { Tween.LocalPosition(t, Vector3.zero, 0.45f, Ease.OutCubic); Tween.LocalRotation(t, deitado, 0.45f, Ease.OutCubic); }
+                else { t.localPosition = Vector3.zero; t.localRotation = deitado; }
+                break;
             case LocalUsado.Bancada:
                 if (NaMao == e) NaMao = null;
                 if (bancada == null) { e.local = LocalUsado.Chao; Posicionar(e, animar); return; }
@@ -188,6 +198,22 @@ public class UsadosFisicos : MonoBehaviour
 
     int quadroMudou = -1;
 
+    // Etapa 9C: [G] pega a caixa do lote ainda fechada (para levar no porta-malas)
+    public bool PegarCaixa(EquipUsado e)
+    {
+        if (e == null || e.local != LocalUsado.Caixa) return false;
+        if (CargaFisica.NaMao != null) { GameUI.Instance?.Toast("Suas mãos estão ocupadas.", UIFactory.Alerta, 2.5f); return false; }
+        e.naCaixa = true;
+        return Pegar(e);
+    }
+
+    // Saiu da mão para o porta-malas
+    public void SoltarDaMao(EquipUsado e)
+    {
+        if (NaMao == e) NaMao = null;
+        quadroMudou = Time.frameCount;
+    }
+
     public bool Pegar(EquipUsado e)
     {
         if (NaMao != null && NaMao != e) { GameUI.Instance?.Toast("Suas mãos estão ocupadas: largue o que está segurando (E no chão).", UIFactory.Alerta, 3f); return false; }
@@ -209,6 +235,7 @@ public class UsadosFisicos : MonoBehaviour
     {
         var e = NaMao;
         if (e == null) return null;
+        if (e.naCaixa) return "A caixa do lote ainda está fechada: largue no chão e abra com o estilete.";
         if (!BancadaLivre) return "Já tem um equipamento na bancada. Tire ele antes.";
         e.local = LocalUsado.Bancada;
         NaMao = null;
@@ -221,7 +248,8 @@ public class UsadosFisicos : MonoBehaviour
     {
         var e = NaMao;
         if (e == null) return;
-        e.local = LocalUsado.Chao;
+        e.local = e.naCaixa ? LocalUsado.Caixa : LocalUsado.Chao;
+        e.naCaixa = false;
         e.vaga = -1;
         NaMao = null;
         Posicionar(e, true);
@@ -234,6 +262,13 @@ public class UsadosFisicos : MonoBehaviour
         if (NaMao == null || !Input.GetKeyDown(KeyCode.E) || Time.frameCount == quadroMudou) return;
         if (GameUI.Instance != null && GameUI.Instance.PainelAberto) return;
         if (Interactable.MaisProximoEmAlcance() != null || PecaEquipamento.Mirada() != null) return;
+        // Longe do escritório não larga (o lugar dos usados é o chão do escritório): guarde no porta-malas
+        var cam = Camera.main;
+        if (sala != null && cam != null && Vector3.Distance(cam.transform.position, sala.position) > 12f)
+        {
+            GameUI.Instance?.Toast("Aqui não: leve de volta ao escritório ou guarde no porta-malas do carro.", UIFactory.Alerta, 3f);
+            return;
+        }
         Largar();
         GameUI.Instance?.Toast("Equipamento deixado no chão, junto do lote.", UIFactory.CorSuave, 2f);
     }
@@ -288,7 +323,7 @@ public class UsadoFisico : Interactable
         u.peca = PecaEquipamento.Criar(go.transform, null, AcoesBancada.Peca, "Na bancada", b.center, b.size + Vector3.one * 0.02f);
         u.peca.titulo = e.nome;
         u.peca.acoesProprias = () => AcoesBancada.Para(u.e);
-        if (e.local == LocalUsado.Caixa) u.Encaixotar();
+        if (e.local == LocalUsado.Caixa || e.naCaixa) u.Encaixotar();
         u.AoMudarLocal();
         return u;
     }
@@ -316,21 +351,26 @@ public class UsadoFisico : Interactable
     // Liga/desliga colisores e o E conforme o lugar
     public void AoMudarLocal()
     {
-        bool naMao = e.local == LocalUsado.Mao, naBancada = e.local == LocalUsado.Bancada;
-        enabled = !naMao && !naBancada;                 // no chão/caixa: o E é deste objeto
-        if (corpo != null) corpo.enabled = !naMao && !naBancada;
+        bool naMao = e.local == LocalUsado.Mao, naBancada = e.local == LocalUsado.Bancada, noCarro = e.local == LocalUsado.Carro;
+        enabled = !naMao && !naBancada && (!noCarro || PortaMalasAberto);   // no chão/caixa/porta-malas aberto: o E é deste objeto
+        if (corpo != null) { corpo.enabled = !naMao && !naBancada; corpo.isTrigger = noCarro; }
         if (peca != null) peca.gameObject.SetActive(naBancada);   // na bancada: mira nas ações
         // na mão não projeta sombra na cara do técnico nem atravessa a parede de longe
         foreach (var r in GetComponentsInChildren<Renderer>(true))
             r.shadowCastingMode = naMao ? UnityEngine.Rendering.ShadowCastingMode.Off : UnityEngine.Rendering.ShadowCastingMode.On;
     }
 
+    static bool PortaMalasAberto => CarroTecnico.Instance != null && CarroTecnico.Instance.TampaAberta;
+
     public override string TextoPrompt
     {
         get
         {
             if (e == null) return "";
-            if (e.local == LocalUsado.Caixa) return UsadosFisicos.NaMao != null ? "Caixa do lote (mãos ocupadas)" : $"[E] Abrir a caixa do lote ({Rotulo(e.tipo).ToLowerInvariant()}) com o estilete";
+            bool maos = CargaFisica.MaosOcupadas;
+            if (e.local == LocalUsado.Carro) return maos ? $"{e.nome} (mãos ocupadas)" : $"[E] Tirar do porta-malas: {(e.naCaixa ? "caixa do lote (" + Rotulo(e.tipo).ToLowerInvariant() + ")" : e.nome)}";
+            if (e.local == LocalUsado.Caixa) return maos ? "Caixa do lote (mãos ocupadas)" : $"[E] Abrir a caixa do lote ({Rotulo(e.tipo).ToLowerInvariant()}) com o estilete" +
+                                                     (CarroTecnico.Instance != null ? "   [G] Pegar a caixa" : "");
             if (UsadosFisicos.NaMao != null) return $"{e.nome} (mãos ocupadas)";
             return $"[E] Pegar: {e.nome}  <size=80%><color=#9AA6B8>{Resumo(e)}</color></size>";
         }
@@ -350,11 +390,18 @@ public class UsadoFisico : Interactable
         if (e == null) return;
         if (e.local == LocalUsado.Caixa)
         {
-            if (UsadosFisicos.NaMao != null) return;
+            if (CargaFisica.MaosOcupadas) return;
             AbrirCaixa();
             return;
         }
-        if (e.local == LocalUsado.Chao && UsadosFisicos.NaMao == null) dono.Pegar(e);
+        if (e.local == LocalUsado.Carro && !CargaFisica.MaosOcupadas)
+        {
+            PortaMalas.Instance?.UsadoSaiu(e);
+            dono.Pegar(e);
+            Debug.Log($"[Carga] Tirou do porta-malas o usado: {e.nome}.");
+            return;
+        }
+        if (e.local == LocalUsado.Chao && !CargaFisica.MaosOcupadas) dono.Pegar(e);
     }
 
     // O estilete corta a fita, as abas abrem, o equipamento sobe e a caixa desmonta

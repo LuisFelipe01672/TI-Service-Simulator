@@ -14,8 +14,9 @@ public class EncomendaFisica : Interactable
     bool CaixaDeCabo => entrega != null && entrega.item == Item.CaixaCabo;
 
     public override string TextoPrompt => entrega == null ? "" :
-        CaixaDeCabo ? "[E] Levar a caixa de cabo (305 m) para a bancada do escritório"
-                    : $"[E] Abrir a encomenda: {Mochila.Info(entrega.item).nome}";
+        (CaixaDeCabo ? "[E] Levar a caixa de cabo (305 m) para a bancada do escritório"
+                     : $"[E] Abrir a encomenda: {Mochila.Info(entrega.item).nome}") +
+        (CarroTecnico.Instance != null ? "   [G] Pegar a caixa" : "");
 
     // Garante que cada entrega que já chegou tem a sua caixa na porta (também depois de carregar o jogo)
     public static void Sincronizar(List<Entrega> entregas)
@@ -25,7 +26,7 @@ public class EncomendaFisica : Interactable
         int i = 0;
         foreach (var e in entregas)
         {
-            if (!e.naPorta) continue;
+            if (!e.naPorta || e.local != 0) continue;   // no porta-malas, nas mãos ou largada em outro lugar
             if (!naCena.TryGetValue(e, out var f) || f == null) naCena[e] = Criar(e, ponto.transform, i);
             i++;
         }
@@ -50,6 +51,51 @@ public class EncomendaFisica : Interactable
         go.transform.localScale = Vector3.zero;
         Tween.Scale(go.transform, Vector3.one, 0.3f, Ease.OutBack);
         return f;
+    }
+
+    // Etapa 9C: caixa largada no chão (fora da porta de casa) — abre com E, pega de novo com G
+    public static EncomendaFisica CriarNoChao(Entrega e, Vector3 pos, Quaternion rot)
+    {
+        var go = new GameObject("Encomenda_" + e.item);
+        go.transform.SetPositionAndRotation(pos, rot);
+        bool cabo = e.item == Item.CaixaCabo;
+        Vector3 tam = Tamanho(e);
+        CriarCaixa(go.transform, tam);
+        Etiqueta(go.transform, tam, cabo ? "CABO DE REDE U/UTP Cat6\n305 m · 23 AWG · azul" : "ENTREGA\n" + Mochila.Info(e.item).nome, cabo);
+        if (cabo) CaboSaindo(go.transform, tam);
+        var f = go.AddComponent<EncomendaFisica>();
+        f.entrega = e;
+        f.distanciaInteracao = 1.6f;
+        e.local = 3;
+        naCena[e] = f;
+        return f;
+    }
+
+    public static Vector3 Tamanho(Entrega e) => e.item == Item.CaixaCabo ? new Vector3(0.36f, 0.42f, 0.36f) : new Vector3(0.42f, 0.24f, 0.32f);
+
+    // [G]: a caixa vai para as mãos (para levar no porta-malas)
+    public void PegarCaixa()
+    {
+        if (entrega == null) return;
+        var e = entrega;
+        bool cabo = CaixaDeCabo;
+        var c = CargaFisica.CriarCaixa(TipoCarga.Encomenda, "Encomenda: " + Mochila.Info(e.item).nome, Tamanho(e),
+            cabo ? "CABO DE REDE U/UTP Cat6\n305 m · 23 AWG · azul" : "ENTREGA\n" + Mochila.Info(e.item).nome);
+        if (cabo) CaboSaindo(c.transform, Tamanho(e));
+        c.entrega = e;
+        c.transform.SetPositionAndRotation(transform.position, transform.rotation);
+        e.local = 2;
+        naCena.Remove(e);
+        entrega = null;
+        Destroy(gameObject);
+        CargaFisica.Pegar(c);
+    }
+
+    // A caixa da porta sumiu porque foi para o porta-malas (ao carregar o jogo)
+    public static void Esconder(Entrega e)
+    {
+        if (e != null && naCena.TryGetValue(e, out var f) && f != null) Destroy(f.gameObject);
+        if (e != null) naCena.Remove(e);
     }
 
     // Caixa de papelão realista (prefab gerado pelo MontarCenario em Resources/Encomendas/Caixa, 1 m de lado)

@@ -23,6 +23,7 @@ public static class CatalogoServicos
 {
     public const float HoraTecnica = 125f;
     public const float Deslocamento = 50f;
+    public const float ValorKm = 1.5f;   // Etapa 9C: km rodado com o carro no chamado avulso (soma à taxa de visita)
 
     public static readonly ServicoInfo[] Servicos =
     {

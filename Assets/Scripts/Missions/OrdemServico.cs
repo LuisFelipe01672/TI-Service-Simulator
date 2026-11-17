@@ -27,6 +27,9 @@ public class OrdemServico
     public string causaPendente = "";     // o que ficou sem resolver (o técnico só descobre quando o cliente volta)
     public List<string> laudo = new List<string>();          // medições das ferramentas (Etapa 4: check-up com laudo)
     public List<string> recomendacoes = new List<string>();  // peças no fim da vida, apontadas no laudo
+    public float kmRodados;               // Etapa 9C: km do carro durante o chamado (ida e volta), cobrados no fechamento
+    public float minutosDeslocamento;     // tempo dirigindo durante o chamado (horas do jogo)
+    public float ValorDeslocamento => Mathf.Round(kmRodados * CatalogoServicos.ValorKm);
     public string fotos = "";             // Etapa 8: fotos anexadas ("antes e depois"); as imagens ficam só na sessão
     [System.NonSerialized] public Texture2D fotoAntes, fotoDepois;
 

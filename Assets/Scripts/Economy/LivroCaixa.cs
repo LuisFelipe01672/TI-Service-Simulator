@@ -21,14 +21,15 @@ public static class LivroCaixa
         Taxas = "Taxas e adesões", Multas = "Multas",
         Equipamentos = "Equipamentos", Moveis = "Móveis", Desenvolvimento = "Desenvolvimento de software", Garantias = "Caução e garantias",
         EmprestimoRecebido = "Empréstimo recebido", Parcelas = "Parcelas de empréstimo", Devolucao = "Devoluções (caução e garantia)",
-        OutrasReceitas = "Outras receitas", OutrasDespesas = "Outras despesas", Alimentacao = "Alimentação";
+        OutrasReceitas = "Outras receitas", OutrasDespesas = "Outras despesas", Alimentacao = "Alimentação",
+        Combustivel = "Combustível e deslocamento";
 
     static readonly Dictionary<string, GrupoContabil> grupos = new Dictionary<string, GrupoContabil>
     {
         { Servicos, GrupoContabil.Receita }, { OutrasReceitas, GrupoContabil.Receita },
         { Impostos, GrupoContabil.Impostos },
         { Suprimentos, GrupoContabil.Custos }, { Licencas, GrupoContabil.Custos }, { Material, GrupoContabil.Custos },
-        { Ferramentas, GrupoContabil.Custos }, { Consertos, GrupoContabil.Custos },
+        { Ferramentas, GrupoContabil.Custos }, { Consertos, GrupoContabil.Custos }, { Combustivel, GrupoContabil.Custos },
         { Folha, GrupoContabil.Despesas }, { Sede, GrupoContabil.Despesas }, { Contador, GrupoContabil.Despesas },
         { Marketing, GrupoContabil.Despesas }, { Taxas, GrupoContabil.Despesas }, { Multas, GrupoContabil.Despesas }, { OutrasDespesas, GrupoContabil.Despesas },
         { Alimentacao, GrupoContabil.Despesas },

@@ -181,7 +181,7 @@ public partial class GameUI : MonoBehaviour
 
         // Mirando uma peça do equipamento, o E é dela; senão vale o interagível mais próximo
         bool mirandoPeca = AtualizarPecas();
-        if (modal == Modal.Nenhum && !mirandoPeca && Input.GetKeyDown(KeyCode.E))
+        if (modal == Modal.Nenhum && !mirandoPeca && !CarroTecnico.NoCarro && Input.GetKeyDown(KeyCode.E))
             Interactable.MaisProximoEmAlcance()?.Interagir();
 
         AtualizarPrompt();
@@ -466,9 +466,9 @@ public partial class GameUI : MonoBehaviour
     void AtualizarPrompt()
     {
         string texto = null;
-        if (modal == Modal.Nenhum && pecaMirada == null)
+        if (modal == Modal.Nenhum && pecaMirada == null && !CarroTecnico.NoCarro)
             texto = Interactable.MaisProximoEmAlcance()?.TextoPrompt;
-        bool mostrar = texto != null;
+        bool mostrar = !string.IsNullOrEmpty(texto);
         if (prompt.gameObject.activeSelf != mostrar) prompt.gameObject.SetActive(mostrar);
         if (mostrar) txtPrompt.text = texto;
     }
@@ -713,7 +713,8 @@ public partial class GameUI : MonoBehaviour
             UIFactory.Texto(c, (chamado.retrabalho ? "<color=#F2545B>RETORNO em garantia (sem cobrança)</color>" :
                 chamado.servicoLocacao == ServicoLocacao.Instalacao ? $"<color=#3FA9F5>Instalação da locação</color> (implantação + frete {UIFactory.Dinheiro(chamado.recompensa)} no fim)" :
                 chamado.servicoLocacao == ServicoLocacao.VisitaMensal ? "<color=#3FA9F5>Visita mensal da locação (incluso)</color>" :
-                chamado.contratoId > 0 ? "<color=#3FA9F5>Incluso no contrato de locação</color>" : $"Paga {UIFactory.Dinheiro(chamado.recompensa)}") +
+                chamado.contratoId > 0 ? "<color=#3FA9F5>Incluso no contrato de locação</color>" : $"Paga {UIFactory.Dinheiro(chamado.recompensa)}" +
+                    (CarroTecnico.Instance != null && chamado.projetoId == 0 ? $" + R$ {CatalogoServicos.ValorKm:0.00}/km de carro" : "")) +
                 $"  ·  <color={SLA.Cor(chamado.prioridade)}>{SLA.Texto(chamado.prioridade)}</color>, SLA até {SLA.HoraDoPrazo(chamado, SLA.Agora())}  ·  {chamado.EquipamentoVisivel}" +
                 (chamado.contratoId > 0 ? "" : chamado.exigeNota ? "  ·  <color=#F5B83F>exige nota fiscal</color>" : "  ·  aceita recibo"),
                 19, UIFactory.CorSuave);

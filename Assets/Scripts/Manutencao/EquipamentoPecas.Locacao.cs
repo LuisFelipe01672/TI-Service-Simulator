@@ -86,6 +86,8 @@ public partial class EquipamentoPecas
             visual.gameObject.SetActive(false);
         }
 
+        // Etapa 9C: a caixa só aparece na sala depois que o técnico traz do escritório
+        if (naCaixaVisto && caixaLocacao.gameObject.activeSelf == e.impNoEscritorio) caixaLocacao.gameObject.SetActive(!e.impNoEscritorio);
         MostrarFitas(e.impComFitas && !e.impNaCaixa);
 
         if (e.reservasDeixadas > reservasVistas) { reservasVistas = e.reservasDeixadas; DeixarTonerReserva(); }

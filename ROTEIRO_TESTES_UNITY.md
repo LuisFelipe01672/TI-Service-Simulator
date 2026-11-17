@@ -114,6 +114,22 @@ mapa; 3: FPS com e sem o bairro). Fotos do cenário sem Play: **Teste gráfico �
 - [ ] À noite: postes acesos ao longo das três ruas, sem pesar (FPS)
 - [ ] Conferir se alguma casa vizinha ficou torta, flutuando ou com a frente para o lado errado
 
+## 7c. Carro do técnico, posto e porta-malas (Etapa 9C, 17/11)
+Atalhos: **Teste (Play) → Carro** (0: diagnóstico; 1: ir até a porta do carro; 2: chamado na papelaria — entra, dirige
+pelo GPS até a vaga, estaciona, desce e entra na loja; 3: casa → posto com 6 L e completa o tanque; 4: encomenda da
+porta de casa no porta-malas e de volta; 5: fotos; 6: FPS dirigindo). Fotos em `Builds/Capturas/carro`.
+- [x] Entrar com E na porta (porta abre, senta, bate), painel com velocidade/marcha/freio de mão/combustível/km, sair com E
+- [x] Dirigir (piloto automático) da casa à loja e ao posto (curva à esquerda na Jacarandás), parar na vaga verde do GPS
+- [x] OS soma os km e o tempo dirigindo; fechamento cobra R$ 1,50/km no chamado avulso
+- [x] Posto: completar o tanque (visor conta R$ e litros), gasto no livro-caixa "Combustível e deslocamento"
+- [x] Encomenda: [G] pega a caixa, E guarda no porta-malas aberto, E tira, E no chão larga (vira encomenda de novo)
+- [x] Escada sai dobrada do porta-malas e abre no chão; maleta grande no canto; save guarda o que está no porta-malas
+- [x] Passeio a pé do bairro (Teste → Bairro/1) continua passando sem travar com o carro estacionado em casa
+- [ ] Jogando com teclado e mouse: dirigir com W/A/S/D, ré, freio de mão (Espaço), faróis (L) à noite, buzina (H)
+- [ ] Instalação de locação de verdade: a caixa da impressora sai do escritório, vai no porta-malas e é largada na sala
+- [ ] Lote de usados: [G] pega a caixa fechada, guarda no porta-malas e tira de volta no escritório
+- [ ] Pane seca: acabar a gasolina, comprar galão no posto a pé e despejar pela porta do carro
+
 ## 8. Testado em 13/11 (tarde) — sistemas
 - [x] Empresa: MEI, ordem das seções, empréstimo, sala 20 m², estações 1/3
 - [x] Negócios: foco (recusa por 30 dias), parcerias (negociar/solicitar/aprovada), projeto inteiro (levantamento → orçamento → material → 8 h → entregue → NFS-e → boleto pago)

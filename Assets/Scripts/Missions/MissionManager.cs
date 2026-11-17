@@ -389,6 +389,12 @@ public partial class MissionManager : MonoBehaviour
 
         // Pagamento: retorno em garantia não cobra o serviço de novo (só peças novas)
         float servico = ch.retrabalho ? 0f : cometeuErro ? ch.recompensa * 0.3f : ch.recompensa;
+        // Etapa 9C: km rodados com o carro no chamado avulso entram na conta (o cliente paga o deslocamento)
+        if (ch.os != null && !ch.retrabalho && ch.contratoId == 0 && ch.projetoId == 0 && ch.servicoLocacao == ServicoLocacao.Nenhum && ch.os.ValorDeslocamento > 0f)
+        {
+            servico += ch.os.ValorDeslocamento;
+            Debug.Log($"[Carro] Deslocamento do chamado: {ch.os.kmRodados:0.0} km = R$ {ch.os.ValorDeslocamento:0} ({ch.os.minutosDeslocamento:0} min dirigindo).");
+        }
         float valor = servico + ch.pecasCobradas;
         if (ch.projetoId > 0)
         {

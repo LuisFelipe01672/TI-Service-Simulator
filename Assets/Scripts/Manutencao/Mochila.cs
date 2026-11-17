@@ -78,6 +78,9 @@ public class Entrega
     public bool defeito, errado;   // sorteados na compra; o jogador descobre ao abrir a caixa
     public int diaPrevisto = -1;   // atrasou: o fornecedor avisa quando passar do dia previsto
     public bool reposicao;         // é a troca de um RMA (não sorteia defeito de novo)
+    // Etapa 9C: onde está a caixa que chegou (0 porta de casa, 1 porta-malas, 2 nas mãos, 3 largada no chão).
+    // Não vai para o save: ao carregar, a caixa volta para a porta (o porta-malas salva as dele à parte).
+    [System.NonSerialized] public int local;
 }
 
 // Mochila do técnico: começa só com o notebook. O resto se compra pelo tablet.

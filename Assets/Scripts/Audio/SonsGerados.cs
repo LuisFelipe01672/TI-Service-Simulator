@@ -59,6 +59,53 @@ public static class SonsGerados
             case "furadeira": return Criar(nome, 1.3f, (t, i) => (Seno(180f + 40f * Mathf.Min(t * 6f, 1f), t) * 0.25f + Ruido() * 0.18f * (0.6f + 0.4f * Mathf.Sin(t * 260f)))
                                                               * Mathf.Clamp01(t * 25f) * Mathf.Clamp01((1.3f - t) * 8f));
             case "dormir": return Arpejo(nome, new[] { 784f, 659f, 523f, 392f }, 0.14f, 0.6f);
+            // Etapa 9C: carro
+            case "porta_carro":
+            {
+                // batida seca de lata + trinco
+                float lp = 0f;
+                return Criar(nome, 0.5f, (t, i) =>
+                {
+                    lp += (Ruido() - lp) * 0.15f;
+                    float lata = (Seno(95f, t) * 0.7f + Seno(240f, t) * 0.25f + lp * 1.6f) * Dec(t, 14f);
+                    float trinco = t > 0.03f ? Ruido() * 0.35f * Dec(t - 0.03f, 90f) : 0f;
+                    return lata * 0.7f + trinco;
+                });
+            }
+            case "porta_malas":
+            {
+                float lp = 0f;
+                return Criar(nome, 0.6f, (t, i) => { lp += (Ruido() - lp) * 0.1f; return (Seno(75f, t) * 0.6f + lp * 1.8f) * Dec(t, 10f) * 0.7f; });
+            }
+            case "partida":
+            {
+                // motor de arranque girando e o motor pegando
+                return Criar(nome, 1.1f, (t, i) =>
+                {
+                    float arranque = t < 0.6f ? Serra(18f + t * 10f, t) * 0.3f * (0.6f + 0.4f * Mathf.Sin(t * 2f * Mathf.PI * 9f)) : 0f;
+                    float pega = t >= 0.55f ? (Serra(32f, t) * 0.35f + Ruido() * 0.08f) * Mathf.Clamp01((t - 0.55f) * 10f) * Mathf.Clamp01((1.1f - t) * 6f) : 0f;
+                    return arranque + pega;
+                });
+            }
+            case "motor":
+            {
+                // marcha lenta de um 1.0 de 4 cilindros (o pitch sobe com a rotação); loop
+                float lp = 0f;
+                return Criar(nome, 2f, (t, i) =>
+                {
+                    lp += (Ruido() - lp) * 0.05f;
+                    float giro = 25f;   // explosões por segundo na lenta (~750 rpm)
+                    return (Serra(giro, t) * 0.32f + Seno(giro * 2f, t) * 0.12f + lp * 0.9f) * 0.8f;
+                }, true);
+            }
+            case "buzina": return Criar(nome, 0.55f, (t, i) => (Quadrada(420f, t) * 0.5f + Quadrada(500f, t) * 0.5f) * 0.22f * Mathf.Clamp01(t * 60f) * Mathf.Clamp01((0.55f - t) * 30f));
+            case "bomba":
+            {
+                // bomba de combustível: motor elétrico zunindo + líquido correndo
+                float lp = 0f;
+                return Criar(nome, 2f, (t, i) => { lp += (Ruido() - lp) * 0.3f; return (Seno(120f, t) * 0.12f + Seno(240f, t) * 0.05f + lp * 0.35f) * 0.8f; }, true);
+            }
+            case "freio_mao": return Criar(nome, 0.35f, (t, i) => Ruido() * 0.3f * (0.5f + 0.5f * Mathf.Sign(Mathf.Sin(t * 2f * Mathf.PI * 38f))) * Mathf.Clamp01((0.35f - t) * 10f));
             case "ambiente_dentro":
             {
                 // Zumbido de ar-condicionado/lâmpadas + ar parado

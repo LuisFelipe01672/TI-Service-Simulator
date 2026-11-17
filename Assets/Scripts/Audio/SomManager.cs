@@ -143,6 +143,14 @@ public class SomManager : MonoBehaviour
         return fontes2D[0];
     }
 
+    // Clip de um som (arquivo em Resources/Sons ou gerado), para quem toca em loop na própria fonte (motor do carro)
+    public static AudioClip ClipDe(string nome)
+    {
+        if (instancia != null) return instancia.Clip(nome);
+        var c = Resources.Load<AudioClip>("Sons/" + nome);
+        return c != null ? c : SonsGerados.Gerar(nome);
+    }
+
     AudioClip Clip(string nome)
     {
         if (clips.TryGetValue(nome, out var c)) return c;

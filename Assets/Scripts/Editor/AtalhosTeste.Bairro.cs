@@ -98,6 +98,12 @@ public static partial class AtalhosTeste
 
         var casa = GameObject.Find("SpawnCasa");
         if (casa != null) Teleporte.MoverJogador(j.transform, casa.transform);   // começa ao lado da cama
+        // Etapa 9C: o carro fica na vaga de casa (estacionado na frente de um cliente, ele bloqueia a travessia a pé)
+        if (CarroTecnico.Instance != null && !CarroTecnico.NoCarro)
+        {
+            var vaga = Bairro.VagaDe(TipoEndereco.Casa);
+            CarroTecnico.Instance.Posicionar(vaga.centro, vaga.giro);
+        }
 
         var passos = new List<Passo>();
         void P(string nome, float x, float z, System.Action acao = null) => passos.Add(new Passo { nome = nome, alvo = new Vector3(x, 0, z), aoChegar = acao });

@@ -29,6 +29,13 @@ public static partial class AcoesFisicas
     {
         if (!e.impNaCaixa) return false;
         l.peca = "caixa";
+        if (e.impNoEscritorio)
+        {
+            l.Add(new AcaoFisica("Olhar o lugar da impressora", () =>
+                "O móvel está vazio: a impressora alugada ainda está na caixa, no seu escritório. Busque com o carro " +
+                "(porta-malas) e largue a caixa aqui na sala.") { observacao = true });
+            return true;
+        }
         l.Add(new AcaoFisica("Olhar a caixa", () =>
             "Caixa de papelão lacrada com fita, setas \"ESTE LADO PARA CIMA\" e a etiqueta de patrimônio da sua empresa. " +
             "Dentro: a impressora presa com calços de isopor, o toner inicial, o cabo de força e o manual.") { observacao = true });

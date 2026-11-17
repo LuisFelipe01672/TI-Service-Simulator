@@ -22,6 +22,7 @@ public static partial class MontarCenario
         MontarCasa();
         MontarBanheiro();
         MontarBairro();
+        MontarCarroEPosto();   // Etapa 9C
     }
 
     static void CriarMateriaisRua()

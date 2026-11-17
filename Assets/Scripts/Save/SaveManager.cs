@@ -31,6 +31,7 @@ public class SaveData
     public EventosAleatorios.Dados eventos;
     public EquipamentosUsados.Dados usados;
     public MissionManager.Dados atendimento;   // OS fechadas, estrelas e retornos em garantia (versão 4)
+    public CarroTecnico.Dados carro;           // Etapa 9C: onde o carro ficou, combustível, hodômetro e porta-malas (null = save antigo)
     public float saldo;
     public float energia = -1f;   // energia do técnico (-1 = save antigo, começa cheia)
     public float reputacao;
@@ -126,6 +127,7 @@ public class SaveManager : MonoBehaviour
             caixa = LivroCaixa.Exportar(),
             eventos = EventosAleatorios.Exportar(),
             usados = EquipamentosUsados.Exportar(),
+            carro = CarroTecnico.Exportar(),
             atendimento = MissionManager.Instance != null ? MissionManager.Instance.Exportar() : null,
             dia = DiaManager.Instance != null ? DiaManager.Instance.dia : Mathf.Max(1, DiaManager.DiaSalvo),
             equipe = FuncionarioManager.Instance != null
@@ -234,6 +236,7 @@ public class SaveManager : MonoBehaviour
         LivroCaixa.Iniciar();
         EventosAleatorios.Iniciar();
         EquipamentosUsados.Iniciar();
+        CarroTecnico.NovoJogo();
         MissionManager.dadosSalvos = null;
         MissionManager.Instance?.NovoJogo();
         GameEconomy.Instance?.DefinirSaldo(saldoInicial);
@@ -313,6 +316,7 @@ public class SaveManager : MonoBehaviour
         LivroCaixa.Carregar(data.caixa);
         EventosAleatorios.Carregar(data.eventos);
         EquipamentosUsados.Carregar(data.usados);
+        CarroTecnico.CarregarSalvo(data.carro);
         if (MissionManager.Instance != null) MissionManager.Instance.Carregar(data.atendimento);
         else MissionManager.dadosSalvos = data.atendimento;
         if (DiaManager.Instance != null) DiaManager.Instance.dia = DiaManager.DiaSalvo;

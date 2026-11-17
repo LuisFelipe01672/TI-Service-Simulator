@@ -217,6 +217,7 @@ public partial class GameUI
         foreach (var p in Bairro.Pedacos())
             Retangulo(p.tipo == TipoPiso.Asfalto ? "Asfalto" : "Calcada", p.area,
                 p.tipo == TipoPiso.Asfalto ? UIFactory.Hex("#2B2F36") : UIFactory.Hex("#9A968E"));
+        Retangulo("Posto", Bairro.TerrenoPosto, UIFactory.Hex("#4A4F57"));
         void Ponto(Vector3 pos, Color cor, float tam, string rotulo)
         {
             var r = Retangulo("Ponto", new Rect(pos.x, pos.z, 0f, 0f), cor);
@@ -232,6 +233,8 @@ public partial class GameUI
             bool destino = gps != null && gps.Ativo && gps.Destino.tipo == e.tipo;
             Ponto(e.porta, destino ? UIFactory.Sucesso : UIFactory.Alerta, destino ? 14 : 10, RotuloCurto(e.tipo));
         }
+        var carro = CarroTecnico.Instance;
+        if (carro != null && !CarroTecnico.NoCarro) Ponto(carro.transform.position, UIFactory.Hex("#3FA9F5"), 10, "carro");
         if (jogador != null) Ponto(jogador.transform.position, UIFactory.Destaque, 12, "você");
 
         if (gps != null && gps.Ativo && jogador != null)
@@ -262,7 +265,8 @@ public partial class GameUI
             case TipoEndereco.Coleta: return "coleta";
             case TipoEndereco.Contabilidade: return "contábil";
             case TipoEndereco.Clinica: return "clínica";
-            default: return "loja";
+            case TipoEndereco.Loja: return "loja";
+            default: return "posto";
         }
     }
 

@@ -10,7 +10,7 @@ using UnityEngine;
 public enum CondicaoUsado { Bom, DefeitoLeve, Sucata }
 public enum TipoUsado { Computador, Monitor, Impressora, Roteador, Switch, Notebook }
 public enum DefeitoUsado { Nenhum, Memoria, Fonte, Cilindro, Capacitor, FonteExterna, Bateria, Placa }
-public enum LocalUsado { Caixa, Chao, Bancada, Mao }
+public enum LocalUsado { Caixa, Chao, Bancada, Mao, Carro }   // Carro: no porta-malas (Etapa 9C)
 
 [System.Serializable]
 public class EquipUsado
@@ -33,7 +33,8 @@ public class EquipUsado
     public bool pecasAproveitadas;
     public LocalUsado local;
     public int patrimonio;       // 0 = sem etiqueta
-    public int vaga = -1;        // lugar no chão do escritório
+    public int vaga = -1;        // lugar no chão do escritório (100+ = vaga do porta-malas)
+    public bool naCaixa;         // Etapa 9C: levado com a caixa do lote ainda fechada (nas mãos ou no porta-malas)
 
     public bool PrecisaApagar => temDados && !dadosApagados;
     public string Etiqueta => patrimonio > 0 ? EquipamentosUsados.CodigoPatrimonio(patrimonio) : "";

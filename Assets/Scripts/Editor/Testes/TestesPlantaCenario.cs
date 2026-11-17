@@ -115,6 +115,11 @@ public class TestesPlantaCenario
         foreach (var x in e)
         {
             var xz = new Vector2(x.porta.x, x.porta.z);
+            if (x.tipo == TipoEndereco.Posto)
+            {
+                Assert.IsTrue(Bairro.TerrenoPosto.Contains(xz), $"O ponto do GPS do posto está fora do terreno: {x.porta}.");
+                continue;
+            }
             Assert.IsTrue(Bairro.Pedacos().Any(p => p.tipo == TipoPiso.Calcada && p.area.Contains(xz)),
                 $"A porta de {x.nome} ({x.Linha}) não está numa calçada: {x.porta}.");
         }
@@ -154,5 +159,87 @@ public class TestesPlantaCenario
         Assert.AreEqual(TipoEndereco.Contabilidade, Bairro.DoTipoSala(TipoSala.Contabilidade));
         Assert.AreEqual(TipoEndereco.Clinica, Bairro.DoTipoSala(TipoSala.Clinica));
         Assert.AreEqual(TipoEndereco.Loja, Bairro.DoTipoSala(TipoSala.Loja));
+    }
+
+    // ---------------- Etapa 9C: vagas e posto ----------------
+
+    // Retângulo que o carro ocupa estacionado (3,9 x 1,75 m), no plano x-z
+    static Rect AreaDoCarro(Bairro.Vaga v)
+    {
+        bool aoLongoDeZ = Mathf.Abs(Mathf.Cos(v.giro * Mathf.Deg2Rad)) > 0.5f;
+        float mx = aoLongoDeZ ? 0.875f : 1.95f, mz = aoLongoDeZ ? 1.95f : 0.875f;
+        return Rect.MinMaxRect(v.centro.x - mx, v.centro.z - mz, v.centro.x + mx, v.centro.z + mz);
+    }
+
+    static bool CantosNoAsfalto(Rect r)
+    {
+        var asfalto = Bairro.Pedacos().Where(p => p.tipo == TipoPiso.Asfalto).Select(p => p.area).ToList();
+        foreach (var c in new[] { new Vector2(r.xMin, r.yMin), new Vector2(r.xMin, r.yMax), new Vector2(r.xMax, r.yMin), new Vector2(r.xMax, r.yMax) })
+            if (!asfalto.Any(a => a.Contains(c))) return false;
+        return true;
+    }
+
+    // Toda vaga na rua fica inteira no asfalto, encostada no meio-fio e no sentido da mão
+    [Test]
+    public void Vagas_NoAsfaltoJuntoAoMeioFio()
+    {
+        foreach (TipoEndereco t in System.Enum.GetValues(typeof(TipoEndereco)))
+        {
+            if (t == TipoEndereco.Posto) continue;
+            var v = Bairro.VagaDe(t);
+            var r = AreaDoCarro(v);
+            Assert.IsTrue(CantosNoAsfalto(r), $"A vaga de {t} ({r}) sai do asfalto.");
+            // Acácias: lado norte virado para o oeste; lado sul para o leste. Norte-sul: leste para o norte, oeste para o sul.
+            if (Mathf.Abs(v.centro.z - Bairro.AcaciasCentroZ) < Bairro.MeiaPista)
+            {
+                bool norte = v.centro.z > Bairro.AcaciasCentroZ;
+                Assert.AreEqual(norte ? 270f : 90f, v.giro, 0.1f, $"Vaga de {t} na contramão.");
+                float meioFio = norte ? Bairro.AcaciasAsfaltoZ0 : Bairro.AcaciasAsfaltoZ1;
+                Assert.That(Mathf.Abs(v.centro.z - meioFio), Is.EqualTo(Bairro.DistMeioFio).Within(0.05f), $"Vaga de {t} longe do meio-fio.");
+            }
+            else
+            {
+                bool leste = v.centro.x > (Mathf.Abs(v.centro.x - Bairro.IpeX) < 5f ? Bairro.IpeX : Bairro.JacarandasX);
+                Assert.AreEqual(leste ? 0f : 180f, v.giro, 0.1f, $"Vaga de {t} na contramão.");
+            }
+        }
+    }
+
+    // Ninguém estaciona em cima da faixa de pedestre nem no cruzamento; a vaga fica perto da porta
+    [Test]
+    public void Vagas_ForaDaFaixaEPertoDaPorta()
+    {
+        var faixas = new List<Rect>();
+        foreach (float x in new[] { 0f, Bairro.IpeX - Bairro.MeiaPista - 2f, Bairro.JacarandasX + Bairro.MeiaPista + 2f })
+            faixas.Add(Rect.MinMaxRect(x - 1.5f, Bairro.AcaciasAsfaltoZ1, x + 1.5f, Bairro.AcaciasAsfaltoZ0));
+        foreach (float x in new[] { Bairro.IpeX, Bairro.JacarandasX })
+            faixas.Add(Rect.MinMaxRect(x - Bairro.MeiaPista, Bairro.AcaciasAsfaltoZ1, x + Bairro.MeiaPista, Bairro.AcaciasAsfaltoZ0));   // cruzamento
+        foreach (var e in Bairro.Enderecos)
+        {
+            var v = Bairro.VagaDe(e.tipo);
+            var r = AreaDoCarro(v);
+            foreach (var f in faixas) Assert.IsFalse(r.Overlaps(f), $"A vaga de {e.tipo} invade a faixa de pedestre ou o cruzamento ({f}).");
+            float d = Vector2.Distance(new Vector2(v.centro.x, v.centro.z), new Vector2(e.porta.x, e.porta.z));
+            Assert.That(d, Is.LessThan(7f), $"A vaga de {e.tipo} fica a {d:0.0} m da porta.");
+        }
+    }
+
+    // O posto fica num terreno livre: sem rua, calçada ou cômodo dentro; bomba e vaga no terreno; entrada rebaixada
+    [Test]
+    public void Posto_NoTerrenoLivreComEntrada()
+    {
+        var t = Bairro.TerrenoPosto;
+        foreach (var p in Bairro.Pedacos())
+            Assert.IsFalse(Encolher(t, 0.01f).Overlaps(p.area), $"O posto invade {p.tipo} da {p.rua} ({p.area}).");
+        foreach (var c in Comodos())
+            Assert.IsFalse(Encolher(t, 0.01f).Overlaps(c.Planta), $"O posto invade {c.nome}.");
+        Assert.IsTrue(t.Contains(new Vector2(Bairro.BombaPosto.x, Bairro.BombaPosto.z)), "Bomba fora do terreno.");
+        var vaga = Bairro.VagaDe(TipoEndereco.Posto);
+        var r = AreaDoCarro(vaga);
+        Assert.IsTrue(t.Contains(r.min) && t.Contains(r.max), "A vaga da bomba sai do terreno do posto.");
+        Assert.That(Vector3.Distance(vaga.centro, Bairro.BombaPosto), Is.LessThan(PostoCombustivel.DistanciaBomba), "A vaga fica longe da bomba.");
+        // guia rebaixada: dá para ir do asfalto da Jacarandás ao terreno sem subir calçada
+        var meio = new Vector2(Bairro.FrenteLesteJacarandas - 0.5f, (Bairro.PostoZ0 + Bairro.PostoZ1) / 2f);
+        Assert.IsTrue(Bairro.Pedacos().Any(p => p.tipo == TipoPiso.Asfalto && p.area.Contains(meio)), "Falta a guia rebaixada na frente do posto.");
     }
 }

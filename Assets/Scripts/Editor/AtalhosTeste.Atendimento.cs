@@ -110,7 +110,7 @@ public static partial class AtalhosTeste
         if (ch == null) { Debug.LogWarning("[Teste] Nenhum retorno aberto (use o atalho 8)."); return; }
         if (mm.chamadoAtivo != null) mm.AbandonarChamado();
         ch.exigeNota = false;
-        mm.AceitarChamado(ch);
+        AceitarComTeleporte(mm, ch);
         Debug.Log($"[Teste] Retorno aceito: {ch.nomeCliente} — {ch.descricaoProblema} | SLA {SLA.Texto(ch.prioridade)} | causa: {CatalogoProblemas.CausaRaizPendente(ch.problema, mm.Estado)}");
     }
 
@@ -133,7 +133,7 @@ public static partial class AtalhosTeste
         var ch = mm?.chamadosDisponiveis.Find(c => c.tutorial);
         if (ch == null) { Debug.LogWarning("[Teste] Sem chamado guiado (só aparece em jogo novo, antes do primeiro chamado)."); return; }
         if (mm.chamadoAtivo != null) mm.AbandonarChamado();
-        mm.AceitarChamado(ch);
+        AceitarComTeleporte(mm, ch);
         Debug.Log("[Teste] Guia: " + TutorialPrimeiroDia.Passo(ch));
     }
 

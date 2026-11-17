@@ -134,13 +134,26 @@ chegar lá (❓). Ideia do dono: partir de uma **cidade já pronta** e adaptar �
 A primeira ordem (etapas 0–8) terminou e está no GitHub. Nesta leva, cada etapa continua em conversa própria,
 testada no Play, com testes automáticos, commit local e exe; push só com pedido.
 
-9. ⬜ **Cidade** (Fase 6), partindo de algo **pronto** (regra "pronto antes do zero"):
-   - 9A ⬜ Pesquisa e escolha: comparar com fotos 2–3 caminhos — traçado real de um bairro brasileiro
-     (OpenStreetMap, crédito obrigatório) vestido com fachadas/calçadas/postes/fios brasileiros; pacote de cidade
-     pronto (Asset Store fica fora do Git); modelos CC0/CC-BY. Critérios: cara de Brasil, peso para a placa de 4 GB,
-     licença. **O dono escolhe** antes de construir.
-   - 9B ⬜ Bairro com endereços: casa, sede, fornecedor, ponto de coleta e os clientes (contabilidade, clínica, loja)
-     viram prédios de verdade na rua — chegar andando/dirigindo, sem teleporte; GPS no celular.
+9. 🟡 **Cidade** (Fase 6), partindo de algo **pronto** (regra "pronto antes do zero"):
+   - 9A ✅ Pesquisa e escolha (17/11/2026): comparados traçado do OpenStreetMap, pacote da Asset Store (favela
+     low poly, fora do Git) e modelos CC-BY/CC0. **O dono escolheu os modelos CC-BY** (casas e sobrados brasileiros
+     do Sketchfab + texturas CC0 do ambientCG), com ruas, postes e fios feitos por código.
+   - 9B ✅ Bairro com endereços (17/11/2026), tudo a pé e **sem teleporte**:
+     - Planta única em `Scripts/Cidade/Bairro.cs` (ruas, calçadas, lotes, endereços): Rua das Acácias (escritório,
+       casa, contabilidade, clínica, loja) cortada pela Rua Ipê Amarelo (ecoponto, hospital) e pela Rua dos
+       Jacarandás (distribuidora de peças). O cenário, o GPS e os testes leem dela.
+     - Salas dos clientes viraram prédios com a porta na calçada (a loja do outro lado da rua, girada); portas
+       abrem com E; fachada com platibanda, caixa d'água azul e placa. Clínica num prédio de dois andares.
+     - 22 casas e sobrados do Sketchfab nos lotes, orelhão, hospital do bairro; postes de concreto com cruzeta,
+       transformador, caixa de emenda e fios caindo em curva; muro com portão de grade na casa do jogador.
+     - **GPS** (`Cidade/GPS.cs`): aceitar um chamado liga o GPS com o endereço do cliente (canto inferior esquerdo:
+       distância, "vire à direita", rua atual) e uma coluna verde na porta; "Você chegou" a 3 m. App **Mapa** no
+       celular com as ruas, os endereços, você e "Ir" em cada endereço.
+     - Atalhos de teste continuam levando direto à porta do cliente (`MissionManager.TeleporteDeTeste`);
+       *Teste (Play)/Bairro/1* anda de verdade da casa ao escritório e aos 3 clientes (59 s, sem travar).
+     - Medido: exe 222 → 243 MB; FPS no editor com × sem o bairro novo: quarto 181 × 210, porta do escritório 180 ×
+       184, esquina da Ipê 109 × 119. 240 testes passando.
+     - Ainda é só fachada: distribuidora de peças, ecoponto e hospital (sem interior nem uso no jogo).
    - 9C ⬜ Carro dirigível (entrar/sair, 1ª pessoa, física simples), estacionar, porta-malas com caixas e escada,
      combustível e tempo de deslocamento cobrado no orçamento.
    - 9D ⬜ Vida na rua: trânsito simples, pedestres, dia/noite; clima (chuva atrasa serviço externo) mais tarde.
@@ -257,7 +270,8 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 - ⬜ Remoto: mais casos de software (senha, e-mail, impressora padrão) quando entrarem no catálogo
 - ✅ **Celular do técnico** (tecla C): barra de status, relógio, Mensagens (cada chamado chega como conversa do
       contato, com "Vou aí!" que aceita), Banco (saldo e movimentações), aviso de mensagem nova
-- ⬜ Celular: ligações de triagem (perguntas por telefone), orçamentos, GPS (Fase 6), fotos do problema
+- ✅ Celular: GPS e mapa do bairro (Etapa 9B)
+- ⬜ Celular: ligações de triagem (perguntas por telefone), orçamentos, fotos do problema
 - ✅ **Energia do técnico** no HUD: cai com as horas e o trabalho; cansado anda/trabalha mais devagar; dormir cedo
       recupera tudo (tarde ou no escritório, menos); café na cozinha (+20, até 3 por dia) — salva no save
 - ✅ Comer (geladeira) como outra forma de recuperar energia
@@ -372,7 +386,8 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
 ## Fase 6 — Cidade e deslocamento (dirigindo de verdade)
 Decisão do dono: **dirigir de verdade** (sem viagem rápida por mapa).
 - ⬜ Carro do técnico dirigível (entrar/sair, volante, câmera em 1ª pessoa, física simples com WheelCollider)
-- ⬜ Cidade com ruas ligando casa, sede, fornecedores, ponto de coleta de lixo eletrônico e clientes; GPS no celular
+- ✅ Cidade com ruas ligando casa, sede, fornecedores, ponto de coleta de lixo eletrônico e clientes; GPS no celular
+      (Etapa 9B: bairro a pé; fornecedor e ecoponto ainda só fachada)
 - ⬜ Combustível (posto), estacionar na frente do cliente, carregar caixas/equipamentos/escada no porta-malas
 - ⬜ Vários endereços (clínica, contabilidade, loja, escola, prefeitura, condomínio) — cada cliente com sala própria
 - ⬜ Trânsito simples (carros NPC, semáforos); **clima**: chuva atrasa e impede serviço externo, temporal traz raios

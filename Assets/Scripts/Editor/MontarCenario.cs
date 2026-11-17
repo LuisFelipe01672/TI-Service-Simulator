@@ -80,12 +80,12 @@ public static partial class MontarCenario
             if (go != null) { Undo.RecordObject(go, "Esconder cenário antigo"); go.SetActive(false); }
         }
 
-        // Gramado em volta das salas (é o que se vê pelas janelas)
-        Caixa(raiz, "Gramado", new Vector3(20f, -0.07f, 0f), new Vector3(160f, 0.1f, 80f), mGrama, 4f);
+        // Gramado sob o bairro inteiro (terrenos baldios e quintais; Cidade/Bairro.cs)
+        Caixa(raiz, "Gramado", new Vector3(0f, -0.07f, (Bairro.LimiteSul + Bairro.LimiteNorte) / 2f),
+            new Vector3(2f * Bairro.LimiteX + 4f, 0.1f, Bairro.LimiteNorte - Bairro.LimiteSul + 4f), mGrama, 4f);
 
-        portasAbrem = true;            // escritório: a porta abre e dá para a rua
+        portasAbrem = true;            // todas as portas abrem: chega-se andando pela rua (Etapa 9B)
         var spawn = MontarEscritorio();
-        portasAbrem = false;           // cliente: a porta leva de volta (Teleporte)
         CriarMateriaisSalas();
         MontarCliente(spawn);          // escritório de contabilidade (Etapa 3: um de três clientes)
         MontarClinica(spawn);
@@ -150,7 +150,7 @@ public static partial class MontarCenario
     static void MontarCliente(Transform spawnEscritorio)
     {
         // Escritório de contabilidade de 10 x 8 m longe do quartinho, com carpete (o nome "Cliente" fica: o jogo o procura)
-        var sala = Sala("Cliente", new Vector3(40, 0, 0), 10f, 8f, mCarpete, 1.5f, mParedeCliente,
+        var sala = Sala("Cliente", Bairro.CentroContabilidade, 10f, 8f, mCarpete, 1.5f, mParedeCliente,
             norte: new[] { Janela(-0.4f, 1.4f), Janela(3.3f, 1.4f) },
             sul: new[] { Porta(0f) },
             leste: new[] { Janela(-1.8f, 1.4f) },

@@ -11,8 +11,10 @@ using UnityEngine;
 // roteador e computador com a frente em -z; cadeira de jantar e personagens com a frente em +z.
 public static partial class MontarCenario
 {
-    internal static Vector3 CentroClinica => new Vector3(40f, 0f, 14f);
-    internal static Vector3 CentroLoja => new Vector3(40f, 0f, -14f);
+    // Endereços no bairro (Cidade/Bairro.cs): contabilidade e clínica ao norte da Rua das Acácias, loja ao sul
+    internal static Vector3 CentroContabilidade => Bairro.CentroContabilidade;
+    internal static Vector3 CentroClinica => Bairro.CentroClinica;
+    internal static Vector3 CentroLoja => Bairro.CentroLoja;
     // Textura de piso cerâmico (ambientCG, CC0). Sem ela, o piso fica só com a cor.
     const string TexturaPisoCeramico = "Tiles002";   // porcelanato branco 60 x 60
 
@@ -222,11 +224,14 @@ public static partial class MontarCenario
             aImp, Caminho(sala, "Impressora", new Vector2(2.1f, 1.05f), new Vector2(2.75f, 2.65f)),
             aRot, Caminho(sala, "Roteador", new Vector2(2.1f, 1.05f), new Vector2(3.85f, 1.45f)),
             aPc, Caminho(sala, "Computador", new Vector2(2.1f, 1.05f), new Vector2(3.65f, 1.0f), new Vector2(3.8f, 0.4f)));
+
+        // A loja fica do lado sul da rua: gira inteira (com pontos e caminhos) para a porta e as vitrines darem para a rua
+        sala.rotation = Quaternion.Euler(0f, Bairro.GiroLoja, 0f);
     }
 
     // ---------------- Peças comuns das salas ----------------
 
-    // Dados da sala para o jogo: chegada pela porta sul, recepção, pontos e caminhos dos equipamentos e a porta de volta
+    // Dados da sala para o jogo: chegada pela porta sul, recepção, pontos e caminhos dos equipamentos
     static void DadosSala(Transform sala, TipoSala tipo, Transform spawnEscritorio, Vector2 recepcao,
         Transform aImp, Transform[] cImp, Transform aRot, Transform[] cRot, Transform aPc, Transform[] cPc)
     {
@@ -240,14 +245,7 @@ public static partial class MontarCenario
         s.ancoraImpressora = aImp; s.caminhoImpressora = cImp;
         s.ancoraRoteador = aRot; s.caminhoRoteador = cRot;
         s.ancoraComputador = aPc; s.caminhoComputador = cPc;
-
-        var porta = new GameObject("Porta_VoltarEscritorio");
-        porta.transform.SetParent(sala, false);
-        porta.transform.localPosition = new Vector3(0, 1f, -3.75f);
-        var tp = porta.AddComponent<Teleporte>();
-        tp.destino = spawnEscritorio;
-        tp.rotulo = "Voltar ao escritório";
-        tp.distanciaInteracao = 1.8f;
+        // Sem porta de teleporte (Etapa 9B): a porta da sala abre e o técnico volta andando pela rua
     }
 
     static Transform[] Caminho(Transform sala, string nome, params Vector2[] pontos)

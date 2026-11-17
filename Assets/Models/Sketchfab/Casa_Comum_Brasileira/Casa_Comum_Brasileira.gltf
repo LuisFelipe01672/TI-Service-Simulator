@@ -1,0 +1,833 @@
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0",
+    "extras": {
+      "author": "M4theus (https://sketchfab.com/M4theus)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/casa-comum-brasileira-bairro-gratis-948325fbf7af48fa9891bd48f6d00922",
+      "title": "Casa Comum Brasileira - Bairro - Grátis -"
+    }
+  },
+  "accessors": [
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 131,
+      "max": [
+        2.1993558406829834,
+        10.50735855102539,
+        4.502401828765869
+      ],
+      "min": [
+        -4.4961934089660645,
+        -1.4989509582519531,
+        -1.4998507499694824
+      ],
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 131,
+      "bufferView": 0,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 131,
+      "bufferView": 0,
+      "byteOffset": 24
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 131,
+      "bufferView": 0,
+      "byteOffset": 32
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5125,
+      "count": 225,
+      "bufferView": 1,
+      "byteOffset": 0
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5125,
+      "count": 225,
+      "bufferView": 1,
+      "byteOffset": 900
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5125,
+      "count": 12,
+      "bufferView": 1,
+      "byteOffset": 1800
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5125,
+      "count": 348,
+      "bufferView": 1,
+      "byteOffset": 1848
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5125,
+      "count": 378,
+      "bufferView": 1,
+      "byteOffset": 3240
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5125,
+      "count": 576,
+      "bufferView": 1,
+      "byteOffset": 4752
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5125,
+      "count": 576,
+      "bufferView": 1,
+      "byteOffset": 7056
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5125,
+      "count": 66,
+      "bufferView": 1,
+      "byteOffset": 9360
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 123,
+      "max": [
+        2.1993558406829834,
+        10.50735855102539,
+        4.502401828765869
+      ],
+      "min": [
+        1.2986763715744019,
+        -1.4989509582519531,
+        -1.4998507499694824
+      ],
+      "bufferView": 2,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 123,
+      "bufferView": 2,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 123,
+      "bufferView": 2,
+      "byteOffset": 24
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 123,
+      "bufferView": 2,
+      "byteOffset": 32
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 8,
+      "max": [
+        2.1993558406829834,
+        10.50735855102539,
+        4.502401828765869
+      ],
+      "min": [
+        -4.4961934089660645,
+        -0.9651094675064087,
+        -1.4998507499694824
+      ],
+      "bufferView": 3,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 8,
+      "bufferView": 3,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 8,
+      "bufferView": 3,
+      "byteOffset": 24
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 8,
+      "bufferView": 3,
+      "byteOffset": 32
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 200,
+      "max": [
+        0.28309696912765503,
+        1,
+        1.433262825012207
+      ],
+      "min": [
+        -6.00837516784668,
+        -3.6407103538513184,
+        -0.06357970833778381
+      ],
+      "bufferView": 4,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 200,
+      "bufferView": 4,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 200,
+      "bufferView": 4,
+      "byteOffset": 24
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 132,
+      "max": [
+        1,
+        66.99097442626953,
+        1
+      ],
+      "min": [
+        -1.000013828277588,
+        -1,
+        -37.355918884277344
+      ],
+      "bufferView": 5,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 132,
+      "bufferView": 5,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 132,
+      "bufferView": 5,
+      "byteOffset": 24
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 255,
+      "max": [
+        0.5730709433555603,
+        0.5730710625648499,
+        0.636386513710022
+      ],
+      "min": [
+        -0.5730710625648499,
+        -0.5730709433555603,
+        -0.27097052335739136
+      ],
+      "bufferView": 6,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 255,
+      "bufferView": 6,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 255,
+      "bufferView": 6,
+      "byteOffset": 24
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 255,
+      "max": [
+        0.5730709433555603,
+        0.5730710625648499,
+        0.636386513710022
+      ],
+      "min": [
+        -0.5730710625648499,
+        -0.5730709433555603,
+        -0.27097052335739136
+      ],
+      "bufferView": 7,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 255,
+      "bufferView": 7,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 255,
+      "bufferView": 7,
+      "byteOffset": 24
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 44,
+      "max": [
+        1,
+        6.933168888092041,
+        0
+      ],
+      "min": [
+        -6.631407737731934,
+        -5.050644874572754,
+        -0.2136760652065277
+      ],
+      "bufferView": 8,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 44,
+      "bufferView": 8,
+      "byteOffset": 12
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 44,
+      "bufferView": 8,
+      "byteOffset": 24
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 5240,
+      "byteStride": 40,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 5240,
+      "byteLength": 9624,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 14864,
+      "byteLength": 4920,
+      "byteStride": 40,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 19784,
+      "byteLength": 320,
+      "byteStride": 40,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 20104,
+      "byteLength": 6400,
+      "byteStride": 32,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 26504,
+      "byteLength": 4224,
+      "byteStride": 32,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 30728,
+      "byteLength": 8160,
+      "byteStride": 32,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 38888,
+      "byteLength": 8160,
+      "byteStride": 32,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 47048,
+      "byteLength": 1408,
+      "byteStride": 32,
+      "target": 34962
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "source": 0,
+      "sampler": 0
+    },
+    {
+      "source": 1,
+      "sampler": 0
+    },
+    {
+      "source": 2,
+      "sampler": 0
+    }
+  ],
+  "images": [
+    {
+      "mimeType": "image/png",
+      "uri": "baseColor_1.png"
+    },
+    {
+      "mimeType": "image/png",
+      "uri": "baseColor_2.png"
+    },
+    {
+      "mimeType": "image/png",
+      "uri": "baseColor_3.png"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "Casa_Comum_Brasileira.bin",
+      "byteLength": 48456
+    }
+  ],
+  "materials": [
+    {
+      "name": "cano_casa__0",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "roughnessFactor": 0.6,
+        "metallicFactor": 0
+      }
+    },
+    {
+      "name": "parede_casa",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.0228572125172191,
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        }
+      }
+    },
+    {
+      "name": "parede_fachada",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "roughnessFactor": 0.8211145618000169,
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 1
+        }
+      }
+    },
+    {
+      "name": "portao_casa",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.236191196011264,
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "roughnessFactor": 0.8335172449875916,
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 2
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "casa_simples_parede_casa_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TEXCOORD_0": 2,
+            "TEXCOORD_1": 3
+          },
+          "mode": 4,
+          "material": 1,
+          "indices": 4
+        }
+      ]
+    },
+    {
+      "name": "casa_simples_parede_fachada_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 13,
+            "POSITION": 12,
+            "TEXCOORD_0": 14,
+            "TEXCOORD_1": 15
+          },
+          "mode": 4,
+          "material": 2,
+          "indices": 5
+        }
+      ]
+    },
+    {
+      "name": "casa_simples_portao_casa_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 17,
+            "POSITION": 16,
+            "TEXCOORD_0": 18,
+            "TEXCOORD_1": 19
+          },
+          "mode": 4,
+          "material": 3,
+          "indices": 6
+        }
+      ]
+    },
+    {
+      "name": "techado_casa_parede_fachada_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 21,
+            "POSITION": 20,
+            "TEXCOORD_0": 22
+          },
+          "mode": 4,
+          "material": 2,
+          "indices": 7
+        }
+      ]
+    },
+    {
+      "name": "cano_casa__0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 24,
+            "POSITION": 23,
+            "TEXCOORD_0": 25
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 8
+        }
+      ]
+    },
+    {
+      "name": "caixa_agua_parede_casa_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 27,
+            "POSITION": 26,
+            "TEXCOORD_0": 28
+          },
+          "mode": 4,
+          "material": 1,
+          "indices": 9
+        }
+      ]
+    },
+    {
+      "name": "caixa_agua.001_parede_casa_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 30,
+            "POSITION": 29,
+            "TEXCOORD_0": 31
+          },
+          "mode": 4,
+          "material": 1,
+          "indices": 10
+        }
+      ]
+    },
+    {
+      "name": "calcada_casa_portao_casa_0",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 33,
+            "POSITION": 32,
+            "TEXCOORD_0": 34
+          },
+          "mode": 4,
+          "material": 3,
+          "indices": 11
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Sketchfab_model",
+      "rotation": [
+        -0.7071067811865475,
+        0,
+        0,
+        0.7071067811865476
+      ],
+      "children": [
+        1
+      ]
+    },
+    {
+      "name": "a3cd72350822448288d101483bdb9b4b.fbx",
+      "rotation": [
+        0.7071067811865475,
+        0,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.009999999776482582,
+        0.009999999776482582,
+        0.009999999776482582
+      ],
+      "children": [
+        2
+      ]
+    },
+    {
+      "name": "RootNode",
+      "children": [
+        3,
+        7,
+        9,
+        11,
+        13,
+        15
+      ]
+    },
+    {
+      "name": "casa_simples",
+      "translation": [
+        0,
+        184.63226318359375,
+        0
+      ],
+      "rotation": [
+        -0.7071068387877038,
+        0,
+        0,
+        0.7071067235853866
+      ],
+      "scale": [
+        100,
+        100.00000000000001,
+        100.00000000000001
+      ],
+      "children": [
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "name": "casa_simples_parede_casa_0",
+      "mesh": 0
+    },
+    {
+      "name": "casa_simples_parede_fachada_0",
+      "mesh": 1
+    },
+    {
+      "name": "casa_simples_portao_casa_0",
+      "mesh": 2
+    },
+    {
+      "name": "techado_casa",
+      "translation": [
+        136.24386596679688,
+        321.71954345703125,
+        -232.050537109375
+      ],
+      "rotation": [
+        -0.7071068387877038,
+        0,
+        0,
+        0.7071067235853866
+      ],
+      "scale": [
+        100,
+        100.00000000000001,
+        100.00000000000001
+      ],
+      "children": [
+        8
+      ]
+    },
+    {
+      "name": "techado_casa_parede_fachada_0",
+      "mesh": 3
+    },
+    {
+      "name": "cano_casa",
+      "translation": [
+        162.9224090576172,
+        313.0169982910156,
+        130.47206115722656
+      ],
+      "rotation": [
+        -0.7071067544940086,
+        0,
+        0,
+        0.7071068078790854
+      ],
+      "scale": [
+        7.1811370849609375,
+        7.1811370849609375,
+        7.1811370849609375
+      ],
+      "children": [
+        10
+      ]
+    },
+    {
+      "name": "cano_casa__0",
+      "mesh": 4
+    },
+    {
+      "name": "caixa_agua",
+      "translation": [
+        -349.7727966308594,
+        673.743408203125,
+        -452.6231689453125
+      ],
+      "rotation": [
+        -0.7071068387877039,
+        0,
+        0,
+        0.7071067235853866
+      ],
+      "scale": [
+        146.77203369140625,
+        146.77203369140625,
+        146.77203369140625
+      ],
+      "children": [
+        12
+      ]
+    },
+    {
+      "name": "caixa_agua_parede_casa_0",
+      "mesh": 5
+    },
+    {
+      "name": "caixa_agua.001",
+      "translation": [
+        -151.35980224609375,
+        673.743408203125,
+        -452.6231689453125
+      ],
+      "rotation": [
+        -0.7071068387877039,
+        0,
+        0,
+        0.7071067235853866
+      ],
+      "scale": [
+        146.77203369140625,
+        146.77203369140625,
+        146.77203369140625
+      ],
+      "children": [
+        14
+      ]
+    },
+    {
+      "name": "caixa_agua.001_parede_casa_0",
+      "mesh": 6
+    },
+    {
+      "name": "calcada_casa",
+      "translation": [
+        223.8280792236328,
+        34.366966247558594,
+        -357.0362854003906
+      ],
+      "rotation": [
+        -0.7071068387877038,
+        0,
+        0,
+        0.7071067235853866
+      ],
+      "scale": [
+        100,
+        100.00000000000001,
+        100.00000000000001
+      ],
+      "children": [
+        16
+      ]
+    },
+    {
+      "name": "calcada_casa_portao_casa_0",
+      "mesh": 7
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Sketchfab_Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

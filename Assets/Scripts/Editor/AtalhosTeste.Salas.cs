@@ -42,12 +42,20 @@ public static partial class AtalhosTeste
         c.descricaoProblema = p.descricao;
         if (c.personalidade == Personalidade.Confuso) c.personalidade = Personalidade.Tranquilo;
         GameUI.Instance?.FecharModal();
-        mm.AceitarChamado(c);
+        AceitarComTeleporte(mm, c);
         var sala = SalaCliente.Atual;
         var eq = EquipamentoDoTipo(equipamento);
         Debug.Log($"[Teste] Chamado de {nome} aceito ({p.solucao}) → sala {(sala != null ? sala.Nome : "?")} | " +
                   $"{equipamento} em {(eq != null ? eq.transform.position.ToString("F2") : "?")} | contato {c.contato}");
         FocarJogo();
+    }
+
+    // Atalho de teste: aceita o chamado e leva o técnico direto à porta do cliente (no jogo ele vai andando, com GPS)
+    static void AceitarComTeleporte(MissionManager mm, Chamado c)
+    {
+        MissionManager.TeleporteDeTeste = true;
+        try { mm.AceitarChamado(c); }
+        finally { MissionManager.TeleporteDeTeste = false; }
     }
 
     static Equipamento EquipamentoDoTipo(TipoEquipamento t)

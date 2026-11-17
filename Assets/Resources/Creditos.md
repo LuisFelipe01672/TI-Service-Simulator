@@ -30,6 +30,12 @@ Alteração comum a todos os modelos do Sketchfab: convertidos de GLB para glTF 
 | `Assets/Models/Sketchfab/Pia_Coluna/` | [Sink](https://sketchfab.com/3d-models/sink-a278d63585494921906ab3500c421ff7) | [lagesnpiet](https://sketchfab.com/lagesnpiet) | Texturas em 1024 px; banheiro da casa |
 | `Assets/Models/Sketchfab/Multimetro/` | [MultiMeter - FREE](https://sketchfab.com/3d-models/multimeter-free-79ac684e66b34554ba869bd2fc3c2653) | [Mathieu Godard](https://sketchfab.com/Mathieu.Godard) | Texturas em 1024 px; logotipo e modelo do fabricante apagados da textura; visor apagado (o número vem do jogo) |
 | `Assets/Models/Sketchfab/Pendrive/` | [USB Flash Drive](https://sketchfab.com/3d-models/usb-flash-drive-b7cfb7e2809e4c64afb713140c982489) | [Artik](https://sketchfab.com/artikdev) | Tampa escondida no jogo |
+| `Assets/Models/Sketchfab/Casa_Comum_Brasileira/` | [Casa Comum Brasileira - Bairro - Grátis](https://sketchfab.com/3d-models/casa-comum-brasileira-bairro-gratis-948325fbf7af48fa9891bd48f6d00922) | [M4theus](https://sketchfab.com/M4theus) | Texturas em 1024 px; casas vizinhas do bairro |
+| `Assets/Models/Sketchfab/Casa_Terrea/` | [Casa Brasileira](https://sketchfab.com/3d-models/casa-brasileira-7164cfffd09743899278ab52f688e566) | [SnowziN2](https://sketchfab.com/SnowziN2) | Texturas em 1024 px; casas vizinhas do bairro |
+| `Assets/Models/Sketchfab/Sobrado_Porta_Enrolar/` | [Favela brasileira](https://sketchfab.com/3d-models/favela-brasileira-b9797c38e4e645b39f0cda8c05bebd5f) | [iagoArt3D](https://sketchfab.com/iagoDev) | Texturas em 1024 px; escala reduzida (7,5 m de altura); fachada da distribuidora de peças com placa própria |
+| `Assets/Models/Sketchfab/Sobrado_Tijolo/` | [Favela brasileira 2](https://sketchfab.com/3d-models/favela-brasileira-2-c87942d7d3ba43648920c7f7cd451afc) | [iagoArt3D](https://sketchfab.com/iagoDev) | Texturas em 1024 px; escala reduzida (9 m de altura); fachada do ecoponto com placa própria |
+| `Assets/Models/Sketchfab/Predio_Hospital/` | [Hospital](https://sketchfab.com/3d-models/hospital-f91637b01dde4749aafd56ea37fa3b21) | [iagoArt3D](https://sketchfab.com/iagoDev) | Texturas em 1024 px; escala reduzida; hospital do bairro (só a fachada) |
+| `Assets/Models/Sketchfab/Orelhao/` | [Orelhao](https://sketchfab.com/3d-models/orelhao-78a74f8c4fd940dfb8cf825c5f57d05d) | [herdyanasofia](https://sketchfab.com/herdyanasofia) | Na calçada da Rua das Acácias |
 
 ## Modelos e texturas CC0 (domínio público, crédito opcional)
 
@@ -42,7 +48,8 @@ Alteração comum a todos os modelos do Sketchfab: convertidos de GLB para glTF 
 
 - Móveis e objetos: **Kenney** — Furniture Kit (https://kenney.nl)
 - Texturas PBR: **ambientCG** (https://ambientcg.com) — em `Assets/Textures/ambientCG/`: Carpet016, OfficeCeiling005,
-  PaintedPlaster017, Wood049, WoodFloor051, Tiles002 (porcelanato da clínica, loja e banheiro), Tiles107 (azulejo do banheiro)
+  PaintedPlaster017, Wood049, WoodFloor051, Tiles002 (porcelanato da clínica, loja e banheiro), Tiles107 (azulejo do banheiro), Asphalt031 (asfalto),
+  Concrete034 (calçadas e postes)
 
 ## Personagens e animações
 

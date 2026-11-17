@@ -104,6 +104,16 @@ Atalhos no Play: **TI Service → Teste (Play)** (aperte Esc antes, para o menu 
 - [x] Roteador e monitor do cliente com a frente para a sala; peças respondem à mira
 - [ ] Resolver um chamado inteiro só pelas peças (roteador e computador)
 
+## 7b. Bairro a pé e GPS (Etapa 9B, 17/11)
+Atalhos: **Teste (Play) → Bairro** (1: anda sozinho casa → escritório → 3 clientes → casa; 2: fotos do GPS e do
+mapa; 3: FPS com e sem o bairro). Fotos do cenário sem Play: **Teste gráfico → Fotos do bairro (cena aberta)**.
+- [x] Andar (automático) da casa ao escritório, à contabilidade, à loja, à distribuidora, à clínica e de volta, sem travar
+- [x] Aceitar chamado não teleporta: o GPS liga com o endereço do cliente e desliga ao chegar ("Você chegou")
+- [x] Celular → Mapa: ruas, endereços, você; "Ir" liga o GPS para o endereço escolhido
+- [ ] Jogando com teclado e mouse: chamado na clínica, ir a pé seguindo o GPS, resolver e voltar para casa
+- [ ] À noite: postes acesos ao longo das três ruas, sem pesar (FPS)
+- [ ] Conferir se alguma casa vizinha ficou torta, flutuando ou com a frente para o lado errado
+
 ## 8. Testado em 13/11 (tarde) — sistemas
 - [x] Empresa: MEI, ordem das seções, empréstimo, sala 20 m², estações 1/3
 - [x] Negócios: foco (recusa por 30 dias), parcerias (negociar/solicitar/aprovada), projeto inteiro (levantamento → orçamento → material → 8 h → entregue → NFS-e → boleto pago)

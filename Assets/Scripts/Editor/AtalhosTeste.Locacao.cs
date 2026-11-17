@@ -76,7 +76,7 @@ public static partial class AtalhosTeste
         var ch = mm.ChamadoDeServico(c.id, tipo);
         if (ch == null) { Debug.LogWarning("[Teste] Chamado de " + tipo + " não apareceu na lista."); return; }
         if (EmpresaManager.Instance != null && !EmpresaManager.Instance.TemCnpj) ch.exigeNota = false;   // save de teste sem CNPJ
-        mm.AceitarChamado(ch);
+        AceitarComTeleporte(mm, ch);
         if (mm.chamadoAtivo != ch) { Debug.LogWarning("[Teste] O chamado não foi aceito."); return; }
         passoLocacao = 0;
         IrAoEquipamento(TipoEquipamento.Impressora);

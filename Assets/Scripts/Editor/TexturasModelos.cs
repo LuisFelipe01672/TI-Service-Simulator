@@ -20,6 +20,8 @@ public class TexturasModelos : AssetPostprocessor
     {
         "Cartucho_Toner", "Telefone_Escritorio", "Notebook", "Switch_5_Portas", "Roteador", "Mochila",
         "Micro_Ondas", "Patch_Panel", "Switch_Rack_24", "Multimetro", "Pendrive",
+        // prédios do bairro (Etapa 9): vistos da rua, de longe
+        "Casa_Comum_Brasileira", "Casa_Terrea", "Sobrado_Porta_Enrolar", "Sobrado_Tijolo", "Predio_Hospital", "Orelhao",
     };
 
     void OnPreprocessTexture()

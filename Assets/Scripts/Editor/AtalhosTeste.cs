@@ -286,7 +286,7 @@ public static partial class AtalhosTeste
         c.problema = p;
         c.equipamento = p.equipamento;
         c.descricaoProblema = p.descricao;
-            mm.AceitarChamado(c);
+            AceitarComTeleporte(mm, c);
             if (mm.chamadoAtivo != null) break;
         }
         Debug.Log($"[Teste] Chamado de teste aceito: {solucao}. Visor: {mm.Estado?.VisorImpressora()}");
@@ -501,7 +501,7 @@ public static partial class AtalhosTeste
         c.paginasNoMes = c.franquia + 340; c.contadorTotal = 48213; c.mesLeitura = -99;
         if (mm.chamadoAtivo != null) mm.AbandonarChamado();
         mm.AdicionarChamadoDeContrato(c.id, c.empresa);
-        mm.AceitarChamado(mm.chamadosDisponiveis[0]);
+        AceitarComTeleporte(mm, mm.chamadosDisponiveis[0]);
         Debug.Log($"[Teste] Contrato {c.empresa}: franquia {c.franquia}, mês {c.paginasNoMes}. Chamado: {mm.chamadoAtivo?.solucao}");
         IrAoEquipamento(TipoEquipamento.Impressora);
     }

@@ -175,7 +175,7 @@ public static partial class AtalhosTeste
         var c = mm.chamadosDisponiveis[0];
         PrepararChamado(c, p);
         GameUI.Instance?.FecharModal();
-        mm.AceitarChamado(c);
+        AceitarComTeleporte(mm, c);
         Debug.Log($"[Teste] Chamado aceito: {t} — {solucao} | sala {SalaCliente.Atual?.Nome} | resolvido? {CatalogoProblemas.Resolvido(p, mm.Estado)}");
         IrPerto(t, t == TipoEquipamento.Notebook ? 0.6f : 0.95f);
     }

@@ -11,7 +11,7 @@ public partial class GameUI
 {
     RectTransform celular, celConteudo;
     TextMeshProUGUI celHora, celBadge;
-    enum AppCel { Inicio, Mensagens, Conversa, Banco }
+    enum AppCel { Inicio, Mensagens, Conversa, Banco, Mapa }
     AppCel appCel = AppCel.Inicio;
     Chamado celConversa;
     readonly HashSet<Chamado> celVistos = new HashSet<Chamado>();    // já avisados (notificação)
@@ -67,6 +67,14 @@ public partial class GameUI
         AtualizarCelular();
     }
 
+    // Abre o celular direto no app Mapa (GPS)
+    public void AbrirMapa()
+    {
+        AbrirCelular();
+        appCel = AppCel.Mapa;
+        AtualizarCelular();
+    }
+
     void VoltarCelular()
     {
         appCel = appCel == AppCel.Conversa ? AppCel.Mensagens : AppCel.Inicio;
@@ -84,6 +92,7 @@ public partial class GameUI
             case AppCel.Mensagens: CelMensagens(); break;
             case AppCel.Conversa: CelConversa(); break;
             case AppCel.Banco: CelBanco(); break;
+            case AppCel.Mapa: CelMapa(); break;
         }
     }
 
@@ -101,6 +110,9 @@ public partial class GameUI
         UIFactory.Botao(celConteudo, naoLidas > 0 ? $"Mensagens  ({naoLidas} nova{(naoLidas > 1 ? "s" : "")})" : "Mensagens",
             () => { appCel = AppCel.Mensagens; AtualizarCelular(); }, naoLidas > 0 ? UIFactory.Sucesso : UIFactory.CartaoClaro, 360, 64, 22);
         UIFactory.Botao(celConteudo, "Banco", () => { appCel = AppCel.Banco; AtualizarCelular(); }, UIFactory.CartaoClaro, 360, 64, 22);
+        if (GPS.Instance != null)
+            UIFactory.Botao(celConteudo, GPS.Instance.Ativo ? "Mapa  (GPS ligado)" : "Mapa", () => { appCel = AppCel.Mapa; AtualizarCelular(); },
+                GPS.Instance.Ativo ? UIFactory.Destaque : UIFactory.CartaoClaro, 360, 64, 22);
         UIFactory.Texto(celConteudo, "<size=80%>Tab: tablet  ·  C: guardar o celular</size>", 18, UIFactory.CorSuave, FontStyles.Normal, TextAlignmentOptions.Center);
     }
 
@@ -176,6 +188,82 @@ public partial class GameUI
         le.preferredWidth = 300;
         UIFactory.AjustarAoConteudo(bolha);
         UIFactory.Texto(bolha, texto, 19, UIFactory.CorTexto);
+    }
+
+    // Mapa do bairro (Etapa 9B): ruas, endereços e você; cada endereço tem "Ir" (liga o GPS)
+    void CelMapa()
+    {
+        UIFactory.Texto(celConteudo, "Mapa do bairro", 30, UIFactory.CorTexto, FontStyles.Bold);
+        var jogador = GameObject.FindWithTag("Player");
+        var gps = GPS.Instance;
+
+        // Desenho: x de -LimiteX a +LimiteX, z de LimiteSul a LimiteNorte (norte para cima)
+        const float largura = 380f;
+        float w = 2f * Bairro.LimiteX, h = Bairro.LimiteNorte - Bairro.LimiteSul;
+        float altura = largura * h / w;
+        var mapa = UIFactory.Painel(celConteudo, "Mapa", UIFactory.Hex("#3E5A34"));   // terrenos (verde)
+        var le = mapa.gameObject.AddComponent<LayoutElement>();
+        le.preferredHeight = altura; le.preferredWidth = largura;
+        Vector2 Norm(float x, float z) => new Vector2((x + Bairro.LimiteX) / w, (z - Bairro.LimiteSul) / h);
+        RectTransform Retangulo(string nome, Rect area, Color cor)
+        {
+            var r = UIFactory.Painel(mapa, nome, cor);
+            r.anchorMin = Norm(area.xMin, area.yMin);
+            r.anchorMax = Norm(area.xMax, area.yMax);
+            r.offsetMin = r.offsetMax = Vector2.zero;
+            r.GetComponent<Image>().raycastTarget = false;
+            return r;
+        }
+        foreach (var p in Bairro.Pedacos())
+            Retangulo(p.tipo == TipoPiso.Asfalto ? "Asfalto" : "Calcada", p.area,
+                p.tipo == TipoPiso.Asfalto ? UIFactory.Hex("#2B2F36") : UIFactory.Hex("#9A968E"));
+        void Ponto(Vector3 pos, Color cor, float tam, string rotulo)
+        {
+            var r = Retangulo("Ponto", new Rect(pos.x, pos.z, 0f, 0f), cor);
+            r.sizeDelta = new Vector2(tam, tam);
+            if (rotulo == null) return;
+            var t = UIFactory.Texto(r, rotulo, 13, Color.white, FontStyles.Bold, TextAlignmentOptions.Center);
+            t.rectTransform.sizeDelta = new Vector2(90, 18);
+            t.rectTransform.anchoredPosition = new Vector2(0, 14);
+            t.raycastTarget = false;
+        }
+        foreach (var e in Bairro.Enderecos)
+        {
+            bool destino = gps != null && gps.Ativo && gps.Destino.tipo == e.tipo;
+            Ponto(e.porta, destino ? UIFactory.Sucesso : UIFactory.Alerta, destino ? 14 : 10, RotuloCurto(e.tipo));
+        }
+        if (jogador != null) Ponto(jogador.transform.position, UIFactory.Destaque, 12, "você");
+
+        if (gps != null && gps.Ativo && jogador != null)
+        {
+            UIFactory.Texto(celConteudo, $"GPS: <b>{gps.Destino.nome}</b>\n{gps.Destino.Linha} · {gps.Distancia(jogador.transform.position):0} m", 18, UIFactory.CorTexto);
+            UIFactory.Botao(celConteudo, "Desligar o GPS", () => { gps.Desligar(); AtualizarCelular(); }, UIFactory.CartaoClaro, 360, 44, 18);
+        }
+        UIFactory.Texto(celConteudo, "Endereços", 20, UIFactory.CorSuave, FontStyles.Bold);
+        foreach (var e in Bairro.Enderecos)
+        {
+            var end = e;
+            float d = jogador != null ? Vector2.Distance(new Vector2(jogador.transform.position.x, jogador.transform.position.z), new Vector2(e.porta.x, e.porta.z)) : 0f;
+            UIFactory.Botao(celConteudo, $"{end.nome}\n<size=80%><color=#9AA6B8>{end.Linha} · {d:0} m</color></size>", () =>
+            {
+                gps?.Definir(end);
+                AtualizarCelular();
+            }, UIFactory.Cartao, 360, 60, 17);
+        }
+    }
+
+    static string RotuloCurto(TipoEndereco t)
+    {
+        switch (t)
+        {
+            case TipoEndereco.Casa: return "casa";
+            case TipoEndereco.Escritorio: return "escritório";
+            case TipoEndereco.Fornecedor: return "peças";
+            case TipoEndereco.Coleta: return "coleta";
+            case TipoEndereco.Contabilidade: return "contábil";
+            case TipoEndereco.Clinica: return "clínica";
+            default: return "loja";
+        }
     }
 
     // Banco: saldo e últimas movimentações do livro-caixa

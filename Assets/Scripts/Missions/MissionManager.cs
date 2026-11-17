@@ -204,7 +204,7 @@ public partial class MissionManager : MonoBehaviour
         SalaCliente.Para(chamado.nomeCliente)?.ReceberEquipamentos();
         EventBus<ChamadoAceitoEvent>.Raise(new ChamadoAceitoEvent { chamado = chamado });
         Debug.Log($"[MissionManager] Chamado aceito: {chamado.nomeCliente} — {chamado.descricaoProblema} | OS {chamado.os.numero} | SLA {SLA.Texto(chamado.prioridade)} até {SLA.HoraDoPrazo(chamado, SLA.Agora())}");
-        TeleportarParaCliente();
+        IrParaCliente();
     }
 
     // A OS nasce no aceite com o que o cliente relatou; o resto se preenche com o trabalho
@@ -495,6 +495,7 @@ public partial class MissionManager : MonoBehaviour
         if (chamadoAtivo.retrabalho) dados.retornos.RemoveAll(r => r.id == chamadoAtivo.retornoId);
         ReputationManager.Instance?.AlterarReputacao(-ReputationManager.Instance.punicaoErro * (chamadoAtivo.retrabalho ? 1.5f : 1f));
         chamadoAtivo = null;
+        GPS.Instance?.Desligar();
         ContratosManager.Instance?.GarantirChamadosServico();   // instalação/visita continua pendente
         // projeto de rede: o que foi feito nesta visita se perde (o cliente desconfia); o projeto continua
         if (chamadosDisponiveis.Count < 2)
@@ -577,13 +578,34 @@ public partial class MissionManager : MonoBehaviour
         return ch;
     }
 
-    void TeleportarParaCliente()
+    // Etapa 9B: sem teleporte. O endereço do cliente vai para o GPS do celular e o técnico vai andando.
+    // Atalhos de teste (editor) ainda levam direto à porta: ver TeleporteDeTeste.
+    public static bool TeleporteDeTeste;
+
+    void IrParaCliente()
+    {
+        var sala = chamadoAtivo != null ? SalaCliente.Para(chamadoAtivo.nomeCliente) : null;
+        if (TeleporteDeTeste)
+        {
+            TeleportarParaCliente(sala);
+            return;
+        }
+        if (sala != null && GPS.Instance != null)
+        {
+            var e = Bairro.De(Bairro.DoTipoSala(sala.tipo));
+            e.nome = chamadoAtivo.nomeCliente;   // o GPS mostra o nome do cliente, no endereço da sala dele
+            GPS.Instance.Definir(e);
+            return;
+        }
+        TeleportarParaCliente(sala);   // cena antiga, sem o bairro: o jeito de antes
+    }
+
+    void TeleportarParaCliente(SalaCliente sala)
     {
         if (jogador == null)
             jogador = GameObject.FindWithTag("Player").transform;
 
         // Cada cliente tem a sua sala (contabilidade, clínica ou loja); cena antiga: o local único
-        var sala = chamadoAtivo != null ? SalaCliente.Para(chamadoAtivo.nomeCliente) : null;
         Transform destino = sala != null && sala.chegada != null ? sala.chegada
             : locaisClientes != null && locaisClientes.Length > 0 ? locaisClientes[0] : null;
         if (destino == null) return;

@@ -188,6 +188,11 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
      - mochila aparecendo **dentro da mesa**;
      - **roteador bugado** (detalhar ao reproduzir);
      - (resolvido em 16/11) banheiro na frente da porta do escritório.
+     - carro (fotos da 9C): painel muito escuro; brilho forte no canto de cima dentro do carro; tampa do
+       porta-malas aberta aparecendo no lugar errado e a caixa não aparece dentro.
+     - a conferir jogando (9C): dirigir no teclado, caixa da locação e lote de usados no porta-malas, galão.
+     - bairro (fotos da 9B): prédios como caixas lisas (fachada da clínica), brilho estranho nas janelas escuras,
+       ruas terminando de repente com a borda do mapa visível.
 
 Ideias para a leva 3 (avaliar depois): servidor/NAS e backup 3-2-1 com teste de restauração; firewall/VPN;
 queda do link da operadora; trabalho em altura e forro; ferramentas de rede (punch-down, escada, passa-fio);

@@ -123,12 +123,45 @@ catálogo, mas a **ordem de trabalho** passa a ser esta. Cada etapa puxa os iten
    trás enquanto o técnico segura E e as luzes piscam juntas no fim. Ferramentas novas na loja: punch-down e etiquetadora.
    Testes `TestesRede`; atalhos em *TI Service/Teste (Play)/Rede física*. Modelos `Patch_Panel`/`Switch_Rack_24`
    ainda não usados (o rack, o patch e o switch são primitivas com as portas no lugar certo para os cordões).
-9. ❓ **Próxima etapa** — a definir com o dono.
+9. ➜ Continua na **leva 2** (abaixo).
 
 Regras desta ordem: **sistemas novos de gestão ficam congelados até a etapa 5** (o que existe precisa ganhar corpo
 físico primeiro). A cidade (Fase 6) pode começar por uma rua pequena com 3–4 endereços — decisão do dono quando
 chegar lá (❓). Ideia do dono: partir de uma **cidade já pronta** e adaptar — avaliar traçado real de um bairro brasileiro
 (OpenStreetMap, com crédito), pacotes prontos (Asset Store fica fora do Git) e modelos CC0/CC-BY, sempre leve para 4 GB. Realismo nunca vira tédio: depois de dominar uma tarefa, oferecer "fazer rápido".
+
+## Ordem de execução — leva 2 (planejada em 17/11/2026)
+A primeira ordem (etapas 0–8) terminou e está no GitHub. Nesta leva, cada etapa continua em conversa própria,
+testada no Play, com testes automáticos, commit local e exe; push só com pedido.
+
+9. ⬜ **Cidade** (Fase 6), partindo de algo **pronto** (regra "pronto antes do zero"):
+   - 9A ⬜ Pesquisa e escolha: comparar com fotos 2–3 caminhos — traçado real de um bairro brasileiro
+     (OpenStreetMap, crédito obrigatório) vestido com fachadas/calçadas/postes/fios brasileiros; pacote de cidade
+     pronto (Asset Store fica fora do Git); modelos CC0/CC-BY. Critérios: cara de Brasil, peso para a placa de 4 GB,
+     licença. **O dono escolhe** antes de construir.
+   - 9B ⬜ Bairro com endereços: casa, sede, fornecedor, ponto de coleta e os clientes (contabilidade, clínica, loja)
+     viram prédios de verdade na rua — chegar andando/dirigindo, sem teleporte; GPS no celular.
+   - 9C ⬜ Carro dirigível (entrar/sair, 1ª pessoa, física simples), estacionar, porta-malas com caixas e escada,
+     combustível e tempo de deslocamento cobrado no orçamento.
+   - 9D ⬜ Vida na rua: trânsito simples, pedestres, dia/noite; clima (chuva atrasa serviço externo) mais tarde.
+10. ⬜ **Wi-Fi corporativo**: posicionar access point, sinal fraco nos cantos (mapa de calor), rede de visitantes separada.
+11. ⬜ **CFTV**: câmeras, DVR/NVR, cabo e fonte; posicionar vendo a área certa; acesso pelo celular do cliente.
+12. ⬜ **Nobreak e energia**: bateria morta apitando, dimensionar e instalar; queda de energia e raio queimando
+    switch/fonte de quem não tem proteção.
+13. ⬜ **Verificação geral (pente-fino de bugs)** — depois da cidade e das etapas acima, antes de novas funções:
+   - Roteiro passando por todos os lugares, equipamentos e interações (casa, escritório, rua/cidade, clientes,
+     bancada, rack), com fotos; + o **feedback do colega** que está testando o zip.
+   - Checagens automáticas no editor: dois pontos de [E] perto demais um do outro; objetos atravessando móveis ou
+     paredes; cômodos sobrepostos (já existe teste da planta); porta que leva a lugar errado.
+   - **Bugs já vistos pelo dono** (anotados em 17/11/2026):
+     - [E] muito colado: abrir a porta e acender a luz disputam o mesmo ponto (interruptor ao lado da porta);
+     - mochila aparecendo **dentro da mesa**;
+     - **roteador bugado** (detalhar ao reproduzir);
+     - (resolvido em 16/11) banheiro na frente da porta do escritório.
+
+Ideias para a leva 3 (avaliar depois): servidor/NAS e backup 3-2-1 com teste de restauração; firewall/VPN;
+queda do link da operadora; trabalho em altura e forro; ferramentas de rede (punch-down, escada, passa-fio);
+funcionários visíveis saindo para atender (Fase 8).
 
 ## Visão
 Simulador de técnico de TI brasileiro, do MEI em casa até uma empresa com sede, equipe e contratos. O prazer vem de

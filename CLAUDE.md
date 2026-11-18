@@ -15,6 +15,45 @@ Roteiro de testes manuais: `ROTEIRO_TESTES_UNITY.md`. Créditos de assets: `CRED
 - **Push só quando o dono pedir.** Commit local ao fim de cada etapa testada.
 - Skills do projeto em `.claude/skills/`: `testar-na-unity`, `baixar-modelo-3d`, `publicar-ti-service`.
 
+## Como continuar (leia primeiro numa conversa nova)
+1. **Onde estamos**: `ROADMAP.md` → seções "Ordem de execução" (etapas 0–8, feitas) e "Ordem de execução — leva 2"
+   (9 cidade, 10 Wi-Fi, 11 CFTV, 12 nobreak, 13 pente-fino de bugs). Pegue a primeira etapa ⬜ dessa lista.
+   Resumo de passagem com o estado do dia: `TI-Service-Contexto/conversas/LEIA-PRIMEIRO.md` (privado, fora do Git).
+   Confira sempre com `git log --oneline -5` e `git status -sb` (o que está "ahead" ainda não foi enviado).
+2. **Uma etapa por conversa**: a conversa principal planeja e propõe um cartão de sessão nova por etapa, com um
+   briefing completo (o que existe, o que fazer, regras, quando está pronto). A sessão da etapa implementa, testa e
+   faz commit local; a principal confere (git log, ROADMAP, data do exe, fotos em `Builds/Capturas/`) e conta ao dono.
+3. **Ciclo de cada etapa**: ler o código antes → implementar → `Assets/Refresh` (compilar) → testes automáticos
+   → testar no Play pelos atalhos (*TI Service/Teste (Play)*, criar atalhos novos para o que fez) → fotos →
+   marcar no `ROADMAP.md` → commit local → gerar o exe (*TI Service/4*) → contar ao dono o que **não** foi testado.
+4. **Push** só quando o dono pedir (skill `publicar-ti-service`): antes, conferir que nada de `TI-Service-Contexto/`,
+   `Builds/`, saves, Mixamo, `.mcp.json` ou `Plugins/NuGet` vai junto e procurar marcas reais no diff
+   (`git diff origin/main..HEAD`). Push pelo **PowerShell** (`git push origin main`): o Git do Bash não tem o
+   gerenciador de credenciais; se pedir login, rodar num terminal do app para o dono entrar no GitHub pelo navegador.
+5. **Zip para testadores**: compactar `Builds/Windows` numa pasta `TI-Service-Simulator` dentro de
+   `Builds/TI-Service-Simulator-teste.zip` (PowerShell `Compress-Archive`); o colega extrai e abre o .exe
+   (SmartScreen: "Mais informações → Executar assim mesmo"). Os arquivos do motor ficam com data antiga: normal.
+6. **Downloads** (modelos, texturas): sempre pedir aprovação ao dono antes, com nome, autor, licença e tamanho.
+   Sketchfab usa a sessão do dono no navegador do app (skill `baixar-modelo-3d`); se der 401, pedir para ele logar.
+
+## Erros que já aconteceram (não repetir)
+- **Play ligado**: nunca remontar o cenário, calcular a luz nem recompilar com o Play rodando — o bake não roda e a
+  montagem se perde. Depois de testar no Play, mande `stop` e confirme (a Unity pode ter ficado em Play/pausa).
+- **Ordem entre arquivos partial**: posição que depende de valor de outro arquivo do `MontarCenario`/`Bairro` deve
+  ser propriedade (`=>`), nunca `static readonly` (o banheiro nasceu na frente do escritório por isso). Ao criar
+  cômodo ou rua, atualizar `Editor/Testes/TestesPlantaCenario.cs`.
+- **Unity-MCP no exe**: o gerador de exe tira o plugin do build; não mexer nisso.
+- **Escrever arquivos**: `sed` com \n e heredoc com código quebram fácil no Bash do Windows — para edições grandes,
+  escrever um script Node na scratchpad e rodar com `node`, ou usar a ferramenta de edição.
+- Unity fechou sozinha uma vez no meio do trabalho: reabrir pelo Hub e continuar.
+
+## Ferramentas instaladas para este projeto
+- Skills do usuário (`~/.claude/skills`): `find-skills` (procurar skills novas), `unity-build-size`,
+  `camera-systems`, `game-feel`, `performance-optimization`, `save-systems`, `unity-csharp-scripting`.
+  Python 3.13 instalado (scripts dessas skills).
+- Agents úteis para revisões: Game Designer, Technical Artist, Unity Architect (rodar em paralelo e juntar num plano).
+- Unity-MCP: ver "Testar e gerar build" abaixo.
+
 ## Arquitetura
 - **Managers** se criam sozinhos com `[RuntimeInitializeOnLoadMethod(AfterSceneLoad)]` e conversam por
   **EventBus** (structs de evento). Evite referências diretas entre managers quando um evento resolve.

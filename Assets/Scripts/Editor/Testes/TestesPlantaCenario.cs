@@ -280,6 +280,7 @@ public class TestesPlantaCenario
         for (int k = 0; k < m.cruzamentos.Count; k++)
             foreach (var d in new[] { Vector3.right, Vector3.left, Vector3.forward, Vector3.back })
             {
+                if (!m.Chegada(k, d)) continue;   // "T": ninguém chega por este lado (não tem placa)
                 Vector3 p = MontarCenario.EsquinaDireita(m, k, d);
                 var xz = new Vector2(p.x, p.z);
                 bool calcada = m.Pedacos().Any(r => r.tipo == TipoPiso.Calcada && r.area.Contains(xz));
@@ -300,6 +301,71 @@ public class TestesPlantaCenario
         Assert.AreEqual(Vector3.left, MontarCenario.FachadaDe(new Vector3(-16f, 0f, 28f)), "Lote a leste da Ipê.");
         Assert.AreEqual(Vector3.right, MontarCenario.FachadaDe(new Vector3(16f, 0f, 27f)), "Lote a oeste da Jacarandás.");
         Assert.AreEqual(Vector3.left, MontarCenario.FachadaDe(new Vector3(36f, 0f, -40f)), "Lote a leste da Jacarandás.");
-        Assert.AreEqual(Vector3.zero, MontarCenario.FachadaDe(new Vector3(100f, 0f, 100f)), "Fora do mapa não é lote.");
+        Assert.AreEqual(Vector3.zero, MontarCenario.FachadaDe(new Vector3(300f, 0f, 300f)), "Fora do mapa não é lote.");
+    }
+
+    // ---------------- Etapa 10E-2: lotes da cidade ----------------
+
+    // Nenhum imóvel (de antes ou novo) em cima de outro, de rua/calçada, de cômodo, do posto ou da praça
+    [Test]
+    public void Lotes_SemSobreposicao()
+    {
+        var lotes = Loteamento.Todos();
+        var pedacos = Bairro.Pedacos();
+        var reservados = Loteamento.Reservados();
+        for (int i = 0; i < lotes.Count; i++)
+        {
+            var a = lotes[i];
+            var area = Encolher(a.fixo ? a.Planta : a.Terreno, 0.05f);
+            Assert.IsTrue(a.fixo || a.baldio || (a.Terreno.Contains(a.Planta.min + Vector2.one * 0.05f) && a.Terreno.Contains(a.Planta.max - Vector2.one * 0.05f)), $"Casa fora do próprio terreno ({a.rua}, {a.alinhamento}).");
+            foreach (var p in pedacos)
+                Assert.IsFalse(area.Overlaps(p.area), $"Lote {a.modelo.nome} ({a.rua}, {a.alinhamento}) invade {p.tipo} da {p.rua}.");
+            foreach (var r in reservados)
+                if (!a.fixo) Assert.IsFalse(area.Overlaps(r.area), $"Lote {a.modelo.nome} ({a.rua}, {a.alinhamento}) invade {r.nome}.");
+            foreach (var c in Comodos())
+                Assert.IsFalse(area.Overlaps(c.Planta), $"Lote {a.modelo.nome} ({a.rua}, {a.alinhamento}) invade {c.nome}.");
+            for (int j = i + 1; j < lotes.Count; j++)
+            {
+                var b = lotes[j];
+                if (a.fixo && b.fixo) continue;   // os de antes ficam como estavam (já encostados uns nos outros)
+                Assert.IsFalse(area.Overlaps(b.fixo ? b.Planta : b.Terreno), $"Lote {a.modelo.nome} ({a.rua}, {a.alinhamento}) em cima de {b.modelo.nome} ({b.rua}, {b.alinhamento}).");
+            }
+            Assert.IsTrue(Encolher(Bairro.Malha.limites, -0.01f).Contains(area.min) && Encolher(Bairro.Malha.limites, -0.01f).Contains(area.max), $"Lote fora do mapa: {a.alinhamento}.");
+        }
+    }
+
+    // Todo lote dá na calçada: a frente do terreno encosta no alinhamento e logo na frente há calçada
+    [Test]
+    public void Lotes_ComAcessoACalcada()
+    {
+        var pedacos = Bairro.Pedacos();
+        foreach (var l in Loteamento.Todos())
+        {
+            var q = l.NaCalcada;
+            Assert.IsTrue(pedacos.Any(p => p.tipo == TipoPiso.Calcada && p.area.Contains(q)), $"Lote {l.modelo.nome} ({l.rua}, {l.alinhamento}) sem calçada na frente ({q}).");
+            // fachada virada para a rua do lote (do meio do terreno para o alinhamento)
+            var v = l.alinhamento - l.Terreno.center;
+            Assert.Greater(v.x * l.Dir.x + v.y * l.Dir.z, 0.5f, $"Lote {l.alinhamento} de costas para a rua.");
+        }
+    }
+
+    // A cidade tem ~100 imóveis novos ou mais, com variedade (cores, espelhados, comércios, muros) e uma praça
+    [Test]
+    public void Lotes_CidadeCheiaEVariada()
+    {
+        var novos = Loteamento.Todos().Where(l => !l.fixo).ToList();
+        var casas = novos.Where(l => !l.baldio).ToList();
+        Assert.GreaterOrEqual(casas.Count, 100, "Poucas casas na cidade nova.");
+        Assert.GreaterOrEqual(novos.Count(l => l.comercio), 12, "Poucos comércios.");
+        Assert.Greater(novos.Count(l => l.baldio), 3, "Nenhum terreno baldio.");
+        Assert.Greater(casas.Count(l => l.espelhado), casas.Count / 4);
+        Assert.Greater(casas.Count(l => l.muro), casas.Count / 5);
+        Assert.AreEqual(Loteamento.CoresParede, casas.Select(l => l.corParede).Distinct().Count(), "Falta cor de parede na cidade.");
+        Assert.Greater(Loteamento.Praca.width * Loteamento.Praca.height, 900f, "Praça pequena demais.");
+        // mesmos lotes toda vez (a montagem e os testes veem a mesma cidade)
+        Loteamento.Esquecer();
+        var outra = Loteamento.Todos();
+        Assert.AreEqual(Loteamento.Todos().Count, outra.Count);
+        Assert.AreEqual(novos.Count + Loteamento.Fixos().Count, outra.Count);
     }
 }

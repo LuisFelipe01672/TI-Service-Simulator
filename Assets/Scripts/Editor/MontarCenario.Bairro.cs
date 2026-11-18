@@ -62,8 +62,11 @@ public static partial class MontarCenario
                 return true;
             }
             var tam = r.lesteOeste ? new Vector3(1.5f, 0.005f, 0.12f) : new Vector3(0.12f, 0.005f, 1.5f);
+            var grupo = new GameObject("Faixa_Central").transform;   // um objeto por rua (Etapa 10E-2)
+            grupo.SetParent(rua, false);
             for (float a = r.ini + 1.5f; a < r.fim - 1f; a += 3f)
-                if (Livre(a)) { var p = r.Ponto(a); Caixa(rua, "Faixa_Central", new Vector3(p.x, 0.012f, p.z), tam, mFaixa, 1f, false, false); }
+                if (Livre(a)) { var p = r.Ponto(a); Caixa(grupo, "Faixa_Central", new Vector3(p.x, 0.012f, p.z), tam, mFaixa, 1f, false, false); }
+            JuntarGrupo(grupo);
         }
 
         // Faixas de pedestre (zebras): listras de 40 cm atravessando a rua
@@ -71,11 +74,14 @@ public static partial class MontarCenario
         {
             var r = m.ruas[fx.rua];
             var tam = r.lesteOeste ? new Vector3(3f, 0.005f, 0.4f) : new Vector3(0.4f, 0.005f, 3f);
+            var zebra = new GameObject("Faixa_Pedestre").transform;
+            zebra.SetParent(rua, false);
             for (float l = r.meiaPista - 0.4f; l > -r.meiaPista + 0.3f; l -= 0.8f)
             {
                 var p = r.Ponto(fx.pos, l);
-                Caixa(rua, "Faixa_Pedestre", new Vector3(p.x, 0.012f, p.z), tam, mFaixa, 1f, false, false);
+                Caixa(zebra, "Faixa_Pedestre", new Vector3(p.x, 0.012f, p.z), tam, mFaixa, 1f, false, false);
             }
+            JuntarGrupo(zebra);
         }
 
         MontarPostes(rua);
@@ -94,7 +100,7 @@ public static partial class MontarCenario
         for (int i = 0; i < m.ruas.Count; i++)
         {
             var r = m.ruas[i];
-            var pos = r.postes ?? PostesPadrao(m, i);
+            var pos = r.postes ?? m.PostesPadrao(i);
             foreach (int lado in r.ladosPostes)
             {
                 var l = new List<Vector3>();
@@ -120,25 +126,6 @@ public static partial class MontarCenario
                 ultimo = p;
             }
         }
-    }
-
-    // Postes a cada 12 m, longe dos cruzamentos e das zebras (ruas sem a lista feita à mão)
-    static float[] PostesPadrao(MalhaRuas m, int iRua)
-    {
-        var r = m.ruas[iRua];
-        var l = new List<float>();
-        for (float a = r.ini + 4f; a <= r.fim - 4f; a += 12f)
-        {
-            bool livre = true;
-            foreach (int k in m.CruzamentosDa(iRua))
-            {
-                var t = m.Transversal(k, iRua);
-                if (Mathf.Abs(a - r.Ao(m.cruzamentos[k].centro)) < t.meiaPista + Mathf.Max(t.calcadaNeg, t.calcadaPos) + 1f) livre = false;
-            }
-            foreach (var fx in m.faixas) if (fx.rua == iRua && Mathf.Abs(a - fx.pos) < 2.5f) livre = false;
-            if (livre) l.Add(a);
-        }
-        return l.ToArray();
     }
 
     // Poste de concreto (duplo T) com cruzeta de média tensão, cabos de telefone/internet mais baixos e o braço da
@@ -181,6 +168,9 @@ public static partial class MontarCenario
         poste.acesa = mLampadaAcesa;
         poste.apagada = mLampadaApagada;
 
+        // Peças paradas do poste numa malha por material (a luminária fica à parte: troca de material à noite)
+        JuntarGrupo(p, "Luminaria");
+
         // Fixações: 3 fios de média tensão na cruzeta e 2 cabos de telecom (mais grossos) a 6 m
         var locais = new[]
         {
@@ -221,48 +211,12 @@ public static partial class MontarCenario
         var viz = new GameObject("Vizinhanca").transform;
         viz.SetParent(raiz, false);
 
-        float fN = Bairro.FrenteNorteAcacias, fS = Bairro.FrenteSulAcacias;
-        // Acácias, lado norte (fachada para o sul)
-        Imovel(viz, "Casa_Comum_Brasileira", LadoCasaComum, FrenteCasaComum, 180, new Vector2(-10.5f, fN));
-        Imovel(viz, "Casa_Terrea", LadoCasaTerrea, FrenteCasaTerrea, 180, new Vector2(9f, fN));
-        Imovel(viz, "Sobrado_Tijolo", LadoSobradoTijolo, FrenteSobradoTijolo, 180, new Vector2(15.5f, fN));
-        Imovel(viz, "Casa_Terrea", LadoCasaTerrea, FrenteCasaTerrea, 180, new Vector2(-54f, fN));
-        Imovel(viz, "Sobrado_Porta_Enrolar", LadoSobradoEnrolar, FrenteSobradoEnrolar, 180, new Vector2(53f, fN));
-        // Acácias, lado sul (fachada para o norte)
-        Imovel(viz, "Casa_Comum_Brasileira", LadoCasaComum, FrenteCasaComum, 0, new Vector2(-11f, fS));
-        Imovel(viz, "Casa_Terrea", LadoCasaTerrea, FrenteCasaTerrea, 0, new Vector2(10f, fS));
-        Imovel(viz, "Sobrado_Tijolo", LadoSobradoTijolo, FrenteSobradoTijolo, 0, new Vector2(16.5f, fS));
-        Imovel(viz, "Casa_Terrea", LadoCasaTerrea, FrenteCasaTerrea, 0, new Vector2(-42f, fS));
-        Imovel(viz, "Casa_Comum_Brasileira", LadoCasaComum, FrenteCasaComum, 0, new Vector2(-53f, fS));
-        Imovel(viz, "Casa_Comum_Brasileira", LadoCasaComum, FrenteCasaComum, 0, new Vector2(54f, fS));
-
-        // Rua Ipê Amarelo: lado oeste (fachada para o leste) e lado leste (fachada para o oeste)
-        float ipeO = Bairro.FrenteOesteIpe, ipeL = Bairro.FrenteLesteIpe;
-        var coleta = Imovel(viz, "Sobrado_Tijolo", LadoSobradoTijolo, FrenteSobradoTijolo, 90, new Vector2(ipeO, Bairro.PosColetaZ));
-        Imovel(viz, "Casa_Terrea", LadoCasaTerrea, FrenteCasaTerrea, 90, new Vector2(ipeO, -40f));
-        Imovel(viz, "Predio_Hospital", LadoPredioGrande, FrentePredioGrande, 90, new Vector2(ipeO, 22f));   // hospital do bairro
-        Imovel(viz, "Casa_Comum_Brasileira", LadoCasaComum, FrenteCasaComum, 270, new Vector2(ipeL, 14f));
-        Imovel(viz, "Casa_Terrea", LadoCasaTerrea, FrenteCasaTerrea, 270, new Vector2(ipeL, 28f));
-        Imovel(viz, "Casa_Terrea", LadoCasaTerrea, FrenteCasaTerrea, 270, new Vector2(ipeL, -28f));
-        Imovel(viz, "Sobrado_Porta_Enrolar", LadoSobradoEnrolar, FrenteSobradoEnrolar, 270, new Vector2(ipeL, -38f));
-
-        // Rua dos Jacarandás
-        float jacO = Bairro.FrenteOesteJacarandas, jacL = Bairro.FrenteLesteJacarandas;
-        Imovel(viz, "Casa_Comum_Brasileira", LadoCasaComum, FrenteCasaComum, 90, new Vector2(jacO, 14f));
-        Imovel(viz, "Casa_Terrea", LadoCasaTerrea, FrenteCasaTerrea, 90, new Vector2(jacO, 27f));
-        Imovel(viz, "Casa_Comum_Brasileira", LadoCasaComum, FrenteCasaComum, 90, new Vector2(jacO, -28f));
-        var fornecedor = Imovel(viz, "Sobrado_Porta_Enrolar", LadoSobradoEnrolar, FrenteSobradoEnrolar, 270, new Vector2(jacL, Bairro.PosFornecedorZ));
-        Imovel(viz, "Casa_Terrea", LadoCasaTerrea, FrenteCasaTerrea, 270, new Vector2(jacL, -40f));
-        Imovel(viz, "Casa_Comum_Brasileira", LadoCasaComum, FrenteCasaComum, 270, new Vector2(jacL, 14f));
-        Imovel(viz, "Sobrado_Tijolo", LadoSobradoTijolo, FrenteSobradoTijolo, 270, new Vector2(jacL, 26f));
+        // Imóveis: os postos à mão no bairro de antes e os lotes da cidade nova (Etapa 10E-2, Editor/Loteamento.cs)
+        MontarImoveis(viz);
 
         // Orelhão na calçada perto do escritório, junto ao meio-fio (a calçada continua livre do lado das casas);
         // a colisão é a caixa inteira, para ninguém entrar no domo
         ModeloReal(SF("Orelhao"), viz, Bairro.Orelhao, LadoOrelhao, 180f - FrenteOrelhao);
-
-        // Placas dos endereços sem interior (por enquanto só a fachada)
-        if (fornecedor != null) PlacaFachada(viz, fornecedor, 270, "DISTRIBUIDORA DE PEÇAS", "Informática · Atacado", 3.2f);
-        if (coleta != null) PlacaFachada(viz, coleta, 90, "ECOPONTO", "Lixo eletrônico · Pilhas", 3.4f);
 
         // Fachada dos prédios com interior
         Fachada("Escritorio", 6f, 6f, "ASSISTÊNCIA TÉCNICA", "Informática · Redes · Impressoras", false, new Color(0.95f, 0.92f, 0.86f));
@@ -272,6 +226,7 @@ public static partial class MontarCenario
         Fachada("Casa", 8f, 6f, null, null, false, new Color(0.96f, 0.88f, 0.76f));
         MuroDaCasa();
         NumeroNaFachada("Casa", 8f, 6f, "128", 1.5f + 1.1f);
+        MontarPraca();
     }
 
     // Modelo do Sketchfab num lote: a fachada vira para 'viradoPara' (graus, 0 = norte) e encosta no alinhamento

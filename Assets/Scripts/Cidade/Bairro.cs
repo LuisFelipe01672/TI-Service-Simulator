@@ -10,6 +10,17 @@ using UnityEngine;
 // O escritório do jogador fica na origem, com a porta para o sul, na Rua das Acácias (leste-oeste).
 // Duas ruas cortam a das Acácias: a Rua Ipê Amarelo (a oeste) e a Rua dos Jacarandás (a leste).
 // Etapa 10E-1: as ruas viraram uma MalhaRuas (Bairro.Malha); as constantes abaixo ficam como a planta dos lotes.
+// Etapa 10E-2: a cidade cresceu ~7x (320 x 244 m) numa grade de quarteirões em volta do bairro de antes, que não saiu
+// do lugar. Ruas novas (nomes de árvores, como as de antes), algumas terminando em "T" no meio da cidade:
+//
+//   z=96  Sibipirunas    ·····+·······+·······+·······+·······+·······+·····   (de Cedros a Oitis)
+//   z=50  Av. Paineiras ======+=======+=======+=======+=======+=======+=====   (de borda a borda)
+//   z=-9  Acácias       ======+=======+=======+=======+=======+=======+=====   (de borda a borda)
+//   z=-68 Palmeiras          +-------+-------+-------+-------+-------+         (de Cedros a Oitis)
+//   z=-108 Flamboyants       +-------+-------+-------+-------+-------+         (de Cedros a Oitis)
+//                         Cedros Mangueiras Ipê  Jacarandás Quaresmeiras Oitis
+//                         x=-130   x=-78   x=-26   x=26     x=78      x=130
+//   Cedros, Ipê, Jacarandás e Oitis vão de borda a borda; Mangueiras e Quaresmeiras vão de Flamboyants a Sibipirunas.
 //
 //            Ipê Amarelo          Jacarandás
 //     (clínica) |   (escritório)       |  (contabilidade)
@@ -42,10 +53,18 @@ public static class Bairro
     public const string RuaAcacias = "Rua das Acácias";
     public const string RuaIpe = "Rua Ipê Amarelo";
     public const string RuaJacarandas = "Rua dos Jacarandás";
+    // Etapa 10E-2
+    public const string RuaCedros = "Rua dos Cedros", RuaMangueiras = "Rua das Mangueiras", RuaQuaresmeiras = "Rua das Quaresmeiras",
+                        RuaOitis = "Rua dos Oitis", AvPaineiras = "Avenida das Paineiras", RuaSibipirunas = "Rua das Sibipirunas",
+                        RuaPalmeiras = "Rua das Palmeiras", RuaFlamboyants = "Rua dos Flamboyants";
+    public const float CedrosX = -130f, MangueirasX = -78f, QuaresmeirasX = 78f, OitisX = 130f;
+    public const float SibipirunasZ = 96f, PaineirasZ = 50f, PalmeirasZ = -68f, FlamboyantsZ = -108f;
 
-    // Limites do bairro
-    public const float LimiteX = 62f;
-    public const float LimiteSul = -47f, LimiteNorte = 42f;
+    // Limites da cidade (Etapa 10E-2; o bairro de antes ia de x = ±62 e z = -47 a 42)
+    public const float LimiteX = 160f;
+    public const float LimiteSul = -128f, LimiteNorte = 116f;
+    // O bairro de antes (as casas postas à mão ficam dentro dele)
+    public static Rect BairroAntigo => Rect.MinMaxRect(-62f, -47f, 62f, 42f);
 
     // Rua das Acácias (leste-oeste): calçada norte, asfalto e calçada sul
     public const float AcaciasCalcadaNorteZ0 = -3.15f, AcaciasAsfaltoZ0 = -5.5f, AcaciasAsfaltoZ1 = -12.5f, AcaciasCalcadaSulZ1 = -15f;
@@ -162,31 +181,90 @@ public static class Bairro
     static MalhaRuas CriarMalha()
     {
         var m = new MalhaRuas { nome = "bairro", limites = Rect.MinMaxRect(-LimiteX, LimiteSul, LimiteX, LimiteNorte) };
+        Rua NS(string nome, float x, float ini, float fim) =>
+            new Rua { nome = nome, lesteOeste = false, eixo = x, ini = ini, fim = fim, meiaPista = MeiaPista, calcadaNeg = Calcada, calcadaPos = Calcada, ladosPostes = new[] { 1 } };
+        Rua LO(string nome, float z, float ini, float fim) =>
+            new Rua { nome = nome, lesteOeste = true, eixo = z, ini = ini, fim = fim, meiaPista = MeiaPista, calcadaNeg = Calcada, calcadaPos = Calcada, ladosPostes = new[] { -1 } };
+
         int acacias = m.AddRua(new Rua
         {
             nome = RuaAcacias, lesteOeste = true, eixo = AcaciasCentroZ, ini = -LimiteX, fim = LimiteX,
             meiaPista = (AcaciasAsfaltoZ0 - AcaciasAsfaltoZ1) / 2f,
             calcadaPos = AcaciasCalcadaNorteZ0 - AcaciasAsfaltoZ0, calcadaNeg = AcaciasAsfaltoZ1 - AcaciasCalcadaSulZ1,
-            postes = PostesAcacias, ladosPostes = new[] { 1, -1 },
+            ladosPostes = new[] { 1, -1 },
         });
-        m.AddRua(new Rua
-        {
-            nome = RuaIpe, lesteOeste = false, eixo = IpeX, ini = LimiteSul, fim = LimiteNorte,
-            meiaPista = MeiaPista, calcadaNeg = Calcada, calcadaPos = Calcada, postes = PostesTransversais, ladosPostes = new[] { 1 },
-        });
-        int jacarandas = m.AddRua(new Rua
-        {
-            nome = RuaJacarandas, lesteOeste = false, eixo = JacarandasX, ini = LimiteSul, fim = LimiteNorte,
-            meiaPista = MeiaPista, calcadaNeg = Calcada, calcadaPos = Calcada, postes = PostesTransversais, ladosPostes = new[] { -1 },
-        });
+        int ipe = m.AddRua(NS(RuaIpe, IpeX, LimiteSul, LimiteNorte));
+        m.ruas[ipe].ladosPostes = new[] { 1 };
+        int jacarandas = m.AddRua(NS(RuaJacarandas, JacarandasX, LimiteSul, LimiteNorte));
+        m.ruas[jacarandas].ladosPostes = new[] { -1 };
+        // ruas novas: as de borda a borda e as que terminam em "T"
+        m.AddRua(NS(RuaCedros, CedrosX, LimiteSul, LimiteNorte));
+        m.AddRua(NS(RuaMangueiras, MangueirasX, FlamboyantsZ, SibipirunasZ));
+        m.AddRua(NS(RuaQuaresmeiras, QuaresmeirasX, FlamboyantsZ, SibipirunasZ));
+        m.AddRua(NS(RuaOitis, OitisX, LimiteSul, LimiteNorte));
+        m.AddRua(LO(AvPaineiras, PaineirasZ, -LimiteX, LimiteX));
+        m.AddRua(LO(RuaSibipirunas, SibipirunasZ, CedrosX, OitisX));
+        m.AddRua(LO(RuaPalmeiras, PalmeirasZ, CedrosX, OitisX));
+        m.AddRua(LO(RuaFlamboyants, FlamboyantsZ, CedrosX, OitisX));
         m.Fechar();
-        // Ipê: PARE para quem vem por ela; Jacarandás: semáforo (verde longo para a Acácias)
-        m.cruzamentos[m.CruzamentoDe(RuaAcacias, RuaIpe)].controle = ControleCruzamento.Pare;
-        m.cruzamentos[m.CruzamentoDe(RuaAcacias, RuaJacarandas)].controle = ControleCruzamento.Semaforo;
+
+        // Controle: PARE em geral (quem passa reto no "T" é a principal); semáforos nos cruzamentos das ruas de
+        // passagem, cada um no seu tempo
+        foreach (var c in m.cruzamentos)
+        {
+            var lo = m.ruas[c.ruaLO];
+            if (Mathf.Abs(c.centro.x - lo.ini) < 0.01f || Mathf.Abs(c.centro.x - lo.fim) < 0.01f) c.principalLesteOeste = false;
+        }
+        void Semaforo(string a, string b, float defasagem)
+        {
+            var c = m.cruzamentos[m.CruzamentoDe(a, b)];
+            c.controle = ControleCruzamento.Semaforo;
+            c.defasagem = defasagem;
+        }
+        Semaforo(RuaAcacias, RuaJacarandas, 0f);          // o de sempre (relógio de antes)
+        Semaforo(AvPaineiras, RuaIpe, 9f);
+        Semaforo(AvPaineiras, RuaJacarandas, 18f);
+        Semaforo(RuaAcacias, RuaQuaresmeiras, 5f);       // quase junto com o da Jacarandás: onda verde na Acácias
+
         foreach (float x in FaixasPedestreX) m.faixas.Add(new FaixaPedestre { rua = acacias, pos = x });
+        m.FaixasEmCadaTrecho();
         // guia rebaixada na frente do posto (calçada leste da Jacarandás)
         m.rebaixos.Add(new Rebaixo { rua = jacarandas, lado = 1, a0 = RebaixoZ0, a1 = RebaixoZ1 });
+
+        // Postes: os de antes (à mão) dentro do bairro antigo e um a cada 12 m no resto
+        m.ruas[acacias].postes = Juntar(PostesAcacias, m.PostesPadrao(acacias), -62f, 62f);
+        m.ruas[ipe].postes = Juntar(PostesTransversais, m.PostesPadrao(ipe), -47f, 42f);
+        m.ruas[jacarandas].postes = Juntar(PostesTransversais, m.PostesPadrao(jacarandas), -47f, 42f);
         return m;
+    }
+
+    // Postes à mão (dentro de [de, ate]) mais os padrão de fora, sem nenhum a menos de 6 m de outro
+    static float[] Juntar(float[] mao, float[] padrao, float de, float ate)
+    {
+        var l = new List<float>(mao);
+        foreach (float a in padrao)
+        {
+            if (a >= de && a <= ate) continue;
+            bool perto = false;
+            foreach (float b in l) if (Mathf.Abs(a - b) < 6f) perto = true;
+            if (!perto) l.Add(a);
+        }
+        l.Sort();
+        return l.ToArray();
+    }
+
+    // Praça (Etapa 10E-2): o quarteirão inteiro entre Jacarandás, Quaresmeiras, Paineiras e Sibipirunas
+    public static Rect Praca
+    {
+        get
+        {
+            var m = Malha;
+            var jac = m.ruas[m.Indice(RuaJacarandas)];
+            var qua = m.ruas[m.Indice(RuaQuaresmeiras)];
+            var pai = m.ruas[m.Indice(AvPaineiras)];
+            var sib = m.ruas[m.Indice(RuaSibipirunas)];
+            return Rect.MinMaxRect(jac.FrentePos, pai.FrentePos, qua.FrenteNeg, sib.FrenteNeg);
+        }
     }
 
     // Orelhão na calçada perto do escritório, junto ao meio-fio (o cenário põe, os pedestres desviam)

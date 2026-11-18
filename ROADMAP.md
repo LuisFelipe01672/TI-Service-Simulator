@@ -295,10 +295,42 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
       esquina 110 × 121.
     - Limites (para a 10E-2): rua termina na borda do mapa (sem "T" no meio do mapa); os pedestres só atravessam nas
       faixas; um relógio só para todos os semáforos.
-    - 10E-2 ⬜ **Cidade ~6x** (~330 x 230 m, grade de quarteirões em volta do bairro atual): ruas novas, ~100 casas e
-      sobrados com os modelos CC-BY já baixados (variações de cor, muro e portão), praça, comércios de fachada; desempenho
-      para placa de 4 GB: distância de corte por camada, occlusion culling, luz de poste só perto; medir FPS nos pontos
-      de sempre e em 3 novos (meta: não cair abaixo de 60 no editor).
+    - 10E-2 ✅ **Cidade ~7x** (18/11/2026): 320 x 244 m (era 124 x 89 m), grade de quarteirões em volta do bairro de
+      antes, que não saiu do lugar (escritório, casa, 3 clientes, distribuidora, coleta, posto, vagas, zebras, postes).
+      - **Ruas** (`Bairro.Malha`): 8 novas com nome de árvore — Cedros, Mangueiras, Quaresmeiras, Oitis (norte-sul);
+        Avenida das Paineiras, Sibipirunas, Palmeiras, Flamboyants (leste-oeste). 11 ruas, 30 cruzamentos, 12 pontas.
+        Mangueiras, Quaresmeiras, Sibipirunas, Palmeiras e Flamboyants terminam em **"T"** no meio da cidade.
+      - **Limitações da 10E-1 resolvidas**: rua começa/termina no eixo de outra ("T": só o fim solto vira ponta; no "T"
+        a calçada do lado sem rua passa reta, quem passa reto é a principal, sem PARE/semáforo do braço que falta);
+        **semáforo com relógio por cruzamento** (`Cruzamento.defasagem`; 4 semáforos: Acácias × Jacarandás, Paineiras ×
+        Ipê, Paineiras × Jacarandás, Acácias × Quaresmeiras — "onda verde" na Acácias); **uma zebra em cada trecho de
+        rua** (`MalhaRuas.FaixasEmCadaTrecho`), então dá para ir a pé de qualquer calçada a qualquer outra; calçadas
+        dos pedestres lidas rua a rua (servem no "T"). Lotação de carros e pedestres x2,5.
+      - **Lotes** (`Editor/Loteamento.cs`, puro): os 25 imóveis postos à mão viraram dados; 238 lotes novos gerados
+        (semente fixa): 177 casas e sobrados (Casa Comum, Casa Térrea, Sobrado Tijolo — CC-BY já baixados) com 8 cores
+        de parede, metade espelhados, recuo com muro (6 cores), portão social de grade e de garagem de chapa, piso
+        cimentado; 44 comércios de fachada (sobrado de porta de enrolar com placa: padaria, farmácia, mercearia...
+        sem marca real); 17 terrenos baldios com muro (alguns com "VENDE-SE"). **Praça** no quarteirão entre
+        Jacarandás, Quaresmeiras, Paineiras e Sibipirunas: caminhos, coreto, 20 árvores (formas simples), bancos,
+        banca de jornal, lixeiras e 4 postes com luz. Muro de divisa de 3 m em volta da cidade. Nada baixado.
+      - **Desempenho (placa de 4 GB)**: camadas com corte por distância (`Cidade/CorteDistancia.cs`: Detalhe 110 m —
+        muros e postes; Miudo 55 m — fios, lixeiras, bancos, pinturas do PARE; Imovel 150 m — casas), tudo o que fica
+        parado fora dos cômodos é estático (lotes de desenho) e entra no **occlusion culling** (calculado no fim do
+        menu 3, ou *TI Service/3c*); luz de poste de verdade só nos 8 mais perto (já era). Caixas sem textura dividem a
+        malha e muros/postes/faixas/barreiras viram uma malha por material (`JuntarGrupo`): cena de 38 MB (66 MB sem isso).
+      - Testes: grade com "T" (`MalhaRuas.GradeComT`) nos testes de rua; novos: pontas só na borda e "T" com 3 braços,
+        relógio por semáforo, tudo ligado a pé, lotes sem sobreposição (entre si, ruas, cômodos, posto, praça), todo
+        lote com calçada na frente e virado para a rua, cidade cheia e variada. **319 passando.**
+      - Play: fiscal do trânsito (90 s cheio): 0 batidas, 0 carro fora do asfalto, 0 pedestre fora da calçada; GPS 5 de
+        5; caminhada casa → escritório → 3 clientes → casa sem travar; fotos em `Builds/Capturas/rua` (praça, avenida,
+        Palmeiras × Mangueiras, de dia, ao anoitecer e de noite) e `Builds/Capturas/bairro` (mapa do celular).
+      - FPS no editor (sem × com movimento, 11h; 20h30 entre parênteses): porta 133 × 118 (133 × 119), esquina da Ipê
+        70 × 62 (68 × 63), Jacarandás 100 × 93 (125 × 111); pontos novos: praça 187 × 158 (186 × 160), avenida
+        Paineiras 155 × 106 (144 × 138), Palmeiras × Mangueiras 96 × 94 (115 × 107). Nenhum abaixo de 60, mas a esquina
+        da Ipê caiu de 116 para ~65 (olha a Acácias inteira: ~8,5 milhões de triângulos e ~2.400 objetos fazendo sombra).
+      - Falta / a fazer depois: baixar o custo da esquina da Ipê (LOD ou fachada simplificada para casas longe, menos
+        objetos com sombra); árvores de verdade (as da praça são formas simples); pedestres não entram na praça;
+        janelas noturnas das casas novas não foram conferidas uma a uma.
     - 10E-3 ⬜ **Mais clientes**: 6 a 9 prédios de cliente com interior (cópias das 3 salas com outro layout/cor/móveis),
       cada cliente com o seu endereço (`SalaCliente.Para` por endereço), vagas, GPS, atalhos e fotos.
     Depois, se o FPS deixar, subir para ~10x.

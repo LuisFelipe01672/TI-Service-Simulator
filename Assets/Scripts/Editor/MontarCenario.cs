@@ -68,6 +68,7 @@ public static partial class MontarCenario
         CriarMateriais();
         materiaisKenney.Clear();
 
+        malhasSemTextura.Clear();       // Etapa 10E-2: caixas sem textura dividem a malha
         var antigo = GameObject.Find("Cenario");
         if (antigo != null) Undo.DestroyObjectImmediate(antigo);
         raiz = new GameObject("Cenario").transform;
@@ -97,6 +98,8 @@ public static partial class MontarCenario
         AjustarJogador(spawnCasa != null ? spawnCasa.transform : spawn);
         Iluminacao();
         PrepararLuzPreCalculada();
+        CamadasDaRua();                // Etapa 10E-2: corte por distância
+        if (!Application.isBatchMode) CalcularOclusao();
 
         Debug.Log("[Cenário] Materiais dos móveis do Kenney: " + string.Join(", ", materiaisKenney.OrderBy(n => n)));
 
@@ -620,12 +623,29 @@ public static partial class MontarCenario
 
     // Caixa com UVs em metros (a textura não estica: 'metros' é o tamanho de uma repetição).
     // As UVs usam a posição dentro do pai, então blocos vizinhos da mesma parede ficam alinhados.
+    // Etapa 10E-2: material sem textura não precisa de UV — caixas do mesmo tamanho dividem uma malha só (a cena
+    // ficava enorme com milhares de traços de faixa, isoladores e listras de zebra, cada um com a sua malha).
+    static readonly Dictionary<(int, int, int), Mesh> malhasSemTextura = new Dictionary<(int, int, int), Mesh>();
+
+    static bool TemTextura(Material m) =>
+        m == null || m.mainTexture != null || (m.HasProperty("_BumpMap") && m.GetTexture("_BumpMap") != null);
+
     static GameObject Caixa(Transform pai, string nome, Vector3 centro, Vector3 tam, Material mat, float metros,
         bool colisor = true, bool sombra = true)
     {
         var go = new GameObject(nome);
         go.transform.SetParent(pai, false);
         go.transform.localPosition = centro;
+        var chave = (Mathf.RoundToInt(tam.x * 1000f), Mathf.RoundToInt(tam.y * 1000f), Mathf.RoundToInt(tam.z * 1000f));
+        if (!TemTextura(mat) && malhasSemTextura.TryGetValue(chave, out var pronta) && pronta != null)
+        {
+            go.AddComponent<MeshFilter>().sharedMesh = pronta;
+            var mr0 = go.AddComponent<MeshRenderer>();
+            mr0.sharedMaterial = mat;
+            mr0.shadowCastingMode = sombra ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            if (colisor) go.AddComponent<BoxCollider>().size = tam;
+            return go;
+        }
 
         var verts = new List<Vector3>();
         var normais = new List<Vector3>();
@@ -663,8 +683,9 @@ public static partial class MontarCenario
         malha.SetNormals(normais);
         malha.SetUVs(0, uvs);
         malha.SetTriangles(tris, 0);
-        malha.RecalculateTangents();
+        if (TemTextura(mat)) malha.RecalculateTangents();
         malha.RecalculateBounds();
+        if (!TemTextura(mat)) malhasSemTextura[chave] = malha;
 
         go.AddComponent<MeshFilter>().sharedMesh = malha;
         var mr = go.AddComponent<MeshRenderer>();

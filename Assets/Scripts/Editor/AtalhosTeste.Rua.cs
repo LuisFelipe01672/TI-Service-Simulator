@@ -196,6 +196,9 @@ public static partial class AtalhosTeste
             ("acacias_leste", new Vector3(-3f, 1.7f, -4.4f), new Vector3(40f, 2.5f, -8f)),
             ("cruzamento_jacarandas", new Vector3(19f, 1.7f, -15.6f), new Vector3(30f, 3f, -5f)),
             ("ipe_hospital", new Vector3(-21f, 1.7f, -4f), new Vector3(-30f, 5f, 18f)),
+            ("praca", new Vector3(34f, 1.7f, 80f), new Vector3(55f, 2.5f, 68f)),
+            ("avenida_paineiras", new Vector3(70f, 1.7f, 45.5f), new Vector3(-100f, 3f, 50f)),
+            ("palmeiras_mangueiras", new Vector3(-84f, 1.7f, -74f), new Vector3(-40f, 3f, -68f)),
         };
         var etapas = new List<Etapa>();
         foreach (var (h, rotulo) in new[] { (11f, "dia"), (18.2f, "anoitecer"), (20.5f, "noite") })
@@ -212,6 +215,17 @@ public static partial class AtalhosTeste
         Rodar("Dia e noite", etapas);
     }
 
+    // Contadores do quadro (lotes de desenho, SetPass, triângulos e quem faz sombra)
+    static Unity.Profiling.ProfilerRecorder rBatches, rSetPass, rTris, rSombras;
+    static string Render()
+    {
+        if (!rBatches.Valid) rBatches = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Render, "Batches Count");
+        if (!rSetPass.Valid) rSetPass = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Render, "SetPass Calls Count");
+        if (!rTris.Valid) rTris = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Render, "Triangles Count");
+        if (!rSombras.Valid) rSombras = Unity.Profiling.ProfilerRecorder.StartNew(Unity.Profiling.ProfilerCategory.Render, "Shadow Casters Count");
+        return $"lotes de desenho {rBatches.LastValue}, SetPass {rSetPass.LastValue}, triângulos {rTris.LastValue / 1000} mil, sombras {rSombras.LastValue}";
+    }
+
     // FPS na rua com e sem o movimento (carros e pedestres), de dia e de noite, em 3 pontos
     [MenuItem(MenuRua + "5. Medir FPS (com e sem movimento, dia e noite)", false, 704)]
     static void FpsRua()
@@ -222,6 +236,10 @@ public static partial class AtalhosTeste
             ("porta do escritório, olhando a rua", new Vector3(0f, 1f, -4.3f), new Vector3(40f, 2f, -6f)),
             ("esquina da Ipê, olhando o bairro", new Vector3(-21f, 1f, -14f), new Vector3(30f, 3f, -3f)),
             ("cruzamento da Jacarandás", new Vector3(19f, 1f, -15.6f), new Vector3(30f, 3f, -5f)),
+            // Etapa 10E-2: pontos novos da cidade
+            ("praça, olhando o coreto", new Vector3(34f, 1f, 80f), new Vector3(55f, 2f, 68f)),
+            ("avenida Paineiras, olhando para o oeste", new Vector3(70f, 1f, 45.5f), new Vector3(-100f, 3f, 50f)),
+            ("Palmeiras com Mangueiras, olhando o bairro", new Vector3(-84f, 1f, -74f), new Vector3(0f, 4f, -9f)),
         };
         var casos = new List<(float hora, bool movimento)> { (11f, false), (11f, true), (20.5f, false), (20.5f, true) };
         var etapas = new List<Etapa>();
@@ -239,7 +257,7 @@ public static partial class AtalhosTeste
                 }));
                 etapas.Add(Esperar("assentar", 2f));
                 etapas.Add(E("medir", () => { q0 = Time.frameCount; t0 = EditorApplication.timeSinceStartup; }, () => EditorApplication.timeSinceStartup - t0 >= 4.0, 10f));
-                etapas.Add(E("anotar", () => Debug.Log($"[FPS] {p.nome} · {(cs.movimento ? "COM" : "SEM")} movimento · {cs.hora:0.#}h: {(Time.frameCount - q0) / (EditorApplication.timeSinceStartup - t0):0} FPS (carros {VidaNaRua.Instance.carros.Count}, pedestres {VidaNaRua.Instance.pedestres.Count})")));
+                etapas.Add(E("anotar", () => Debug.Log($"[FPS] {p.nome} · {(cs.movimento ? "COM" : "SEM")} movimento · {cs.hora:0.#}h: {(Time.frameCount - q0) / (EditorApplication.timeSinceStartup - t0):0} FPS (carros {VidaNaRua.Instance.carros.Count}, pedestres {VidaNaRua.Instance.pedestres.Count}; {Render()})")));
             }
         etapas.Add(E("fim", () => { VidaNaRua.Desligada = false; VidaNaRua.CarrosFixos = null; VidaNaRua.PedestresFixos = null; Hora(11f); Debug.Log("[FPS] Fim da medição da rua."); }));
         Rodar("FPS da rua", etapas);

@@ -215,6 +215,7 @@ public static partial class MontarCenario
 
         foreach (var d in new[] { Vector3.right, Vector3.left, Vector3.forward, Vector3.back })
         {
+            if (!m.Chegada(k, d)) continue;   // "T": ninguém chega por este lado
             // na esquina à direita de quem chega, virado para ele
             Vector3 pos = EsquinaDireita(m, k, d);
             var p = new GameObject("Semaforo").transform;
@@ -225,6 +226,7 @@ public static partial class MontarCenario
             Caixa(p, "Caixa", new Vector3(0f, 3.05f, 0f), new Vector3(0.32f, 0.92f, 0.22f), mCaixa, 1f, false);
             var luz = p.gameObject.AddComponent<SemaforoLuzes>();
             luz.eixoPrincipal = cz.Principal(d);
+            luz.defasagem = cz.defasagem;
             luz.acesos = acesos; luz.apagados = apagados;
             luz.lentes = new Renderer[3];
             for (int i = 0; i < 3; i++)
@@ -263,6 +265,7 @@ public static partial class MontarCenario
         Vector3 I = RotasTransito.CentroCruzamento(m, k);
         foreach (var d in new[] { transversal.Dir, -transversal.Dir })
         {
+            if (!m.Chegada(k, d)) continue;   // "T": ninguém chega por este lado
             var p = new GameObject("Placa_PARE").transform;
             p.SetParent(g, false);
             p.localPosition = EsquinaDireita(m, k, d) + Vector3.up * 0.12f;
@@ -368,13 +371,24 @@ public static partial class MontarCenario
         pai.SetParent(raiz, false);
         var lista = new List<Renderer>();
         int n = 0;
+        // imóveis direto na Vizinhanca (os de antes) e dentro dos lotes (Lote/Casa ou Casa_E, espelhada; Etapa 10E-2)
+        var imoveis = new List<Transform>();
         foreach (Transform t in viz)
         {
-            if (!JanelasDosModelos.TryGetValue(t.name, out var janelas)) continue;
+            if (JanelasDosModelos.ContainsKey(t.name)) imoveis.Add(t);
+            else if (t.name.StartsWith("Lote"))
+                foreach (Transform piv in t) if (piv.name.StartsWith("Casa")) foreach (Transform c in piv) if (JanelasDosModelos.ContainsKey(c.name)) imoveis.Add(c);
+        }
+        foreach (var t in imoveis)
+        {
+            var janelas = JanelasDosModelos[t.name];
             var rs = t.GetComponentsInChildren<Renderer>();
             if (rs.Length == 0) continue;
             var b = rs[0].bounds; foreach (var r in rs) b.Encapsulate(r.bounds);
-            Vector3 dir = FachadaDe(b.center);
+            bool noLote = t.parent != viz;
+            bool espelhada = noLote && t.parent.name == "Casa_E";
+            Vector3 dir = noLote ? t.parent.parent.forward : FachadaDe(b.center);
+            dir = new Vector3(Mathf.Round(dir.x), 0f, Mathf.Round(dir.z));
             if (dir == Vector3.zero) continue;
             Vector3 direita = Vector3.Cross(Vector3.up, -dir);
             float largura = Mathf.Abs(Vector3.Dot(b.size, new Vector3(Mathf.Abs(direita.x), 0f, Mathf.Abs(direita.z))));
@@ -386,7 +400,9 @@ public static partial class MontarCenario
             Physics.SyncTransforms();
             foreach (var j in janelas)
             {
-                Vector3 meio = cantoFrente + direita * ((j.x + j.z) / 2f) + Vector3.up * ((j.y + j.w) / 2f);
+                float u = (j.x + j.z) / 2f;
+                if (espelhada) u = largura - u;   // casa espelhada: a janela da esquerda vai para a direita
+                Vector3 meio = cantoFrente + direita * u + Vector3.up * ((j.y + j.w) / 2f);
                 float fundo = -1f;
                 foreach (var off in new[] { Vector2.zero, new Vector2(0.15f, 0.15f), new Vector2(-0.15f, -0.15f), new Vector2(0.15f, -0.15f), new Vector2(-0.15f, 0.15f) })
                 {

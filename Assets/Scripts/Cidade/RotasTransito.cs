@@ -268,7 +268,11 @@ public static class RotasTransito
     }
 
     // ---------------- Semáforo ----------------
-    // Um relógio só para todos os semáforos; o eixo principal do cruzamento tem o verde longo
+    // O eixo principal do cruzamento tem o verde longo. Etapa 10E-2: cada cruzamento soma a sua defasagem ao relógio
+    // (os semáforos não abrem todos ao mesmo tempo).
+    public static Cor CorSemaforo(MalhaRuas m, int cruzamento, bool eixoPrincipal, float tempo) =>
+        CorSemaforo(eixoPrincipal, tempo + m.cruzamentos[cruzamento].defasagem);
+
     public enum Cor { Verde, Amarelo, Vermelho }
     public const float VerdePrincipal = 16f, Amarelo = 3f, TodosVermelho = 1.5f, VerdeTransversal = 10f;
     public static float Ciclo => VerdePrincipal + Amarelo + TodosVermelho + VerdeTransversal + Amarelo + TodosVermelho;
@@ -296,15 +300,19 @@ public static class RotasTransito
         else if (hora < 21.5f) { c = 5; p = 6; }
         else { c = 2; p = 2; }
         if (fimDeSemana) { c = Mathf.Max(1, Mathf.RoundToInt(c * 0.6f)); p = Mathf.Max(1, Mathf.RoundToInt(p * 0.6f)); }
-        return (c, p);
+        // Etapa 10E-2: a cidade ficou ~7x maior; mais gente circulando (quem está longe nem é desenhado)
+        return (Mathf.RoundToInt(c * EscalaLotacao), Mathf.RoundToInt(p * EscalaLotacao));
     }
+
+    public const float EscalaLotacao = 2.5f;
 
     public static bool FaroisAcesos(float hora) => hora >= 17.75f || hora < 6.25f;
 
     // ---------------- Calçadas (pedestres) ----------------
-    // Linhas a 85 cm da fachada (longe dos postes, que ficam no meio-fio), em volta de cada quarteirão: cada lado do
-    // quarteirão que dá para uma rua tem um caminho; as quinas são nós e o fim que dá na borda do mapa é uma ponta
-    // (onde o pedestre nasce e some). Os quarteirões se ligam só pelas faixas de pedestre.
+    // Linhas a 85 cm da fachada (longe dos postes, que ficam no meio-fio), dos dois lados de cada rua: a linha é cortada
+    // onde sai uma transversal para aquele lado e termina na linha da transversal (a quina é um nó comum às duas) ou,
+    // na borda do mapa, numa ponta (onde o pedestre nasce e some). Os dois lados de uma rua se ligam só pelas faixas.
+    // Etapa 10E-2: lido rua a rua (não mais por quarteirão), para servir no "T" — o lado sem transversal passa reto.
     public struct NoCalcada { public Vector3 pos; public bool ponta; }
     public struct ArestaCalcada { public int a, b; public int faixa; /* -1 = calçada */ public Vector3 meioFio; /* lado da rua */ }
 
@@ -312,17 +320,23 @@ public static class RotasTransito
     {
         public readonly List<NoCalcada> nos = new List<NoCalcada>();
         public readonly List<ArestaCalcada> arestas = new List<ArestaCalcada>();
+        List<int>[] vizinhas;
         public List<int> Vizinhas(int no)
         {
-            var l = new List<int>();
-            for (int i = 0; i < arestas.Count; i++) if (arestas[i].a == no || arestas[i].b == no) l.Add(i);
-            return l;
+            if (vizinhas == null || vizinhas.Length != nos.Count)
+            {
+                vizinhas = new List<int>[nos.Count];
+                for (int i = 0; i < nos.Count; i++) vizinhas[i] = new List<int>();
+                for (int i = 0; i < arestas.Count; i++) { vizinhas[arestas[i].a].Add(i); vizinhas[arestas[i].b].Add(i); }
+            }
+            return new List<int>(vizinhas[no]);
         }
         public int Outro(int aresta, int no) => arestas[aresta].a == no ? arestas[aresta].b : arestas[aresta].a;
     }
 
     public const float AFachada = 0.85f;
     const float GrudarNaQuina = 1f;   // zebra a menos disso da quina sai da própria quina
+    const float RecuoBorda = 1f;      // a ponta da calçada fica 1 m antes da borda do mapa
 
     public static RedeCalcadas Calcadas() => Calcadas(Bairro.Malha);
 
@@ -335,7 +349,7 @@ public static class RotasTransito
         int No(Vector3 p, bool ponta)
         {
             var k = (Mathf.RoundToInt(p.x * 100f), Mathf.RoundToInt(p.z * 100f));
-            if (porPos.TryGetValue(k, out int i)) return i;
+            if (porPos.TryGetValue(k, out int i)) { if (ponta) r.nos[i] = new NoCalcada { pos = r.nos[i].pos, ponta = true }; return i; }
             r.nos.Add(new NoCalcada { pos = new Vector3(p.x, y, p.z), ponta = ponta });
             porPos[k] = r.nos.Count - 1;
             return r.nos.Count - 1;
@@ -344,6 +358,7 @@ public static class RotasTransito
         // Caminho na calçada do lado 'lado' da rua (+1 norte/leste, -1 sul/oeste), de a0 a a1 ao longo dela
         void Lado(int iRua, int lado, float a0, float a1, bool ponta0, bool ponta1)
         {
+            if (a1 - a0 < 0.01f) return;
             var rua = m.ruas[iRua];
             float t = lado > 0 ? rua.FrentePos - AFachada : rua.FrenteNeg + AFachada;
             Vector3 meioFio = -lado * rua.Normal;
@@ -370,26 +385,28 @@ public static class RotasTransito
             }
         }
 
-        // Quarteirões: entre ruas norte-sul vizinhas (ou a borda) e leste-oeste vizinhas (ou a borda)
-        var ns = new List<int>(); var lo = new List<int>();
-        for (int i = 0; i < m.ruas.Count; i++) (m.ruas[i].lesteOeste ? lo : ns).Add(i);
-        ns.Sort((a, b) => m.ruas[a].eixo.CompareTo(m.ruas[b].eixo));
-        lo.Sort((a, b) => m.ruas[a].eixo.CompareTo(m.ruas[b].eixo));
-        var lim = m.limites;
-        for (int i = 0; i <= ns.Count; i++)
+        for (int i = 0; i < m.ruas.Count; i++)
         {
-            int esq = i > 0 ? ns[i - 1] : -1, dir = i < ns.Count ? ns[i] : -1;
-            float x0 = esq >= 0 ? m.ruas[esq].FrentePos - AFachada : lim.xMin + 1f;
-            float x1 = dir >= 0 ? m.ruas[dir].FrenteNeg + AFachada : lim.xMax - 1f;
-            for (int j = 0; j <= lo.Count; j++)
+            var rua = m.ruas[i];
+            var cruz = m.CruzamentosDa(i);
+            int kIni = m.CruzamentoNoFim(i, -1), kFim = m.CruzamentoNoFim(i, 1);
+            foreach (int lado in new[] { -1, 1 })
             {
-                int sul = j > 0 ? lo[j - 1] : -1, norte = j < lo.Count ? lo[j] : -1;
-                float z0 = sul >= 0 ? m.ruas[sul].FrentePos - AFachada : lim.yMin + 1f;
-                float z1 = norte >= 0 ? m.ruas[norte].FrenteNeg + AFachada : lim.yMax - 1f;
-                if (sul >= 0) Lado(sul, 1, x0, x1, esq < 0, dir < 0);
-                if (norte >= 0) Lado(norte, -1, x0, x1, esq < 0, dir < 0);
-                if (esq >= 0) Lado(esq, 1, z0, z1, sul < 0, norte < 0);
-                if (dir >= 0) Lado(dir, -1, z0, z1, sul < 0, norte < 0);
+                // começo: na borda (ponta) ou na linha da calçada do lado de lá da rua onde esta nasce ("T")
+                float a0 = kIni >= 0 ? m.Transversal(kIni, i).FrentePos - AFachada : rua.ini + RecuoBorda;
+                float a1 = kFim >= 0 ? m.Transversal(kFim, i).FrenteNeg + AFachada : rua.fim - RecuoBorda;
+                float cur = a0;
+                bool pontaCur = kIni < 0;
+                foreach (int k in cruz)
+                {
+                    if (k == kIni || k == kFim) continue;
+                    if (!m.Braco(k, lado * rua.Normal)) continue;   // o lado sem transversal passa reto
+                    var o = m.Transversal(k, i);
+                    Lado(i, lado, cur, o.FrenteNeg + AFachada, pontaCur, false);
+                    cur = o.FrentePos - AFachada;
+                    pontaCur = false;
+                }
+                Lado(i, lado, cur, a1, pontaCur, kFim < 0);
             }
         }
         // Travessias: a zebra liga as duas calçadas da rua

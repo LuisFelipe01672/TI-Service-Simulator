@@ -164,7 +164,7 @@ public class CarroNPC : MonoBehaviour
     {
         if (rua.Malha.cruzamentos[p.indice].controle == ControleCruzamento.Semaforo)
         {
-            var cor = RotasTransito.CorSemaforo(p.preferencial, VidaNaRua.TempoSemaforo);
+            var cor = RotasTransito.CorSemaforo(rua.Malha, p.indice, p.preferencial, VidaNaRua.TempoSemaforo);
             if (cor == RotasTransito.Cor.Vermelho) { if (d > 0.2f || v < 2f) return false; }
             else if (cor == RotasTransito.Cor.Amarelo && d > v * v / (2f * 3f) + 0.5f) return false;
         }

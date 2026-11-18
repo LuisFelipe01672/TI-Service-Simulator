@@ -6,12 +6,17 @@ using UnityEngine;
 // do mapa), as faixas de pedestre e as guias rebaixadas. Tudo o que depende das ruas lê daqui: os pedaços de asfalto e
 // calçada (Bairro.Pedacos), as rotas dos carros e as calçadas dos pedestres (RotasTransito), o GPS (caminho mais curto
 // no grafo das ruas) e a montagem do cenário (faixas pintadas, postes, semáforos, PAREs e barreiras).
-// O bairro de hoje é Bairro.Malha (3 ruas); os testes também montam uma grade 3 x 3 (MalhaRuas.Grade).
+// O bairro de hoje é Bairro.Malha; os testes também montam uma grade 3 x 3 (MalhaRuas.Grade) e uma grade com "T".
+//
+// Etapa 10E-2: uma rua pode começar ou terminar no eixo de outra (cruzamento em "T", no meio do mapa); só o fim que
+// fica solto (na borda do mapa) vira ponta. Cada semáforo tem o seu relógio (Cruzamento.defasagem).
 //
 // Regras do desenho (iguais às do "H" que existia antes):
 //  • a rua leste-oeste passa reta no cruzamento (o asfalto dela é inteiro); a norte-sul é cortada no asfalto dela;
 //  • as calçadas da leste-oeste são cortadas só onde passa o asfalto da norte-sul (as esquinas ficam com ela);
-//  • as calçadas da norte-sul são cortadas na faixa inteira da leste-oeste (asfalto + calçadas).
+//  • as calçadas da norte-sul são cortadas na faixa inteira da leste-oeste (asfalto + calçadas);
+//  • no "T", a calçada do lado sem rua passa reta (não é cortada) e a rua que termina tem o asfalto até a borda
+//    do asfalto da outra (a leste-oeste que termina numa norte-sul cobre o quadrado do cruzamento).
 public enum ControleCruzamento { Pare, Semaforo }
 
 public class Rua
@@ -52,6 +57,7 @@ public class Cruzamento
     public ControleCruzamento controle = ControleCruzamento.Pare;
     public bool principalLesteOeste = true;   // PARE: quem vem pela outra para; semáforo: este eixo tem o verde longo
     public string nome;
+    public float defasagem;              // semáforo: segundos somados ao relógio (cada cruzamento no seu tempo)
     public int Rua(bool lesteOeste) => lesteOeste ? ruaLO : ruaNS;
     // A chegada (direção de quem vem) é pela rua principal?
     public bool Principal(Vector3 chegada) => principalLesteOeste ? Mathf.Abs(chegada.x) > 0.5f : Mathf.Abs(chegada.z) > 0.5f;
@@ -98,13 +104,36 @@ public class MalhaRuas
             foreach (int j in ns)
                 cruzamentos.Add(new Cruzamento { ruaLO = i, ruaNS = j, centro = new Vector3(ruas[j].eixo, 0f, lo.eixo), nome = $"{lo.nome} × {ruas[j].nome}" });
         }
+        // Pontas: só o fim de rua que não está num cruzamento ("T")
         for (int i = 0; i < ruas.Count; i++)
         {
-            pontas.Add(new Ponta { rua = i, lado = -1 });
-            pontas.Add(new Ponta { rua = i, lado = 1 });
+            if (CruzamentoNoFim(i, -1) < 0) pontas.Add(new Ponta { rua = i, lado = -1 });
+            if (CruzamentoNoFim(i, 1) < 0) pontas.Add(new Ponta { rua = i, lado = 1 });
         }
         return this;
     }
+
+    // Cruzamento em cima do começo (lado -1) ou do fim (+1) da rua: a rua termina num "T" (-1 se termina solta)
+    public int CruzamentoNoFim(int rua, int lado)
+    {
+        var r = ruas[rua];
+        float a = lado < 0 ? r.ini : r.fim;
+        for (int k = 0; k < cruzamentos.Count; k++)
+            if ((cruzamentos[k].ruaLO == rua || cruzamentos[k].ruaNS == rua) && Mathf.Abs(r.Ao(cruzamentos[k].centro) - a) < 0.01f) return k;
+        return -1;
+    }
+
+    // A rua do cruzamento k continua na direção 'dir' (eixo x ou z)? No "T" falta um dos quatro braços.
+    public bool Braco(int k, Vector3 dir)
+    {
+        var cz = cruzamentos[k];
+        var r = ruas[cz.Rua(Mathf.Abs(dir.x) > 0.5f)];
+        float c = r.Ao(cz.centro), s = Vector3.Dot(dir, r.Dir);
+        return s > 0f ? r.fim > c + 0.5f : r.ini < c - 0.5f;
+    }
+
+    // Chegando ao cruzamento na direção d, vem-se por um braço que existe?
+    public bool Chegada(int k, Vector3 d) => Braco(k, -d);
 
     public int CruzamentoDe(string ruaA, string ruaB)
     {
@@ -143,28 +172,39 @@ public class MalhaRuas
         {
             var r = ruas[i];
             var cortesAsfalto = new List<Vector2>();
-            var cortesCalcada = new List<Vector2>();
+            var cortesPos = new List<Vector2>();   // calçada do lado + (norte/leste)
+            var cortesNeg = new List<Vector2>();
+            float ini = r.ini, fim = r.fim;        // o asfalto da leste-oeste que termina num "T" cobre o cruzamento
             foreach (int k in CruzamentosDa(i))
             {
                 var outra = Transversal(k, i);
                 float c = r.Ao(cruzamentos[k].centro);
+                // a outra rua sai para o lado + / - desta? (no "T", a calçada do lado sem rua passa reta)
+                bool paraPos = Braco(k, r.Normal), paraNeg = Braco(k, -r.Normal);
+                Vector2 corte;
                 if (r.lesteOeste)
-                    cortesCalcada.Add(new Vector2(c - outra.meiaPista, c + outra.meiaPista));   // só o asfalto da transversal
+                {
+                    corte = new Vector2(c - outra.meiaPista, c + outra.meiaPista);   // só o asfalto da transversal
+                    if (Mathf.Abs(c - r.ini) < 0.01f) ini = c - outra.meiaPista;
+                    if (Mathf.Abs(c - r.fim) < 0.01f) fim = c + outra.meiaPista;
+                }
                 else
                 {
                     cortesAsfalto.Add(new Vector2(outra.AsfaltoNeg, outra.AsfaltoPos));
-                    cortesCalcada.Add(new Vector2(outra.FrenteNeg, outra.FrentePos));          // a faixa inteira dela
+                    corte = new Vector2(outra.FrenteNeg, outra.FrentePos);          // a faixa inteira dela
                 }
+                if (paraPos) cortesPos.Add(corte);
+                if (paraNeg) cortesNeg.Add(corte);
             }
-            Trechos(l, i, TipoPiso.Asfalto, 0, r.AsfaltoNeg, r.AsfaltoPos, cortesAsfalto);
-            Trechos(l, i, TipoPiso.Calcada, 1, r.AsfaltoPos, r.FrentePos, cortesCalcada);
-            Trechos(l, i, TipoPiso.Calcada, -1, r.FrenteNeg, r.AsfaltoNeg, cortesCalcada);
+            Trechos(l, i, TipoPiso.Asfalto, 0, r.AsfaltoNeg, r.AsfaltoPos, cortesAsfalto, ini, fim);
+            Trechos(l, i, TipoPiso.Calcada, 1, r.AsfaltoPos, r.FrentePos, cortesPos, r.ini, r.fim);
+            Trechos(l, i, TipoPiso.Calcada, -1, r.FrenteNeg, r.AsfaltoNeg, cortesNeg, r.ini, r.fim);
         }
         pedacos = l;
         return l;
     }
 
-    void Trechos(List<PedacoRua> l, int rua, TipoPiso tipo, int lado, float t0, float t1, List<Vector2> cortes)
+    void Trechos(List<PedacoRua> l, int rua, TipoPiso tipo, int lado, float t0, float t1, List<Vector2> cortes, float ini, float fim)
     {
         var r = ruas[rua];
         void Add(TipoPiso t, float a0, float a1)
@@ -187,9 +227,9 @@ public class MalhaRuas
             Add(TipoPiso.Calcada, cur, a1);
         }
         cortes.Sort((x, y) => x.x.CompareTo(y.x));
-        float a = r.ini;
-        foreach (var c in cortes) { Trecho(a, c.x); a = c.y; }
-        Trecho(a, r.fim);
+        float a = ini;
+        foreach (var c in cortes) { Trecho(a, Mathf.Min(c.x, fim)); a = Mathf.Max(a, c.y); }
+        Trecho(a, fim);
     }
 
     public bool NaRua(Vector2 xz)
@@ -327,6 +367,49 @@ public class MalhaRuas
         return l;
     }
 
+    // Postes a cada 12 m, longe dos cruzamentos e das zebras (ruas sem a lista feita à mão)
+    public float[] PostesPadrao(int iRua)
+    {
+        var r = ruas[iRua];
+        var l = new List<float>();
+        for (float a = r.ini + 4f; a <= r.fim - 4f; a += 12f)
+        {
+            bool livre = true;
+            foreach (int k in CruzamentosDa(iRua))
+            {
+                var t = Transversal(k, iRua);
+                if (Mathf.Abs(a - r.Ao(cruzamentos[k].centro)) < t.meiaPista + Mathf.Max(t.calcadaNeg, t.calcadaPos) + 1f) livre = false;
+            }
+            foreach (var fx in faixas) if (fx.rua == iRua && Mathf.Abs(a - fx.pos) < 2.5f) livre = false;
+            if (livre) l.Add(a);
+        }
+        return l.ToArray();
+    }
+
+    // ---------------- Faixas de pedestre em cada trecho (Etapa 10E-2) ----------------
+    // Cada trecho de rua entre dois nós (cruzamento ou ponta) que ainda não tem zebra ganha uma, junto ao cruzamento de
+    // baixo (oeste/sul) — ou ao de cima, se o trecho vem da borda. Assim todo quarteirão se liga aos vizinhos a pé.
+    public void FaixasEmCadaTrecho()
+    {
+        for (int i = 0; i < ruas.Count; i++)
+        {
+            var r = ruas[i];
+            var nos = new List<(float a, int k)>();
+            if (CruzamentoNoFim(i, -1) < 0) nos.Add((r.ini, -1));
+            foreach (int k in CruzamentosDa(i)) nos.Add((r.Ao(cruzamentos[k].centro), k));
+            if (CruzamentoNoFim(i, 1) < 0) nos.Add((r.fim, -1));
+            for (int j = 0; j + 1 < nos.Count; j++)
+            {
+                float a0 = nos[j].a, a1 = nos[j + 1].a;
+                if (faixas.Exists(x => x.rua == i && x.pos > a0 && x.pos < a1)) continue;
+                float pos = nos[j].k >= 0 ? a0 + Transversal(nos[j].k, i).meiaPista + 2f
+                                          : a1 - Transversal(nos[j + 1].k, i).meiaPista - 2f;
+                if (pos - a0 < 4f || a1 - pos < 4f) continue;   // trecho curto demais
+                faixas.Add(new FaixaPedestre { rua = i, pos = pos });
+            }
+        }
+    }
+
     // ---------------- Grade de teste ----------------
 
     // nx ruas norte-sul por nz ruas leste-oeste, 'quadra' metros entre os eixos, centrada na origem, com uma faixa de
@@ -350,6 +433,34 @@ public class MalhaRuas
             }
         }
         m.cruzamentos[m.cruzamentos.Count / 2].controle = ControleCruzamento.Semaforo;
+        m.FaixasEmCadaTrecho();   // e nos trechos que vão até a borda (todo quarteirão ligado a pé)
+        return m;
+    }
+
+    // Grade com "T" (Etapa 10E-2): ruas que terminam no meio do mapa, no eixo de outra. 3 leste-oeste e 3 norte-sul,
+    // 40 m entre os eixos, borda a 80 m da origem:
+    //   A (z=-40) de borda a borda; B (z=0) de D a F; C (z=40) da borda oeste até F;
+    //   D (x=-40) e F (x=40) de borda a borda; E (x=0) da borda sul até C.
+    public static MalhaRuas GradeComT()
+    {
+        var m = new MalhaRuas { nome = "grade com T", limites = Rect.MinMaxRect(-80f, -80f, 80f, 80f) };
+        m.AddRua(new Rua { nome = "Rua A", lesteOeste = true, eixo = -40f, ini = -80f, fim = 80f });
+        m.AddRua(new Rua { nome = "Rua B", lesteOeste = true, eixo = 0f, ini = -40f, fim = 40f });
+        m.AddRua(new Rua { nome = "Rua C", lesteOeste = true, eixo = 40f, ini = -80f, fim = 40f });
+        m.AddRua(new Rua { nome = "Rua D", lesteOeste = false, eixo = -40f, ini = -80f, fim = 80f });
+        m.AddRua(new Rua { nome = "Rua E", lesteOeste = false, eixo = 0f, ini = -80f, fim = 40f });
+        m.AddRua(new Rua { nome = "Rua F", lesteOeste = false, eixo = 40f, ini = -80f, fim = 80f });
+        m.Fechar();
+        // no "T", quem passa reto é a principal
+        foreach (var c in m.cruzamentos)
+        {
+            bool loTermina = Mathf.Abs(c.centro.x - m.ruas[c.ruaLO].ini) < 0.01f || Mathf.Abs(c.centro.x - m.ruas[c.ruaLO].fim) < 0.01f;
+            if (loTermina) c.principalLesteOeste = false;
+        }
+        var bxe = m.cruzamentos[m.CruzamentoDe("Rua B", "Rua E")];
+        bxe.controle = ControleCruzamento.Semaforo;
+        bxe.defasagem = 7f;
+        m.FaixasEmCadaTrecho();
         return m;
     }
 }

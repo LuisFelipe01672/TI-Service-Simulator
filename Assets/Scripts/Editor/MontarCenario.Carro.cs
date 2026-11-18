@@ -451,6 +451,7 @@ public static partial class MontarCenario
             var r = m.ruas[pt.rua];
             Barreira(r.Ponto(pt.lado < 0 ? r.ini + 0.3f : r.fim - 0.3f), !r.lesteOeste, 2f * r.meiaPista);
         }
+        JuntarGrupo(f);   // barreiras numa malha por material (Etapa 10E-2)
         // Muro invisível em volta (só colisão)
         var lim = m.limites;
         float w = lim.width + 4f, xMeio = lim.center.x, zMeio = lim.center.y, h = lim.height + 4f;
@@ -459,5 +460,12 @@ public static partial class MontarCenario
         Invisivel(new Vector3(xMeio, 2f, lim.yMax + 2f), new Vector3(w, 4f, 0.5f));
         Invisivel(new Vector3(lim.xMin - 2f, 2f, zMeio), new Vector3(0.5f, 4f, h));
         Invisivel(new Vector3(lim.xMax + 2f, 2f, zMeio), new Vector3(0.5f, 4f, h));
+        // Etapa 10E-2: muro de divisa de 3 m em volta da cidade (atrás das barreiras do fim das ruas), para não ver o vazio
+        var mDivisa = MatPBR("Muro_Divisa", "PaintedPlaster017", new Color(0.8f, 0.76f, 0.68f), 0.1f);
+        float mw = lim.width + 3f, mh = lim.height + 3f;
+        Caixa(f, "Muro_Divisa", new Vector3(xMeio, 1.5f, lim.yMin - 1.5f), new Vector3(mw, 3f, 0.25f), mDivisa, 3f);
+        Caixa(f, "Muro_Divisa", new Vector3(xMeio, 1.5f, lim.yMax + 1.5f), new Vector3(mw, 3f, 0.25f), mDivisa, 3f);
+        Caixa(f, "Muro_Divisa", new Vector3(lim.xMin - 1.5f, 1.5f, zMeio), new Vector3(0.25f, 3f, mh), mDivisa, 3f);
+        Caixa(f, "Muro_Divisa", new Vector3(lim.xMax + 1.5f, 1.5f, zMeio), new Vector3(0.25f, 3f, mh), mDivisa, 3f);
     }
 }

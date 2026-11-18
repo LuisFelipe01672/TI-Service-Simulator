@@ -57,6 +57,7 @@ public static partial class MontarCenario
                 // Rua, prédios, gramado, caminho da calçada: sem sonda, segue a luz ambiente do dia
                 r.lightProbeUsage = LightProbeUsage.Off;
                 r.reflectionProbeUsage = ReflectionProbeUsage.BlendProbesAndSkybox;
+                MarcarEstaticosDeFora(r);   // Etapa 10E-2: lotes de desenho e occlusion culling
                 fora++;
                 continue;
             }

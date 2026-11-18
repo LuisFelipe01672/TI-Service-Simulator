@@ -7,6 +7,7 @@ using UnityEngine.Serialization;
 public class SemaforoLuzes : MonoBehaviour
 {
     [FormerlySerializedAs("eixoAcacias")] public bool eixoPrincipal;
+    public float defasagem;            // Etapa 10E-2: o relógio deste cruzamento (Cruzamento.defasagem)
     public Renderer[] lentes;          // vermelho, amarelo, verde
     public Material[] acesos, apagados;
     int corAtual = -1;
@@ -16,7 +17,7 @@ public class SemaforoLuzes : MonoBehaviour
     {
         if (Time.time < proxima) return;
         proxima = Time.time + 0.1f;
-        int cor = RotasTransito.CorSemaforo(eixoPrincipal,VidaNaRua.TempoSemaforo) switch
+        int cor = RotasTransito.CorSemaforo(eixoPrincipal, VidaNaRua.TempoSemaforo + defasagem) switch
         {
             RotasTransito.Cor.Vermelho => 0,
             RotasTransito.Cor.Amarelo => 1,

@@ -231,6 +231,8 @@ public partial class GameUI
             Retangulo(p.tipo == TipoPiso.Asfalto ? "Asfalto" : "Calcada", p.area,
                 p.tipo == TipoPiso.Asfalto ? UIFactory.Hex("#2B2F36") : UIFactory.Hex("#9A968E"));
         Retangulo("Posto", Bairro.TerrenoPosto, UIFactory.Hex("#4A4F57"));
+        Retangulo("Praca", Bairro.Praca, UIFactory.Hex("#5C8A44"));   // Etapa 10E-2
+
         void Ponto(Vector3 pos, Color cor, float tam, string rotulo)
         {
             var r = Retangulo("Ponto", new Rect(pos.x, pos.z, 0f, 0f), cor);

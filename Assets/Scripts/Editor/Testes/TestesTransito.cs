@@ -13,6 +13,7 @@ public class TestesTransito
     {
         yield return Bairro.Malha;
         yield return MalhaRuas.Grade(3, 3, 40f);
+        yield return MalhaRuas.GradeComT();
     }
 
     static List<Rect> Asfalto(MalhaRuas m) => m.Pedacos().Where(p => p.tipo == TipoPiso.Asfalto).Select(p => p.area).ToList();
@@ -131,31 +132,39 @@ public class TestesTransito
     public void Rotas_ManobrasEPreferencial()
     {
         var m = Bairro.Malha;
+        // Acácias de ponta a ponta: reto e preferencial nos 6 cruzamentos, passando nas 7 zebras e nos 2 semáforos
         var reta = RotasTransito.Rota(m, Ponta(m, Bairro.RuaAcacias, -1), Ponta(m, Bairro.RuaAcacias, 1));
-        Assert.AreEqual(2, reta.paradas.Count(p => p.tipo == RotasTransito.TipoParada.Cruzamento));
-        Assert.AreEqual(3, reta.paradas.Count(p => p.tipo == RotasTransito.TipoParada.Faixa), "Pela Acácias inteira passa nas 3 faixas.");
-        Assert.IsTrue(reta.paradas.All(p => p.tipo != RotasTransito.TipoParada.Cruzamento || (p.preferencial && p.manobra == RotasTransito.Manobra.Reto)));
-        // Ipê sul → Jacarandás norte: na Ipê vira à direita (para o leste), na Jacarandás vira à esquerda (para o norte)
-        var r = RotasTransito.Rota(m, Ponta(m, Bairro.RuaIpe, -1), Ponta(m, Bairro.RuaJacarandas, 1));
+        var cr = reta.paradas.Where(p => p.tipo == RotasTransito.TipoParada.Cruzamento).ToList();
+        Assert.AreEqual(6, cr.Count);
+        Assert.AreEqual(7, reta.paradas.Count(p => p.tipo == RotasTransito.TipoParada.Faixa), "Pela Acácias inteira passa nas 7 faixas.");
+        Assert.IsTrue(cr.All(p => p.preferencial && p.manobra == RotasTransito.Manobra.Reto));
+        Assert.AreEqual(2, cr.Count(p => m.cruzamentos[p.indice].controle == ControleCruzamento.Semaforo));
+        // Cedros norte → Acácias oeste: passa reto no "T" da Sibipirunas (preferencial), para no PARE da Paineiras e
+        // vira à direita no PARE da Acácias
+        var r = RotasTransito.Rota(m, Ponta(m, Bairro.RuaCedros, 1), Ponta(m, Bairro.RuaAcacias, -1));
         var c = r.paradas.Where(p => p.tipo == RotasTransito.TipoParada.Cruzamento).OrderBy(p => p.s).ToList();
-        Assert.AreEqual(m.CruzamentoDe(Bairro.RuaAcacias, Bairro.RuaIpe), c[0].indice);
-        Assert.AreEqual(RotasTransito.Manobra.Direita, c[0].manobra);
-        Assert.IsFalse(c[0].preferencial, "Quem vem pela Ipê para no PARE.");
-        Assert.AreEqual(RotasTransito.Manobra.Esquerda, c[1].manobra);
-        Assert.IsTrue(c[1].preferencial);
-        Assert.AreEqual(ControleCruzamento.Pare, m.cruzamentos[c[0].indice].controle);
-        Assert.AreEqual(ControleCruzamento.Semaforo, m.cruzamentos[c[1].indice].controle);
+        Assert.AreEqual(3, c.Count);
+        Assert.AreEqual(m.CruzamentoDe(Bairro.RuaSibipirunas, Bairro.RuaCedros), c[0].indice);
+        Assert.IsTrue(c[0].preferencial && c[0].manobra == RotasTransito.Manobra.Reto, "No \"T\" quem passa reto é a principal.");
+        Assert.IsFalse(c[1].preferencial, "Quem vem pela Cedros para no PARE da avenida.");
+        Assert.AreEqual(m.CruzamentoDe(Bairro.RuaAcacias, Bairro.RuaCedros), c[2].indice);
+        Assert.AreEqual(RotasTransito.Manobra.Direita, c[2].manobra);
+        Assert.IsFalse(c[2].preferencial);
+        // Acácias oeste → Cedros norte: vira à esquerda na Cedros, vindo pela preferencial
+        var e = RotasTransito.Rota(m, Ponta(m, Bairro.RuaAcacias, -1), Ponta(m, Bairro.RuaCedros, 1));
+        var ce = e.paradas.Where(p => p.tipo == RotasTransito.TipoParada.Cruzamento).OrderBy(p => p.s).ToList();
+        Assert.AreEqual(RotasTransito.Manobra.Esquerda, ce[0].manobra);
+        Assert.IsTrue(ce[0].preferencial);
     }
 
-    // A malha do bairro tem as 3 ruas de sempre, nos mesmos lugares (nada saiu do lugar com a troca do "H" fixo)
+    // A cidade (Etapa 10E-2): as 3 ruas de antes nos mesmos lugares, mais 8 ruas novas numa grade com "T"
     [Test]
     public void Malha_BairroIgualAoH()
     {
         var m = Bairro.Malha;
-        Assert.AreEqual(3, m.ruas.Count);
-        Assert.AreEqual(2, m.cruzamentos.Count);
-        Assert.AreEqual(6, m.pontas.Count);
-        Assert.AreEqual(3, m.faixas.Count);
+        Assert.AreEqual(11, m.ruas.Count);
+        Assert.AreEqual(30, m.cruzamentos.Count);
+        Assert.AreEqual(12, m.pontas.Count, "Pontas: Acácias, Paineiras, Ipê, Jacarandás, Cedros e Oitis (as outras terminam em \"T\").");
         var ac = m.ruas[m.Indice(Bairro.RuaAcacias)];
         Assert.That(ac.AsfaltoPos, Is.EqualTo(Bairro.AcaciasAsfaltoZ0).Within(0.001f));
         Assert.That(ac.AsfaltoNeg, Is.EqualTo(Bairro.AcaciasAsfaltoZ1).Within(0.001f));
@@ -163,11 +172,43 @@ public class TestesTransito
         Assert.That(ac.FrenteNeg, Is.EqualTo(Bairro.FrenteSulAcacias).Within(0.001f));
         Assert.That(m.ruas[m.Indice(Bairro.RuaIpe)].eixo, Is.EqualTo(Bairro.IpeX));
         Assert.That(m.ruas[m.Indice(Bairro.RuaJacarandas)].eixo, Is.EqualTo(Bairro.JacarandasX));
-        Assert.AreEqual(new Vector3(Bairro.IpeX, 0f, Bairro.AcaciasCentroZ), m.cruzamentos[m.CruzamentoDe(Bairro.RuaAcacias, Bairro.RuaIpe)].centro);
-        Assert.AreEqual(new Vector3(Bairro.JacarandasX, 0f, Bairro.AcaciasCentroZ), m.cruzamentos[m.CruzamentoDe(Bairro.RuaAcacias, Bairro.RuaJacarandas)].centro);
-        // 6 pedaços de asfalto e 15 de calçada, como o "H" escrito à mão (com a guia rebaixada do posto)
-        Assert.AreEqual(6, m.Pedacos().Count(p => p.tipo == TipoPiso.Asfalto));
-        Assert.AreEqual(15, m.Pedacos().Count(p => p.tipo == TipoPiso.Calcada));
+        int ipe = m.CruzamentoDe(Bairro.RuaAcacias, Bairro.RuaIpe), jac = m.CruzamentoDe(Bairro.RuaAcacias, Bairro.RuaJacarandas);
+        Assert.AreEqual(new Vector3(Bairro.IpeX, 0f, Bairro.AcaciasCentroZ), m.cruzamentos[ipe].centro);
+        Assert.AreEqual(new Vector3(Bairro.JacarandasX, 0f, Bairro.AcaciasCentroZ), m.cruzamentos[jac].centro);
+        Assert.AreEqual(ControleCruzamento.Pare, m.cruzamentos[ipe].controle);
+        Assert.AreEqual(ControleCruzamento.Semaforo, m.cruzamentos[jac].controle);
+        Assert.AreEqual(0f, m.cruzamentos[jac].defasagem, "O semáforo de sempre continua no relógio de antes.");
+        // as 3 zebras de antes continuam na Acácias
+        foreach (float x in Bairro.FaixasPedestreX) Assert.IsTrue(m.faixas.Any(f => f.rua == m.Indice(Bairro.RuaAcacias) && Mathf.Abs(f.pos - x) < 0.01f));
+        // ~6x maior que o bairro de antes (124 x 89 m)
+        Assert.That(m.limites.width * m.limites.height / (124f * 89f), Is.InRange(5.5f, 10f));
+    }
+
+    // Toda ponta fica na borda do mapa; todo fim de rua que não é ponta é um "T" (cai no eixo de outra rua)
+    [TestCaseSource(nameof(Malhas))]
+    public void Malha_PontasNaBordaETs(MalhaRuas m)
+    {
+        var lim = m.limites;
+        foreach (var p in m.pontas)
+        {
+            var q = m.ruas[p.rua].Ponto(p.lado < 0 ? m.ruas[p.rua].ini : m.ruas[p.rua].fim);
+            bool borda = Mathf.Abs(q.x - lim.xMin) < 0.01f || Mathf.Abs(q.x - lim.xMax) < 0.01f || Mathf.Abs(q.z - lim.yMin) < 0.01f || Mathf.Abs(q.z - lim.yMax) < 0.01f;
+            Assert.IsTrue(borda, $"[{m}] Ponta da {m.ruas[p.rua]} fora da borda: {q}.");
+        }
+        for (int i = 0; i < m.ruas.Count; i++)
+            foreach (int lado in new[] { -1, 1 })
+            {
+                bool ponta = m.pontas.Any(p => p.rua == i && p.lado == lado);
+                int k = m.CruzamentoNoFim(i, lado);
+                Assert.IsTrue(ponta ^ (k >= 0), $"[{m}] {m.ruas[i]}: o fim {lado} tem que ser ponta ou \"T\".");
+                if (k < 0) continue;
+                // no "T" falta só o braço desta rua para o lado de fora; a outra rua passa reto e é a principal
+                var o = m.Transversal(k, i);
+                int bracos = new[] { Vector3.right, Vector3.left, Vector3.forward, Vector3.back }.Count(d => m.Braco(k, d));
+                Assert.AreEqual(3, bracos, $"[{m}] {m.cruzamentos[k].nome}: \"T\" sem 3 braços.");
+                if (m.cruzamentos[k].controle == ControleCruzamento.Pare)
+                    Assert.AreEqual(o.lesteOeste, m.cruzamentos[k].principalLesteOeste, $"[{m}] {m.cruzamentos[k].nome}: no \"T\" a principal é a que passa reto.");
+            }
     }
 
     [Test]
@@ -180,6 +221,39 @@ public class TestesTransito
         Assert.AreEqual(1, m.cruzamentos.Count(c => c.controle == ControleCruzamento.Semaforo));
         Assert.AreEqual(Vector3.zero, m.cruzamentos[4].centro, "O cruzamento do meio fica na origem.");
         foreach (var r in m.ruas) Assert.AreEqual(3, m.CruzamentosDa(m.ruas.IndexOf(r)).Count);
+    }
+
+    [Test]
+    public void Malha_GradeComT()
+    {
+        var m = MalhaRuas.GradeComT();
+        Assert.AreEqual(6, m.ruas.Count);
+        Assert.AreEqual(9, m.cruzamentos.Count);
+        Assert.AreEqual(8, m.pontas.Count, "A, D e F nas duas bordas; C e E numa só; B termina em \"T\" nos dois lados.");
+        Assert.AreEqual(4, Enumerable.Range(0, m.cruzamentos.Count).Count(k => new[] { Vector3.right, Vector3.left, Vector3.forward, Vector3.back }.Count(d => m.Braco(k, d)) == 3));
+        Assert.Greater(m.faixas.Count, 10, "Uma zebra em cada trecho.");
+    }
+
+    // Semáforos com relógio por cruzamento: nunca verde nos dois eixos, e cruzamentos diferentes em tempos diferentes
+    [Test]
+    public void Semaforo_RelogioPorCruzamento()
+    {
+        var m = Bairro.Malha;
+        var sem = Enumerable.Range(0, m.cruzamentos.Count).Where(k => m.cruzamentos[k].controle == ControleCruzamento.Semaforo).ToList();
+        Assert.AreEqual(4, sem.Count);
+        Assert.AreEqual(sem.Count, sem.Select(k => m.cruzamentos[k].defasagem).Distinct().Count(), "Dois semáforos no mesmo relógio.");
+        bool diferentes = false;
+        for (float t = 0f; t < RotasTransito.Ciclo; t += 0.5f)
+        {
+            foreach (int k in sem)
+            {
+                var a = RotasTransito.CorSemaforo(m, k, true, t);
+                var b = RotasTransito.CorSemaforo(m, k, false, t);
+                Assert.IsTrue(a == RotasTransito.Cor.Vermelho || b == RotasTransito.Cor.Vermelho, $"Os dois eixos abertos em {m.cruzamentos[k].nome}, t={t}.");
+            }
+            diferentes |= sem.Select(k => RotasTransito.CorSemaforo(m, k, true, t)).Distinct().Count() > 1;
+        }
+        Assert.IsTrue(diferentes, "Todos os semáforos mudam juntos.");
     }
 
     [Test]
@@ -264,14 +338,20 @@ public class TestesTransito
         for (int i = 0; i < rede.nos.Count; i++) Assert.Greater(rede.Vizinhas(i).Count, 0, $"[{m}] Nó solto: {rede.nos[i].pos}.");
     }
 
-    // A rede das calçadas do bairro é a mesma de antes (22 nós, 19 caminhos, 3 travessias)
-    [Test]
-    public void Calcadas_BairroComoAntes()
+    // Dá para ir a pé de qualquer ponto da calçada a qualquer outro (as zebras ligam todos os quarteirões)
+    [TestCaseSource(nameof(Malhas))]
+    public void Calcadas_TudoLigadoAPe(MalhaRuas m)
     {
-        var rede = RotasTransito.Calcadas(Bairro.Malha);
-        Assert.AreEqual(22, rede.nos.Count);
-        Assert.AreEqual(19, rede.arestas.Count);
-        Assert.AreEqual(12, rede.nos.Count(n => n.ponta));
+        var rede = RotasTransito.Calcadas(m);
+        var visto = new bool[rede.nos.Count];
+        var fila = new Queue<int>();
+        visto[0] = true; fila.Enqueue(0);
+        while (fila.Count > 0)
+        {
+            int n = fila.Dequeue();
+            foreach (int a in rede.Vizinhas(n)) { int o = rede.Outro(a, n); if (!visto[o]) { visto[o] = true; fila.Enqueue(o); } }
+        }
+        for (int i = 0; i < rede.nos.Count; i++) Assert.IsTrue(visto[i], $"[{m}] Calçada sem caminho a pé até o resto: {rede.nos[i].pos}.");
     }
 
     // Carro dos vizinhos freia e para antes de um pedestre parado na faixa dele, e para antes da zebra ocupada
@@ -335,10 +415,10 @@ public class TestesTransito
         try
         {
             var rota = RotasTransito.Rota(m, Ponta(m, Bairro.RuaIpe, 1), Ponta(m, Bairro.RuaIpe, -1));
-            a.Iniciar(rota, 20f, 1); a.v = 0f;
+            a.Iniciar(rota, 40f, 1); a.v = 0f;   // no meio do quarteirão (depois do PARE da Sibipirunas)
             b.Iniciar(rota, 2f, 2);
             rua.carros.Add(a); rua.carros.Add(b);
-            for (int i = 0; i < 400; i++) { rua.AtualizarObstaculos(); b.Passo(0.05f, rua); }
+            for (int i = 0; i < 800; i++) { rua.AtualizarObstaculos(); b.Passo(0.05f, rua); }
             float vao = (a.s - RotasTransito.MeioComprimento) - (b.s + RotasTransito.MeioComprimento);
             Assert.Less(b.v, 0.05f);
             Assert.That(vao, Is.InRange(0.5f, 4f), $"Vão entre os carros: {vao:0.00} m.");

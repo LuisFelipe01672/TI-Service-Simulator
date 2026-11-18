@@ -132,7 +132,7 @@ public partial class GameUI
                         if (naVisita)
                         {
                             var est = mmP.Estado;
-                            var falta = est == null ? new List<string>() : p.tipo == TipoProjeto.Rack ? est.PendenciasRack() : est.PendenciasPontos();
+                            var falta = est == null ? new List<string>() : p.tipo == TipoProjeto.Rack ? est.PendenciasRack() : p.tipo == TipoProjeto.WiFi ? est.PendenciasWiFi() : est.PendenciasPontos();
                             UIFactory.Texto(card, falta.Count == 0 ? "<color=#3CCB7F>Visita pronta: fale com o contato para conferir e assinar a OS.</color>"
                                                                    : $"<color=#F5B83F>Nesta visita falta:</color> {string.Join(" · ", falta)}", 17, UIFactory.CorSuave);
                         }
@@ -140,6 +140,8 @@ public partial class GameUI
                         {
                             UIFactory.Texto(card, p.tipo == TipoProjeto.Rack
                                 ? "Próxima visita: organizar o rack (foto do antes, cordões curtos, organizador, velcro, etiquetas, foto do depois)."
+                                : p.tipo == TipoProjeto.WiFi
+                                ? "Próxima visita: 1 access point — medir a sala, teto com escada, cabo até o rack, PoE, redes da empresa e de visitantes, medir de novo."
                                 : $"Próxima visita: {ProjetosManager.PontosNaVisita(p)} ponto(s) — canaleta, cabo, crimpar, punch-down no patch panel, testar e etiquetar.", 17, UIFactory.CorSuave);
                             var bIr = UIFactory.Botao(LinhaBotoes(card), "Ir ao cliente executar", () =>
                             {

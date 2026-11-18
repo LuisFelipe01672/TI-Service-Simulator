@@ -199,7 +199,7 @@ public class TestesRede
     {
         Assert.IsTrue(ProjetosManager.Fisico(TipoProjeto.Cabeamento));
         Assert.IsTrue(ProjetosManager.Fisico(TipoProjeto.Rack));
-        Assert.IsFalse(ProjetosManager.Fisico(TipoProjeto.WiFi));
+        Assert.IsTrue(ProjetosManager.Fisico(TipoProjeto.WiFi), "Etapa 10: o Wi-Fi também é feito com as mãos");
         var p = Cabeamento(10, 8);
         Assert.AreEqual(2, ProjetosManager.PontosNaVisita(p));
         Assert.AreEqual(0.8f, ProjetosManager.Progresso(p), 0.001f);

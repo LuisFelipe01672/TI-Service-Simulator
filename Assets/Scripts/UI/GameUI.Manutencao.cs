@@ -117,7 +117,7 @@ public partial class GameUI
         // Etapa 8: visita de projeto de rede (rack ou pontos): o que ainda falta
         if (ch.projetoId > 0 && !ch.aguardandoAssinatura)
         {
-            var falta = ch.solucao == CatalogoProblemas.OrganizarRack ? estado.PendenciasRack() : estado.PendenciasPontos();
+            var falta = ch.solucao == CatalogoProblemas.OrganizarRack ? estado.PendenciasRack() : ch.solucao == CatalogoProblemas.InstalarAccessPoint ? estado.PendenciasWiFi() : estado.PendenciasPontos();
             if (falta.Count > 0) txtManSub.text += $"\n<color=#F5B83F>Falta: {string.Join(" · ", falta)}.</color>";
         }
 

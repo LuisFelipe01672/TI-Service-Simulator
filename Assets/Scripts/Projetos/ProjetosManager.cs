@@ -56,7 +56,7 @@ public class ProjetosManager : MonoBehaviour
             materialPorUnidade = 160f, materialFixo = 300f, horasPorUnidade = 0.75f, horasFixas = 2f, minU = 6, maxU = 40 },
         new InfoProjeto { tipo = TipoProjeto.WiFi, nome = "Wi-Fi corporativo", unidade = "access point",
             descricao = "Site survey, access points no teto com cabo e PoE, rede de visitantes separada.",
-            materialPorUnidade = 860f, materialFixo = 900f, horasPorUnidade = 1.5f, horasFixas = 2f, minU = 2, maxU = 8 },
+            materialPorUnidade = 860f, materialFixo = 900f, horasPorUnidade = 1.5f, horasFixas = 2f, minU = 1, maxU = 4 },
         new InfoProjeto { tipo = TipoProjeto.Rack, nome = "Organização de rack", unidade = "rack",
             descricao = "Rack 12U, patch panel, organizadores, switch gerenciável e identificação de todos os cabos.",
             materialPorUnidade = 2860f, materialFixo = 0f, horasPorUnidade = 6f, horasFixas = 2f, minU = 1, maxU = 2 },
@@ -261,13 +261,14 @@ public class ProjetosManager : MonoBehaviour
     public const int MaxPontosPorVisita = 4;
 
     // Feito com as mãos na sala do cliente: o tablet só mostra o andamento e agenda a visita
-    public static bool Fisico(TipoProjeto t) => t == TipoProjeto.Cabeamento || t == TipoProjeto.Rack;
+    public static bool Fisico(TipoProjeto t) => t == TipoProjeto.Cabeamento || t == TipoProjeto.Rack || t == TipoProjeto.WiFi;
 
     public static int PontosNaVisita(Projeto p) =>
-        p.tipo == TipoProjeto.Rack ? 1 : Mathf.Clamp(p.tamanhoReal - p.unidadesFeitas, 0, MaxPontosPorVisita);
+        p.tipo == TipoProjeto.Rack || p.tipo == TipoProjeto.WiFi ? 1 : Mathf.Clamp(p.tamanhoReal - p.unidadesFeitas, 0, MaxPontosPorVisita);
 
     public static string Andamento(Projeto p) =>
         p.tipo == TipoProjeto.Rack ? $"{p.unidadesFeitas} de {p.tamanhoReal} rack(s) organizado(s)"
+        : p.tipo == TipoProjeto.WiFi ? $"{p.unidadesFeitas} de {p.tamanhoReal} access point(s) no ar, com sinal bom e visitantes isolados"
                                    : $"{p.unidadesFeitas} de {p.tamanhoReal} pontos testados e etiquetados";
 
     // Vai até o cliente fazer a próxima parte (vira um chamado aceito na hora)
@@ -286,10 +287,14 @@ public class ProjetosManager : MonoBehaviour
         if (m != null)
         {
             var precisa = p.tipo == TipoProjeto.Rack ? new[] { Item.Etiquetadora }
+                        : p.tipo == TipoProjeto.WiFi ? new[] { Item.AlicateCrimpagem, Item.TestadorCabo }
                                                      : new[] { Item.AlicateCrimpagem, Item.TestadorCabo, Item.PunchDown, Item.Etiquetadora };
             foreach (var it in precisa) if (m.Quantidade(it) <= 0) falta.Add(Mochila.Info(it).nome);
         }
-        return $"A caminho da <b>{p.empresa}</b>: {(p.tipo == TipoProjeto.Rack ? "organizar o rack" : $"{PontosNaVisita(p)} ponto(s) de rede nesta visita")}." +
+        string oque = p.tipo == TipoProjeto.Rack ? "organizar o rack"
+                    : p.tipo == TipoProjeto.WiFi ? $"access point {p.unidadesFeitas + 1} de {p.tamanhoReal} (leve a escada: fica no porta-malas)"
+                    : $"{PontosNaVisita(p)} ponto(s) de rede nesta visita";
+        return $"A caminho da <b>{p.empresa}</b>: {oque}." +
                (falta.Count > 0 ? $" <color=#F5B83F>Falta na mochila: {string.Join(", ", falta)} (Loja).</color>" : "");
     }
 
@@ -299,6 +304,7 @@ public class ProjetosManager : MonoBehaviour
         var p = projetos.Find(x => x.id == ch.projetoId);
         if (p == null || ch.estado == null) return;
         if (p.tipo == TipoProjeto.Cabeamento) ch.estado.PrepararPontos(p.unidadesFeitas + 1, Mathf.Max(1, PontosNaVisita(p)));
+        if (p.tipo == TipoProjeto.WiFi) ch.estado.PrepararWiFi(p.unidadesFeitas + 1);
     }
 
     // O cliente assinou a OS da visita: conta o que ficou pronto e, com tudo pronto, entrega o projeto
@@ -308,6 +314,7 @@ public class ProjetosManager : MonoBehaviour
         if (p == null || ch.estado == null || p.etapa != 4) return null;
         int feitos = 0;
         if (p.tipo == TipoProjeto.Rack) { if (ch.estado.RackOrganizado) feitos = 1; }
+        else if (p.tipo == TipoProjeto.WiFi) { if (ch.estado.WiFiConcluido) feitos = 1; }
         else foreach (var pt in ch.estado.pontos) if (pt.Pronto) feitos++;
         p.unidadesFeitas = Mathf.Min(p.tamanhoReal, p.unidadesFeitas + feitos);
         if (p.unidadesFeitas >= p.tamanhoReal) return Concluir(p);

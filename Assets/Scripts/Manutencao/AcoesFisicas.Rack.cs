@@ -48,6 +48,14 @@ public static partial class AcoesFisicas
             MM?.Verificar();
             return r;
         }) { observacao = true, pistaVisual = "Conte as luzes de link acesas no switch." });
+        // Etapa 10: o cabo do access point chega no rack e vai na porta PoE do switch
+        if (e.wifiServico && e.apCabo && !e.apNoSwitch)
+            l.Add(new AcaoFisica($"Ligar o cabo do {e.NomeAp} na porta {EstadoEquipamentos.PortaSwitchAp} do switch (PoE)", () =>
+            {
+                string r = e.LigarApNoSwitch();
+                MM?.Verificar();
+                return r;
+            }, 1.5f));
 
         l.peca = "patch";
         if (e.rackServico) AcoesCordoes(e, l);

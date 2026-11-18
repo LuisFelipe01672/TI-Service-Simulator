@@ -73,7 +73,7 @@ public partial class GameUI
         var fDepois = ch.estado != null ? ch.estado.fotoDepois : os.fotoDepois;
         if (fAntes != null || fDepois != null)
         {
-            Titulo("FOTOS");
+            Titulo(ch.estado != null && ch.estado.wifiServico ? "MAPA DE CALOR DO WI-FI (verde: bom · laranja: fraco · vermelho: muito fraco)" : "FOTOS");
             var fotos = UIFactory.Vazio(folha, "Fotos");
             UIFactory.Horizontal(fotos, 14);
             foreach (var (tex, nome) in new[] { (fAntes, "ANTES"), (fDepois, "DEPOIS") })

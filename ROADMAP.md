@@ -200,7 +200,29 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
      - Fica para depois: **clima** (chuva atrasando serviço externo, pista molhada, guarda-chuva) — não sai barato
        (partículas, materiais molhados, regra de atraso nas OS); seta e farol alto nos carros dos vizinhos;
        ônibus/moto; pedestres entrando nas casas e lojas; os carros não "veem" o técnico dirigindo na contramão.
-10. ⬜ **Wi-Fi corporativo**: posicionar access point, sinal fraco nos cantos (mapa de calor), rede de visitantes separada.
+10. ✅ **Wi-Fi corporativo** (18/11/2026) — o projeto de Wi-Fi deixou de ser "trabalhar X horas" no tablet: virou visita
+    no cliente, um access point por visita (projeto de 1 a 4 APs; a equipe também instala):
+    - **Medição com o celular** (app Wi-Fi, `Missions/SurveyWiFi.cs`): o técnico anda pela sala e cada metro medido
+      aparece colorido no chão (verde bom, laranja fraco, vermelho muito fraco); medidos 75% dos quadrados livres, o
+      **mapa de calor** vai para a OS (antes e depois). O app também mostra o sinal onde ele está e as redes vizinhas
+      com o canal de cada uma.
+    - **Modelo de sinal** (`SinalWiFi`, em `Missions/AccessPointCliente.cs`): perda pela distância + móveis no caminho
+      (metal pesa mais). O roteador da operadora numa mesinha deixa o fundo da sala abaixo de −67 dBm; AP no meio do
+      teto cobre tudo; AP num canto deixa o canto oposto fraco (aí é tirar o AP, furo a mais no forro, e pôr em outro lugar).
+    - **AP no teto** (criado em código, `EquipamentoPecas.WiFi`): marcar com lápis onde se mira no forro (só depois da
+      medição), **escada aberta embaixo** (a do porta-malas), furar e fixar o suporte (pó de gesso no chão), canaleta
+      do rack até o AP e cabo Cat6, crimpar (minigame), testar, encaixar o AP, ligar na **porta PoE 24 do switch**
+      (luz laranja piscando 20 s, depois verde).
+    - **Configuração** no navegador do computador do cliente (192.168.0.2): rede da empresa WPA2/WPA3, **rede de
+      visitantes com isolamento**, canal fora do canal dos vizinhos; desligar o Wi-Fi do roteador da operadora; testar
+      com o celular na rede de visitantes (sem isolamento ele enxerga a impressora e as pastas).
+    - Chamados avulsos novos do roteador: **Wi-Fi lento por canal congestionado** e **visitantes usando a rede da
+      empresa** (senha no quadro da recepção) — o painel do roteador ganhou canal, rede de visitantes e troca de senha;
+      os dois dão para fazer por acesso remoto.
+    - Testes `TestesWiFi` (276 passando); atalhos *Teste (Play)/Wi-Fi* 1–8; fotos em `Builds/Capturas/wifi`.
+    - Medido no editor: antes −74 dBm (14 a 15 pontos fracos de 57), AP no meio −60 dBm, AP num canto −70 dBm (4 fracos).
+    - Não testado jogando de verdade: a medição andando (o atalho mede sem andar), a crimpagem pelo minigame, o
+      painel do AP clicando (o atalho liga as opções), a escada carregada do carro até a sala.
 11. ⬜ **CFTV**: câmeras, DVR/NVR, cabo e fonte; posicionar vendo a área certa; acesso pelo celular do cliente.
 12. ⬜ **Nobreak e energia**: bateria morta apitando, dimensionar e instalar; queda de energia e raio queimando
     switch/fonte de quem não tem proteção.
@@ -422,7 +444,7 @@ Ferramentas: menu *TI Service/Teste gráfico* (cena `Assets/Scenes/Testes/TesteG
       ponto a ponto, identificar com etiqueta — Etapa 8
 - ⬜ **Trabalho em altura e forro**: escada, abrir placa de forro, poeira; risco de cair se for com pressa
 - ✅ **Organizar rack bagunçado** (antes/depois) — serviço vendável — Etapa 8
-- ⬜ Wi-Fi: posicionar access point, sinal fraco nos cantos (mapa de calor), **rede de visitantes separada**
+- ✅ Wi-Fi: posicionar access point, sinal fraco nos cantos (mapa de calor), **rede de visitantes separada** — Etapa 10
 - ⬜ Firewall em comodato no rack do cliente; **VPN** para quem trabalha de casa
 - ⬜ **Servidor/NAS** no escritório do cliente; **backup 3-2-1** (HD externo + NAS + nuvem) e **teste de restauração**
 - ⬜ **Queda do link da operadora**: provar que não é sua culpa, abrir chamado com a operadora; vender link de backup

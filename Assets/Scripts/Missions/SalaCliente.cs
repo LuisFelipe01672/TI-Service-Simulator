@@ -36,7 +36,7 @@ public class SalaCliente : MonoBehaviour
         switch (t)
         {
             case TipoEquipamento.Impressora: return ancoraImpressora;
-            case TipoEquipamento.Roteador: case TipoEquipamento.Rack: return ancoraRoteador;   // o rack fica na parede perto do roteador
+            case TipoEquipamento.Roteador: case TipoEquipamento.Rack: case TipoEquipamento.AccessPoint: return ancoraRoteador;   // o rack fica na parede perto do roteador
             case TipoEquipamento.Computador: case TipoEquipamento.Notebook: return ancoraComputador;
             default: throw new System.ArgumentOutOfRangeException(nameof(t), $"Sala sem lugar para {t}");
         }
@@ -47,7 +47,7 @@ public class SalaCliente : MonoBehaviour
         switch (t)
         {
             case TipoEquipamento.Impressora: return caminhoImpressora;
-            case TipoEquipamento.Roteador: case TipoEquipamento.Rack: return caminhoRoteador;
+            case TipoEquipamento.Roteador: case TipoEquipamento.Rack: case TipoEquipamento.AccessPoint: return caminhoRoteador;
             case TipoEquipamento.Computador: case TipoEquipamento.Notebook: return caminhoComputador;
             default: throw new System.ArgumentOutOfRangeException(nameof(t), $"Sala sem caminho para {t}");
         }
@@ -110,18 +110,21 @@ public class SalaCliente : MonoBehaviour
     {
         NotebookCliente.Garantir();
         RackCliente.Garantir();
+        AccessPointCliente.Garantir();
         foreach (var e in FindObjectsByType<Equipamento>())
         {
             var a = Ancora(e.tipoEquipamento);
             if (a == null) continue;
             if (e.tipoEquipamento == TipoEquipamento.Notebook) continue;   // vai depois, ao lado do monitor
             if (e.tipoEquipamento == TipoEquipamento.Rack) continue;       // vai depois, na parede perto do roteador
+            if (e.tipoEquipamento == TipoEquipamento.AccessPoint) continue;   // vai depois, no centro da sala
             e.transform.SetPositionAndRotation(a.position, a.rotation);
         }
         Atual = this;
         Physics.SyncTransforms();
         NotebookCliente.Posicionar(this);
         RackCliente.Posicionar(this);
+        AccessPointCliente.Posicionar(this);
         Debug.Log($"[Salas] Equipamentos na sala: {Nome}.");
     }
 }

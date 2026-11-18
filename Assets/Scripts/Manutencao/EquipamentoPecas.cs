@@ -58,6 +58,7 @@ public partial class EquipamentoPecas : MonoBehaviour
             case TipoEquipamento.Computador: MontarComputador(); break;
             case TipoEquipamento.Notebook: MontarNotebook(); break;
             case TipoEquipamento.Rack: MontarRack(); break;
+            case TipoEquipamento.AccessPoint: MontarAccessPoint(); break;
             default: MontarGenerico(); break;   // equipamento sem visual próprio: peças da definição sobre o colisor
         }
     }
@@ -326,6 +327,8 @@ public partial class EquipamentoPecas : MonoBehaviour
         }
         else if (eq.tipoEquipamento == TipoEquipamento.Rack)
             AtualizarRack(e);
+        else if (eq.tipoEquipamento == TipoEquipamento.AccessPoint)
+            AtualizarAccessPoint(e);
     }
 
     static void Pintar(Renderer r, Material m)

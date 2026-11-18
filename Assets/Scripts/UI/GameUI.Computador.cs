@@ -383,6 +383,7 @@ public partial class GameUI
         var l = LinhaPc();
         BotaoPc(l, "192.168.0.1 (roteador)", () => { paginaNavegador = "roteador"; logadoRoteador = false; senhaDigitada = ""; }, UIFactory.Hex("#6B7A90"), 300);
         BotaoPc(l, "buscador.com.br", () => paginaNavegador = "busca", UIFactory.Hex("#6B7A90"), 200);
+        if (e.wifiServico) BotaoPc(l, "192.168.0.2 (access point)", () => paginaNavegador = "ap", UIFactory.Hex("#6B7A90"), 300);
 
         if (e.swPaginaTrocada && paginaNavegador != "roteador")
         {
@@ -400,6 +401,7 @@ public partial class GameUI
             else TextoPc("Não é possível acessar esse site.  ERR_INTERNET_DISCONNECTED", 24);
             return;
         }
+        if (paginaNavegador == "ap") { MontarPainelAp(e); return; }
         if (paginaNavegador != "roteador") { TextoPc("Escolha um endereço acima.", 22); return; }
         if (!e.PcNaRede || !e.RoteadorFuncionando) { TextoPc("Não é possível acessar 192.168.0.1 (o computador está sem rede ou o roteador está desligado).", 22); return; }
 
@@ -420,12 +422,43 @@ public partial class GameUI
 
         TextoPc($"<b>Wi-Fi</b>: {(e.wifiAtivo ? "Ativado" : "<color=#B23A48>DESATIVADO</color>")}  ·  Nome da rede: {e.wifiNome}", 21);
         var w = LinhaPc();
-        BotaoPc(w, e.wifiAtivo ? "Desativar Wi-Fi" : "Ativar Wi-Fi", () => e.wifiAtivo = !e.wifiAtivo, null, 220);
+        BotaoPc(w, e.wifiAtivo ? "Desativar Wi-Fi" : "Ativar Wi-Fi", () => { e.wifiAtivo = !e.wifiAtivo; MissionManager.Instance?.Verificar(); }, null, 220);
         BotaoPc(w, "Assistente: configurar internet e Wi-Fi", () =>
         {
             e.ConfigurarRoteador(MissionManager.Instance?.chamadoAtivo?.nomeCliente?.Replace(" ", "_"));
             avisoPc = "Internet e Wi-Fi configurados.";
         }, null, 420);
+
+        // Etapa 10: canal e rede de visitantes
+        TextoPc($"<b>Canal do Wi-Fi</b>: {e.rotCanal}   <size=80%>(veja no celular, app Wi-Fi, em que canal estão as redes dos vizinhos)</size>", 21);
+        var cn = LinhaPc();
+        foreach (int canal in new[] { 1, 6, 11 })
+        {
+            int c = canal;
+            BotaoPc(cn, $"Canal {c}", () =>
+            {
+                e.rotCanal = c;
+                avisoPc = e.RotCanalLivre ? $"Wi-Fi no canal {c}: livre, nenhum vizinho aqui." : $"Wi-Fi no canal {c}: o mesmo de várias redes vizinhas.";
+                MissionManager.Instance?.Verificar();
+            }, c == e.rotCanal ? UIFactory.Destaque : UIFactory.Hex("#6B7A90"), 140);
+        }
+        TextoPc($"<b>Rede de visitantes</b>: {(e.rotRedeVisitantes ? $"{e.wifiNome}_Visitantes" + (e.rotVisitantesIsolada ? " (isolada da rede da empresa)" : " <color=#B23A48>(NÃO isolada)</color>") : "<color=#B23A48>não existe</color>")}" +
+                $"   ·   Senha da empresa: {(e.rotSenhaVazada ? "<color=#B23A48>a mesma do quadro da recepção</color>" : "só com a equipe")}", 21);
+        var vs = LinhaPc();
+        if (!e.rotRedeVisitantes || !e.rotVisitantesIsolada)
+            BotaoPc(vs, "Criar a rede de visitantes isolada", () =>
+            {
+                e.rotRedeVisitantes = e.rotVisitantesIsolada = true;
+                avisoPc = "Rede de visitantes criada: só internet, sem acesso à impressora e aos computadores da empresa.";
+                MissionManager.Instance?.Verificar();
+            }, null, 380);
+        if (e.rotSenhaVazada)
+            BotaoPc(vs, "Trocar a senha da rede da empresa", () =>
+            {
+                e.rotSenhaVazada = false;
+                avisoPc = "Senha da empresa trocada (forte, só com a equipe). A senha do quadro da recepção agora é a da rede de visitantes.";
+                MissionManager.Instance?.Verificar();
+            }, null, 360);
 
         TextoPc($"<b>Rede</b>: modem da operadora em modo {(e.modemEmBridge ? "Bridge (só repassa a internet)" : "<color=#B23A48>Roteador (também entrega IP!)</color>")}", 21);
         var r = LinhaPc();
@@ -451,6 +484,62 @@ public partial class GameUI
             paginaNavegador = "";
             avisoPc = "Roteador restaurado para o padrão de fábrica.";
         }, UIFactory.Hex("#B23A48"), 300);
+    }
+
+    // Etapa 10: painel do access point do projeto de Wi-Fi (192.168.0.2)
+    void MontarPainelAp(EstadoEquipamentos e)
+    {
+        if (!e.PcNaRede) { TextoPc("Não é possível acessar 192.168.0.2 (o computador está sem rede).", 22); return; }
+        if (!e.ApLigado)
+        {
+            TextoPc(e.ApIniciando ? "O access point está iniciando... (luz laranja piscando). Tente de novo em alguns segundos."
+                                  : "192.168.0.2 não responde: o access point ainda não está instalado e ligado na porta PoE do switch.", 22);
+            return;
+        }
+        string empresa = (MissionManager.Instance?.chamadoAtivo?.nomeCliente ?? "Empresa").Replace(" ", "_");
+        TextoPc($"Painel do access point · {e.NomeAp}", 28, true);
+        TextoPc($"<b>Rede da empresa</b>: {(e.apRedeEmpresa ? $"{empresa} (WPA2/WPA3, senha forte)" : "<color=#B23A48>não criada (rede aberta de fábrica no ar)</color>")}", 21);
+        var r1 = LinhaPc();
+        if (!e.apRedeEmpresa)
+            BotaoPc(r1, "Criar a rede da empresa (WPA2/WPA3)", () =>
+            {
+                e.apRedeEmpresa = true;
+                avisoPc = $"Rede \"{empresa}\" criada com WPA2/WPA3 e senha forte. A rede aberta de fábrica saiu do ar.";
+                MissionManager.Instance?.Verificar();
+            }, null, 380);
+
+        TextoPc($"<b>Rede de visitantes</b>: {(e.apRedeVisitantes ? $"{empresa}_Visitantes · isolamento: {(e.apVisitantesIsolada ? "ligado (só internet)" : "<color=#B23A48>desligado (vê a rede da empresa!)</color>")}" : "não criada")}", 21);
+        var r2 = LinhaPc();
+        if (!e.apRedeVisitantes)
+            BotaoPc(r2, "Criar a rede de visitantes", () =>
+            {
+                e.apRedeVisitantes = true;
+                e.apVisitanteTestado = false;
+                avisoPc = "Rede de visitantes criada. Atenção à opção de isolamento.";
+            }, null, 300);
+        else
+            BotaoPc(r2, e.apVisitantesIsolada ? "Desligar o isolamento dos visitantes" : "Ligar o isolamento dos visitantes (só internet)", () =>
+            {
+                e.apVisitantesIsolada = !e.apVisitantesIsolada;
+                e.apVisitanteTestado = false;
+                avisoPc = e.apVisitantesIsolada ? "Visitantes isolados: só internet, sem ver a impressora nem os computadores." : "Isolamento desligado.";
+                MissionManager.Instance?.Verificar();
+            }, null, 460);
+
+        TextoPc($"<b>Canal</b>: {e.apCanal}{(e.apCanal == 6 ? " (padrão de fábrica)" : "")}   <size=80%>(redes vizinhas: veja no celular, app Wi-Fi)</size>", 21);
+        var cn = LinhaPc();
+        foreach (int canal in new[] { 1, 6, 11 })
+        {
+            int c = canal;
+            BotaoPc(cn, $"Canal {c}", () =>
+            {
+                e.apCanal = c;
+                avisoPc = e.ApCanalLivre ? $"AP no canal {c}: livre." : $"AP no canal {c}: o mesmo das redes dos vizinhos (interferência).";
+                MissionManager.Instance?.Verificar();
+            }, c == e.apCanal ? UIFactory.Destaque : UIFactory.Hex("#6B7A90"), 140);
+        }
+        TextoPc(e.wifiAtivo ? "<color=#F5B83F>O Wi-Fi do roteador da operadora (192.168.0.1) ainda está ligado: duas redes brigando. Desligue lá.</color>"
+                            : "Wi-Fi do roteador da operadora desligado: só o AP no ar.", 20);
     }
 
     void EntrarNoRoteador()

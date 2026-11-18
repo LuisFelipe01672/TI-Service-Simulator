@@ -11,7 +11,7 @@ public partial class GameUI
 {
     RectTransform celular, celConteudo;
     TextMeshProUGUI celHora, celBadge;
-    enum AppCel { Inicio, Mensagens, Conversa, Banco, Mapa }
+    enum AppCel { Inicio, Mensagens, Conversa, Banco, Mapa, WiFi }
     AppCel appCel = AppCel.Inicio;
     Chamado celConversa;
     readonly HashSet<Chamado> celVistos = new HashSet<Chamado>();    // já avisados (notificação)
@@ -75,6 +75,14 @@ public partial class GameUI
         AtualizarCelular();
     }
 
+    // Abre o celular direto no app Wi-Fi (atalhos de teste)
+    public void AbrirAppWiFi()
+    {
+        AbrirCelular();
+        appCel = AppCel.WiFi;
+        AtualizarCelular();
+    }
+
     void VoltarCelular()
     {
         appCel = appCel == AppCel.Conversa ? AppCel.Mensagens : AppCel.Inicio;
@@ -93,6 +101,7 @@ public partial class GameUI
             case AppCel.Conversa: CelConversa(); break;
             case AppCel.Banco: CelBanco(); break;
             case AppCel.Mapa: CelMapa(); break;
+            case AppCel.WiFi: CelWiFi(); break;
         }
     }
 
@@ -113,6 +122,9 @@ public partial class GameUI
         if (GPS.Instance != null)
             UIFactory.Botao(celConteudo, GPS.Instance.Ativo ? "Mapa  (GPS ligado)" : "Mapa", () => { appCel = AppCel.Mapa; AtualizarCelular(); },
                 GPS.Instance.Ativo ? UIFactory.Destaque : UIFactory.CartaoClaro, 360, 64, 22);
+        if (MissionManager.Instance?.Estado != null)
+            UIFactory.Botao(celConteudo, SurveyWiFi.Medindo ? "Wi-Fi  (medindo)" : "Wi-Fi (analisador)", () => { appCel = AppCel.WiFi; AtualizarCelular(); },
+                SurveyWiFi.Medindo ? UIFactory.Destaque : UIFactory.CartaoClaro, 360, 64, 22);
         UIFactory.Texto(celConteudo, "<size=80%>Tab: tablet  ·  C: guardar o celular</size>", 18, UIFactory.CorSuave, FontStyles.Normal, TextAlignmentOptions.Center);
     }
 
@@ -302,5 +314,67 @@ public partial class GameUI
             SomManager.Tocar("bip", 0.4f, 1.3f);
             Toast($"Celular: nova mensagem de {c.contato} ({c.nomeCliente}). Aperte <b>C</b>.", UIFactory.Destaque, 3.5f);
         }
+    }
+
+    // Etapa 10: analisador de Wi-Fi — sinal aqui, redes vizinhas e canais, medição da sala (mapa de calor) e teste
+    // de visitante
+    void CelWiFi()
+    {
+        UIFactory.Texto(celConteudo, "Wi-Fi", 30, UIFactory.CorTexto, FontStyles.Bold);
+        var mm = MissionManager.Instance;
+        var e = mm?.Estado;
+        if (e == null) { UIFactory.Texto(celConteudo, "Nenhum atendimento em andamento.", 18, UIFactory.CorSuave); return; }
+        var jog = GameObject.FindWithTag("Player");
+        var ap = AccessPointCliente.Transform;
+        bool naSala = jog != null && ap != null && SalaCliente.Atual != null &&
+                      Mathf.Abs(AccessPointCliente.Local(jog.transform.position).x) < AccessPointCliente.LarguraSala / 2f &&
+                      Mathf.Abs(AccessPointCliente.Local(jog.transform.position).z) < AccessPointCliente.ProfundidadeSala / 2f;
+        float aqui = SinalWiFi.SemSinal;
+        if (naSala)
+        {
+            Vector3 p = jog.transform.position;
+            aqui = SinalWiFi.Em(new Vector3(p.x, ap.position.y + SinalWiFi.AlturaMedicao, p.z), e);
+            var cor = SinalWiFi.Cor(aqui);
+            UIFactory.Texto(celConteudo, $"Sinal aqui: <b>{aqui:0} dBm</b>  <color=#{ColorUtility.ToHtmlStringRGB(cor)}>({SinalWiFi.Qualidade(aqui)})</color>", 22, UIFactory.CorTexto);
+            UIFactory.Texto(celConteudo, $"<size=80%>Meta para voz e vídeo: {EstadoEquipamentos.MetaDbm:0} dBm ou mais em toda a sala.</size>", 16, UIFactory.CorSuave);
+        }
+        else UIFactory.Texto(celConteudo, "Fora da sala do cliente.", 18, UIFactory.CorSuave);
+
+        if (SurveyWiFi.Medindo)
+            UIFactory.Botao(celConteudo, "Parar a medição", () => { SurveyWiFi.Instance.Parar(); AtualizarCelular(); }, UIFactory.Perigo, 360, 54, 19);
+        else
+            UIFactory.Botao(celConteudo, "Medir a sala (mapa de calor)", () =>
+            {
+                string r = SurveyWiFi.Garantir().Comecar();
+                if (SurveyWiFi.Medindo) FecharModal();
+                Toast(r, SurveyWiFi.Medindo ? UIFactory.Destaque : UIFactory.Alerta, 5f);
+            }, UIFactory.Destaque, 360, 54, 19);
+
+        foreach (var (tex, nome) in new[] { (e.fotoAntes, "Antes"), (e.fotoDepois, "Depois") })
+        {
+            if (tex == null || tex.name != "MapaDeCalor") continue;   // a foto do rack não entra aqui
+            UIFactory.Texto(celConteudo, $"Mapa de calor — {nome}  <size=80%>(branco: roteador · azul: AP)</size>", 17, UIFactory.CorSuave, FontStyles.Bold);
+            var img = new GameObject("Mapa", typeof(RectTransform), typeof(RawImage));
+            img.transform.SetParent(celConteudo, false);
+            img.GetComponent<RawImage>().texture = tex;
+            var le = img.AddComponent<LayoutElement>();
+            le.preferredWidth = 360; le.preferredHeight = 288;
+        }
+
+        bool temVisitantes = e.wifiServico ? e.apRedeVisitantes : e.WiFiNoRoteador && e.rotRedeVisitantes;
+        if (temVisitantes)
+            UIFactory.Botao(celConteudo, "Entrar na rede de visitantes e tentar abrir a impressora", () =>
+            {
+                string r = e.TestarComoVisitante();
+                mm.RegistrarAcao("Teste na rede de visitantes");
+                Registrar(r);
+                Toast(r, UIFactory.CorTexto, 6f);
+                mm.Verificar();
+                AtualizarCelular();
+            }, UIFactory.CartaoClaro, 360, 64, 17);
+
+        UIFactory.Texto(celConteudo, "Redes por perto", 20, UIFactory.CorSuave, FontStyles.Bold);
+        foreach (var r in e.RedesVisiveis(aqui, mm.chamadoAtivo?.nomeCliente))
+            UIFactory.Texto(celConteudo, r, 16, UIFactory.CorTexto);
     }
 }

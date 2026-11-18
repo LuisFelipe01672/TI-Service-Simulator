@@ -47,6 +47,7 @@ public static class RegistroEquipamentos
         new DefinicaoRoteador(),
         new DefinicaoNotebook(),
         new DefinicaoRack(),
+        new DefinicaoAccessPoint(),
     };
 
     static readonly Dictionary<TipoEquipamento, DefinicaoEquipamento> porTipo = Montar();

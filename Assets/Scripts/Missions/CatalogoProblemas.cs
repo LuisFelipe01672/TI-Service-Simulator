@@ -113,6 +113,9 @@ public static partial class CatalogoProblemas
     public const string LimparVentoinha = "Limpar a ventoinha do notebook";
     public const string TrocarBateriaEstufada = "Trocar a bateria estufada";
     public const string TrocarDobradica = "Trocar a dobradiça";
+    // Etapa 10: Wi-Fi do roteador
+    public const string TrocarCanalWiFi = "Trocar o canal do Wi-Fi";
+    public const string CriarRedeVisitantes = "Criar a rede de visitantes";
     public static bool EhCheckup(Problema p) => p != null && p.solucao == Checkup;
 
     // Etapa 5: serviços da locação feitos no local. Ficam FORA das listas sorteáveis (só o ContratosManager cria).
@@ -619,6 +622,35 @@ public static partial class CatalogoProblemas
                 "Depois que esfria ele liga, e daqui a pouco desliga de novo." },
             Pergunta.MexeramEmAlgo, "Uso sempre na mesa, certinho.")
             .Quebra(e => { e.nbPoeira = Random.Range(0.85f, 1f); }),
+
+        // ---------- Etapa 10: Wi-Fi do roteador ----------
+        new Problema(TipoEquipamento.Roteador, TrocarCanalWiFi,
+            "O Wi-Fi fica lento e as chamadas de vídeo travam o dia inteiro.",
+            "A internet sem fio está uma carroça, mas no cabo vai bem.",
+            new[] {
+                "Piorou de umas semanas para cá, desde que abriu o escritório aqui do lado.",
+                "Ninguém mexeu no roteador.",
+                "Não dá erro: a chamada congela e a voz fica picotada.",
+                "Todo mundo no Wi-Fi. Quem está no cabo nem percebe.",
+                "Reiniciamos o roteador, melhora meia hora e volta." },
+            Pergunta.JaReiniciou, "Nunca reiniciamos nada.")
+            .Remoto("Pelo acesso remoto: analisou as redes vizinhas e mudou o Wi-Fi do roteador para um canal livre.")
+            .Conclui(e => e.RotCanalLivre)
+            .Quebra(e => { e.canalVizinhos = Random.value < 0.75f ? 6 : 1; e.rotCanal = e.canalVizinhos; }),
+
+        new Problema(TipoEquipamento.Roteador, CriarRedeVisitantes,
+            "Os clientes da recepção usam o Wi-Fi da empresa e um deles mandou impressão na nossa impressora.",
+            "Tem gente de fora entrando na nossa rede, saiu uma folha estranha na impressora.",
+            new[] {
+                "Desde que pusemos a senha do Wi-Fi num quadrinho na recepção.",
+                "A gente escreveu a senha no quadro para os clientes, para ser simpático.",
+                "Não dá erro; ontem saiu na impressora um cardápio de pizzaria que ninguém daqui mandou.",
+                "Qualquer um que senta na recepção vê a impressora e as pastas compartilhadas.",
+                "Já desligamos a impressora de noite, mas o problema é a rede." },
+            Pergunta.MexeramEmAlgo, "A senha nunca saiu daqui de dentro.")
+            .Remoto("Pelo acesso remoto: criou a rede de visitantes isolada da rede da empresa e trocou a senha da rede da empresa.")
+            .Conclui(e => e.rotRedeVisitantes && e.rotVisitantesIsolada && !e.rotSenhaVazada)
+            .Quebra(e => { e.rotRedeVisitantes = false; e.rotVisitantesIsolada = false; e.rotSenhaVazada = true; }),
     };
 
     public static readonly Problema[] Dificeis = {
@@ -847,7 +879,7 @@ public static partial class CatalogoProblemas
     {
         foreach (var lista in new[] { Faceis, Medios, Dificeis })
             foreach (var p in lista) if (p.equipamento == equipamento && p.solucao == solucao) return p;
-        foreach (var p in new[] { InstalacaoLocacao, VisitaLocacao, OrganizacaoRack, CabeamentoPontos })
+        foreach (var p in new[] { InstalacaoLocacao, VisitaLocacao, OrganizacaoRack, CabeamentoPontos, InstalacaoWiFi })
             if (p.equipamento == equipamento && p.solucao == solucao) return p;
         return null;
     }

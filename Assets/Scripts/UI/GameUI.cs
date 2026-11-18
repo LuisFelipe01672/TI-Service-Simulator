@@ -304,6 +304,18 @@ public partial class GameUI : MonoBehaviour
     void ConstruirTablet(RectTransform pai)
     {
         tablet = JanelaModal(pai, "Tablet", new Vector2(1120, 720));
+        // Etapa 10D: cara de tablet — moldura escura de cantos bem redondos, borda clara fina e sombra
+        var imgTablet = tablet.GetComponent<Image>();
+        imgTablet.color = UIFactory.Hex("#10151DFA");
+        UIFactory.Arredondar(imgTablet, 30f);
+        var borda = tablet.gameObject.AddComponent<Outline>();
+        borda.effectColor = UIFactory.Hex("#3A4558");
+        borda.effectDistance = new Vector2(2f, -2f);
+        UIFactory.Sombra(tablet, 10f, 0.5f);
+        // Câmera frontal no topo da moldura
+        var camFrontal = UIFactory.Painel(tablet, "CameraFrontal", UIFactory.Hex("#2A3342"));
+        UIFactory.Ancorar(camFrontal, new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(10f, 10f));
+        camFrontal.pivot = new Vector2(0.5f, 1f);
 
         // Cabeçalho
         var cab = UIFactory.Vazio(tablet, "Cabecalho");
@@ -639,6 +651,8 @@ public partial class GameUI : MonoBehaviour
     RectTransform Cartao(Color? cor = null)
     {
         var c = UIFactory.Painel(tabletConteudo, "Cartao", cor ?? UIFactory.Cartao);
+        UIFactory.Arredondar(c.GetComponent<Image>(), 14f);
+        UIFactory.Sombra(c);
         UIFactory.Vertical(c, 8, 20);
         return c;
     }

@@ -252,9 +252,21 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
     - Testes `TestesAnimacao`; atalhos *Teste (Play)/Animações* 1–4 (fotos em `Builds/Capturas/animacoes`). 278 passando.
     - Falta: os usados da bancada (outro visual, `UsadoVisual`) e ações instantâneas (tirar o cartucho, gaveta) seguem
       com as animações de antes; mãos de verdade (hoje só a ferramenta aparece).
-10D. ⬜ **Visual do tablet e do computador + imagens na loja**: novo layout (cartões, ícones, cores) para o tablet e
-    o TI OS; foto de cada item na Loja e nas compras do tablet — gerada dos próprios modelos 3D
-    (`Editor/FotosModelos.cs` já fotografa modelos), sem baixar nada.
+10D. ✅ **Visual do tablet e do computador + fotos na loja** (18/11/2026):
+    - **Fotos dos 27 itens** (`Editor/GerarIcones.cs`, menu *TI Service/Gerar ícones da loja*): notebook, multímetro,
+      pendrive e cartucho são os modelos 3D do jogo (Sketchfab, CC-BY); o resto são miniaturas em primitivas (pente de
+      memória com chips e contatos, fonte com ventoinha, testador com LEDs, alicate, SSD, placa POST...). Fundo
+      transparente, em `Resources/Icones`.
+    - **Loja** em vitrine de 3 colunas: foto num fundo claro, selo "VOCÊ TEM"/"A CAMINHO", preço em verde com a variação
+      do dia, descrição curta e os botões; a mochila mostra as ferramentas em fotos e o que está a caminho também.
+    - **Tudo com cantos arredondados** (`UIFactory.Arredondado`, 9-slice gerado em código) e sombra nos cartões;
+      **tablet** com moldura escura, borda clara e câmera frontal.
+    - **TI OS**: papel de parede em degradê, menu com ícone colorido e sigla em cada programa (o aberto em destaque),
+      janela do programa clara com sombra e **barra de tarefas** (rede, contato e relógio).
+    - Testes `TestesVisual` (todo item tem foto); atalho *Teste (Play)/Visual/1* (fotos em `Builds/Capturas/interface`).
+      280 passando.
+    - Falta: ícones nas abas do tablet e um tema claro/escuro; a janela de manutenção e a OS seguem com o visual de antes
+      (só ganharam os cantos arredondados).
 10E. ⬜ **Cidade maior** (dono: 6 a 10 vezes maior e com mais clientes): mais quarteirões e ruas a partir da planta `Cidade/Bairro.cs`,
     mais casas do pacote CC-BY já baixado, sempre medindo o FPS (placa de 4 GB).
 11. ⬜ **CFTV**: câmeras, DVR/NVR, cabo e fonte; posicionar vendo a área certa; acesso pelo celular do cliente.

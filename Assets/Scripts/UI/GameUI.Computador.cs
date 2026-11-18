@@ -24,14 +24,24 @@ public partial class GameUI
     bool pcReiniciando;
     const string PromptCmd = "C:\\Users\\cliente> ";
 
+    // Etapa 10D: cara de sistema operacional — fundo em degradê, menu com ícone colorido por programa (o aberto em
+    // destaque), janela do programa clara com sombra e barra de tarefas embaixo (rede e relógio)
+    readonly Dictionary<App, Image> botoesApp = new Dictionary<App, Image>();
+    TextMeshProUGUI txtBarraTarefas;
+    static readonly Color CorBotaoApp = UIFactory.Hex("#16365C"), CorBotaoAppAtivo = UIFactory.Hex("#2F6FB3");
+
     void ConstruirComputador(RectTransform pai)
     {
         computador = JanelaModal(pai, "Computador", new Vector2(1500, 860));
         var fundo = computador.GetComponent<Image>();
-        fundo.color = UIFactory.Hex("#0F2A4A");
+        fundo.color = UIFactory.Hex("#0B1E36");
+        UIFactory.Arredondar(fundo, 14f);
+        UIFactory.Sombra(computador, 10f, 0.5f);
+        var papel = UIFactory.Degrade(computador, "PapelDeParede", UIFactory.Hex("#1F5596"), UIFactory.Hex("#0B1E36"));
+        UIFactory.Esticar(papel.rectTransform, 4);
 
         // Barra de título
-        var barra = UIFactory.Painel(computador, "Titulo", UIFactory.Hex("#1B3A5E"));
+        var barra = UIFactory.Painel(computador, "Titulo", UIFactory.Hex("#0A1628E6"));
         barra.anchorMin = new Vector2(0, 1); barra.anchorMax = new Vector2(1, 1); barra.pivot = new Vector2(0.5f, 1);
         barra.offsetMin = new Vector2(0, -56); barra.offsetMax = Vector2.zero;
         UIFactory.Horizontal(barra, 12, 10);
@@ -39,11 +49,25 @@ public partial class GameUI
         txtPcTitulo.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
         UIFactory.Botao(barra, "Levantar (Esc)", FecharModal, UIFactory.Perigo, 200, 40, 18);
 
+        // Barra de tarefas
+        var tarefas = UIFactory.Painel(computador, "BarraTarefas", UIFactory.Hex("#081221F0"));
+        tarefas.anchorMin = new Vector2(0, 0); tarefas.anchorMax = new Vector2(1, 0); tarefas.pivot = new Vector2(0.5f, 0);
+        tarefas.offsetMin = new Vector2(0, 0); tarefas.offsetMax = new Vector2(0, 40);
+        UIFactory.Horizontal(tarefas, 14, 6);
+        var iniciar = UIFactory.Painel(tarefas, "Iniciar", UIFactory.Destaque);
+        var leI = iniciar.gameObject.AddComponent<LayoutElement>(); leI.preferredWidth = 92; leI.preferredHeight = 28;
+        var ti = UIFactory.Texto(iniciar, "TI OS", 15, Color.white, FontStyles.Bold, TextAlignmentOptions.Center);
+        UIFactory.Esticar(ti.rectTransform);
+        txtBarraTarefas = UIFactory.Texto(tarefas, "", 16, UIFactory.CorTexto, FontStyles.Normal, TextAlignmentOptions.Right);
+        txtBarraTarefas.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
+        txtBarraTarefas.margin = new Vector4(0, 0, 10, 0);
+
         // Menu Iniciar (lateral)
-        pcMenu = UIFactory.Painel(computador, "Menu", UIFactory.Hex("#132F52"));
+        pcMenu = UIFactory.Painel(computador, "Menu", UIFactory.Hex("#0A1628CC"));
+        UIFactory.Arredondar(pcMenu.GetComponent<Image>(), 14f);
         pcMenu.anchorMin = new Vector2(0, 0); pcMenu.anchorMax = new Vector2(0, 1); pcMenu.pivot = new Vector2(0, 0.5f);
-        pcMenu.offsetMin = new Vector2(0, 0); pcMenu.offsetMax = new Vector2(300, -56);
-        UIFactory.Vertical(pcMenu, 6, 12);
+        pcMenu.offsetMin = new Vector2(10, 50); pcMenu.offsetMax = new Vector2(306, -66);
+        UIFactory.Vertical(pcMenu, 5, 10);
         BotaoApp("Prompt de Comando", App.Prompt);
         BotaoApp("Configurações de rede", App.Rede);
         BotaoApp("Serviços", App.Servicos);
@@ -58,20 +82,63 @@ public partial class GameUI
         BotaoApp("Programas instalados", App.Programas);
         BotaoApp("Atualizações do sistema", App.Atualizacoes);
         BotaoApp("Contas de usuário", App.Contas);
-        UIFactory.Botao(pcMenu, "Reiniciar o computador", PedirReinicio, UIFactory.Hex("#7A2E35"), 276, 46, 18);
+        UIFactory.Botao(pcMenu, "Reiniciar o computador", PedirReinicio, UIFactory.Hex("#7A2E35"), 276, 40, 16);
 
-        // Área do aplicativo
-        var area = UIFactory.Painel(computador, "Area", UIFactory.Hex("#E9EDF2"));
+        // Janela do aplicativo
+        var area = UIFactory.Painel(computador, "Area", UIFactory.Hex("#F4F6F9"));
+        UIFactory.Arredondar(area.GetComponent<Image>(), 12f);
+        UIFactory.Sombra(area, 6f, 0.45f);
         area.anchorMin = Vector2.zero; area.anchorMax = Vector2.one;
-        area.offsetMin = new Vector2(312, 12); area.offsetMax = new Vector2(-12, -68);
+        area.offsetMin = new Vector2(318, 50); area.offsetMax = new Vector2(-12, -66);
         pcConteudo = UIFactory.Vazio(area, "Conteudo");
         UIFactory.Esticar(pcConteudo, 18);
         UIFactory.Vertical(pcConteudo, 10, 0);
     }
 
+    // Botão do menu: quadradinho colorido com a sigla do programa + o nome
     void BotaoApp(string nome, App app)
     {
-        UIFactory.Botao(pcMenu, nome, () => { appAtual = app; digitandoSenha = false; MontarComputador(); }, UIFactory.Hex("#1F4A7A"), 276, 46, 18);
+        var b = UIFactory.Botao(pcMenu, nome, () => { appAtual = app; digitandoSenha = false; MontarComputador(); }, CorBotaoApp, 276, 38, 16);
+        var rotulo = b.GetComponentInChildren<TextMeshProUGUI>();
+        rotulo.alignment = TextAlignmentOptions.Left;
+        rotulo.fontStyle = FontStyles.Normal;
+        rotulo.margin = new Vector4(48, 0, 6, 0);
+        var icone = UIFactory.Painel(b.transform, "Icone", CorDoApp(app));
+        UIFactory.Arredondar(icone.GetComponent<Image>(), 6f);
+        UIFactory.Ancorar(icone, new Vector2(0f, 0.5f), new Vector2(8f, 0f), new Vector2(28f, 28f));
+        var sigla = UIFactory.Texto(icone, Sigla(nome), 12, Color.white, FontStyles.Bold, TextAlignmentOptions.Center);
+        UIFactory.Esticar(sigla.rectTransform);
+        botoesApp[app] = b.GetComponent<Image>();
+    }
+
+    static string Sigla(string nome)
+    {
+        var p = nome.Split(' ');
+        string s = p[0].Substring(0, 1);
+        for (int i = 1; i < p.Length && s.Length < 2; i++) if (p[i].Length > 2) s += p[i].Substring(0, 1);
+        if (s.Length < 2 && p[0].Length > 1) s += p[0].Substring(1, 1);
+        return s.ToUpperInvariant();
+    }
+
+    static Color CorDoApp(App a)
+    {
+        switch (a)
+        {
+            case App.Prompt: return UIFactory.Hex("#2B2B2B");
+            case App.Rede: return UIFactory.Hex("#1E88E5");
+            case App.Servicos: return UIFactory.Hex("#6D4C41");
+            case App.Impressoras: return UIFactory.Hex("#00897B");
+            case App.Dispositivos: return UIFactory.Hex("#5E35B1");
+            case App.Tarefas: return UIFactory.Hex("#43A047");
+            case App.Navegador: return UIFactory.Hex("#F4511E");
+            case App.Email: return UIFactory.Hex("#3949AB");
+            case App.SistemaContabil: return UIFactory.Hex("#8E24AA");
+            case App.Antivirus: return UIFactory.Hex("#C62828");
+            case App.Programas: return UIFactory.Hex("#546E7A");
+            case App.Atualizacoes: return UIFactory.Hex("#0277BD");
+            case App.Contas: return UIFactory.Hex("#F9A825");
+            default: return UIFactory.Destaque;
+        }
     }
 
     public void AbrirComputador()
@@ -118,6 +185,11 @@ public partial class GameUI
         if (e == null) { FecharModal(); return; }
         txtPcTitulo.text = $"{mm.chamadoAtivo.EquipamentoTexto()} de {mm.chamadoAtivo.contato}  ·  {AppNome(appAtual)}" +
                            (e.PcNaInternet ? "   <color=#7CFFB0>• Internet</color>" : e.PcNaRede ? "   <color=#FFD54A>• Sem internet</color>" : "   <color=#FF8A8A>• Sem rede</color>");
+
+        foreach (var kv in botoesApp) if (kv.Value != null) kv.Value.color = kv.Key == appAtual ? CorBotaoAppAtivo : CorBotaoApp;
+        if (txtBarraTarefas != null)
+            txtBarraTarefas.text = (e.PcNaInternet ? "<color=#7CFFB0>Internet</color>" : e.PcNaRede ? "<color=#FFD54A>Rede sem internet</color>" : "<color=#FF8A8A>Sem rede</color>") +
+                                   $"     {mm.chamadoAtivo.contato}     {(DiaManager.Instance != null ? DiaManager.Instance.HoraTexto() : "")}";
 
         UIFactory.Limpar(pcConteudo);
         if (pcReiniciando) { TextoPc("Reiniciando...", 40, true); return; }

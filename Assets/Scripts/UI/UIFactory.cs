@@ -52,8 +52,100 @@ public static class UIFactory
     {
         var go = new GameObject(nome, typeof(RectTransform), typeof(Image));
         go.transform.SetParent(pai, false);
-        go.GetComponent<Image>().color = cor;
+        var img = go.GetComponent<Image>();
+        img.color = cor;
+        if (cor.a > 0.05f) Arredondar(img);   // Etapa 10D: cantos arredondados em tudo que aparece
         return (RectTransform)go.transform;
+    }
+
+    // ---------- Etapa 10D: visual (cantos arredondados, sombra, degradê, ícones dos itens) ----------
+
+    static Sprite arredondado;
+    // Quadrado branco 64 px com cantos de raio 16, fatiado (9-slice): estica sem deformar o canto
+    public static Sprite Arredondado
+    {
+        get
+        {
+            if (arredondado != null) return arredondado;
+            const int n = 64, r = 16;
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { name = "CantoArredondado", wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[n * n];
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float cx = x < r ? r - 0.5f : x >= n - r ? n - r - 0.5f : x;
+                    float cy = y < r ? r - 0.5f : y >= n - r ? n - r - 0.5f : y;
+                    float d = Mathf.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
+                    byte a = (byte)(Mathf.Clamp01(r - d + 0.5f) * 255f);
+                    px[y * n + x] = new Color32(255, 255, 255, a);
+                }
+            tex.SetPixels32(px);
+            tex.Apply();
+            arredondado = Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(r, r, r, r));
+            return arredondado;
+        }
+    }
+
+    // raio em pixels da tela de referência (1920 x 1080)
+    public static void Arredondar(Image img, float raio = 10f)
+    {
+        img.sprite = Arredondado;
+        img.type = Image.Type.Sliced;
+        img.pixelsPerUnitMultiplier = 16f / Mathf.Max(1f, raio);
+    }
+
+    public static void Sombra(RectTransform rt, float distancia = 4f, float alfa = 0.35f)
+    {
+        var s = rt.gameObject.AddComponent<Shadow>();
+        s.effectColor = new Color(0f, 0f, 0f, alfa);
+        s.effectDistance = new Vector2(0f, -distancia);
+    }
+
+    // Faixa colorida de 4 px na borda esquerda (status do cartão)
+    public static void Faixa(RectTransform rt, Color cor)
+    {
+        var f = Painel(rt, "Faixa", cor);
+        var le = f.gameObject.AddComponent<LayoutElement>();
+        le.ignoreLayout = true;
+        f.anchorMin = new Vector2(0, 0); f.anchorMax = new Vector2(0, 1); f.pivot = new Vector2(0, 0.5f);
+        f.offsetMin = new Vector2(0, 6); f.offsetMax = new Vector2(5, -6);
+    }
+
+    // Degradê vertical (de cima para baixo) como imagem esticada
+    public static RawImage Degrade(Transform pai, string nome, Color cima, Color baixo)
+    {
+        var go = new GameObject(nome, typeof(RectTransform), typeof(RawImage));
+        go.transform.SetParent(pai, false);
+        var tex = new Texture2D(1, 32, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+        for (int i = 0; i < 32; i++) tex.SetPixel(0, i, Color.Lerp(baixo, cima, i / 31f));
+        tex.Apply();
+        var raw = go.GetComponent<RawImage>();
+        raw.texture = tex;
+        raw.raycastTarget = false;
+        return raw;
+    }
+
+    static readonly System.Collections.Generic.Dictionary<Item, Texture2D> icones = new System.Collections.Generic.Dictionary<Item, Texture2D>();
+    // Foto do item (Resources/Icones, gerada pelo menu TI Service/Gerar ícones da loja); null se não houver
+    public static Texture2D Icone(Item item)
+    {
+        if (icones.TryGetValue(item, out var t)) return t;
+        t = Resources.Load<Texture2D>("Icones/" + item);
+        icones[item] = t;
+        return t;
+    }
+
+    public static RawImage Imagem(Transform pai, Texture tex, float tamanho)
+    {
+        var go = new GameObject("Imagem", typeof(RectTransform), typeof(RawImage));
+        go.transform.SetParent(pai, false);
+        var raw = go.GetComponent<RawImage>();
+        raw.texture = tex;
+        raw.raycastTarget = false;
+        var le = go.AddComponent<LayoutElement>();
+        le.preferredWidth = le.minWidth = tamanho;
+        le.preferredHeight = le.minHeight = tamanho;
+        return raw;
     }
 
     public static RectTransform Vazio(Transform pai, string nome)

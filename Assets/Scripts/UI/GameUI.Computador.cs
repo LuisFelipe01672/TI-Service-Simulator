@@ -303,6 +303,20 @@ public partial class GameUI
                         !e.ImpressoraOnline || !e.PcNaRede ? "<color=#B23A48>Offline</color>" :
                         e.FilaTravada ? "<color=#C77700>Erro - imprimindo</color>" : "<color=#1E8E3E>Pronta</color>";
         TextoPc("Status: " + status, 22);
+        // Etapa 10B: o driver aparece aqui (antes só dava para reinstalar mirando o monitor, e ninguém achava)
+        TextoPc("Driver: " + (e.impDriverErrado
+            ? "<color=#B23A48>Impressora PCL genérica</color>  <size=85%>(não é o driver do modelo: sai página com símbolos estranhos)</size>"
+            : "Laser monocromática — driver do fabricante"), 21);
+        if (e.impDriverErrado)
+            BotaoPc(LinhaPc(), "Remover a impressora e reinstalar com o driver do modelo (pendrive de drivers)", () =>
+            {
+                var m = Mochila.Instance;
+                if (m == null || !m.Tem(Item.PendriveDrivers)) { avisoPc = "Precisa do pendrive de drivers na mochila (Loja do tablet)."; return; }
+                e.impDriverErrado = false;
+                MissionManager.Instance?.ConsumirTempo(30f);
+                MissionManager.Instance?.RegistrarAcao("Reinstalou a impressora com o driver certo (pendrive)");
+                avisoPc = "Impressora removida, driver genérico apagado e o do modelo instalado pelo pendrive. Imprima uma página de teste.";
+            }, null, 760);
 
         if (!e.spoolerRodando) { TextoPc("Não foi possível abrir a fila: o serviço Spooler de Impressão não está em execução.", 20); }
         else

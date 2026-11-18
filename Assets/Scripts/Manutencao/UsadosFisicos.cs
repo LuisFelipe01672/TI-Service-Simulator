@@ -80,7 +80,7 @@ public class UsadosFisicos : MonoBehaviour
     bool AcharCenario()
     {
         if (sala == null) { var s = GameObject.Find("Cenario/Escritorio"); if (s != null) sala = s.transform; }
-        if (bancada == null) bancada = FindAnyObjectByType<Bancada>();
+        if (bancada == null) bancada = Bancada.DeEquipamentos();
         if (bancada != null && monitor == null)
             monitor = TelaBancada.Criar(bancada.transform, PosMonitor, Quaternion.Euler(0f, 180f, 0f));
         return sala != null;

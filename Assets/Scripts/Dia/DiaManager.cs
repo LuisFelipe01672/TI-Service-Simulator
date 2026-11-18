@@ -257,9 +257,12 @@ public class DiaManager : MonoBehaviour
         TemCasa = FindAnyObjectByType<Cama>() != null;
         if (sala == null) return;
 
-        // Bancada para fazer cabos, encostada na parede leste (embaixo da janela)
-        if (FindAnyObjectByType<Bancada>() == null)
-            Bancada.Criar(sala.transform, new Vector3(2.65f, 0f, -1.3f), -90f);
+        // Duas bancadas na parede leste: a de equipamentos usados embaixo da janela e a de cabos depois da cafeteira
+        // (Etapa 10B: separadas, a caixa de cabo não atrapalha o computador usado)
+        if (Bancada.DeEquipamentos() == null)
+            Bancada.Criar(sala.transform, new Vector3(2.65f, 0f, -1.3f), -90f, false);
+        if (Bancada.DeCabos() == null)
+            Bancada.Criar(sala.transform, new Vector3(2.7f, 0f, 1.45f), -90f, true);
 
         if (TemCasa || FindAnyObjectByType<SaidaEscritorio>() != null) return;
         var porta = new GameObject("Porta_EncerrarDia");

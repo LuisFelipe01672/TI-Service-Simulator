@@ -223,6 +223,27 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
     - Medido no editor: antes −74 dBm (14 a 15 pontos fracos de 57), AP no meio −60 dBm, AP num canto −70 dBm (4 fracos).
     - Não testado jogando de verdade: a medição andando (o atalho mede sem andar), a crimpagem pelo minigame, o
       painel do AP clicando (o atalho liga as opções), a escada carregada do carro até a sala.
+10B. ✅ **Consertos do teste do colega** (18/11/2026; o zip que ele testou era de 16/11, da Etapa 7):
+    - **notebook** só vai para a mesa do cliente quando o chamado é dele (antes aparecia junto do computador em todo
+      atendimento) — `NotebookCliente.Posicionar`;
+    - **roteador**: não reproduzido nesta versão (fotos das 3 salas em `Builds/Capturas/consertos`: na mesinha, no
+      lugar certo). Pedir ao colega para olhar de novo no zip novo;
+    - **duas bancadas** no escritório: a de equipamentos (embaixo da janela, tampo livre para os usados) e a de cabos
+      (depois da cafeteira, com a caixa de 305 m, o rolo e o alicate) — `Bancada.deCabos`, criadas pelo `DiaManager`;
+    - **driver da impressora** na tela do computador (Impressoras e fila mostra "Driver: Impressora PCL genérica" e o
+      botão de remover e reinstalar com o pendrive de drivers); a ação no monitor continua valendo;
+    - aba **Negócios** virou um menu (Foco, Projetos, Licitações, Parcerias, Produtos próprios) e cada seção tem
+      "« Voltar para Negócios".
+    - Atalhos *Teste (Play)/Consertos* 1–3 (fotos). 276 testes passando.
+10C. ⬜ **Animação em toda troca de peça** (foco pedido pelo dono): levantar ação por ação o que ainda é só texto
+    (memória: abrir as travas, puxar e encaixar o pente; disco, fonte, cooler e pasta térmica, bateria da placa;
+    notebook inteiro, que hoje não tem nenhuma animação; peças da impressora) e animar com PrimeTween, mãos/ferramenta
+    quando fizer sentido.
+10D. ⬜ **Visual do tablet e do computador + imagens na loja**: novo layout (cartões, ícones, cores) para o tablet e
+    o TI OS; foto de cada item na Loja e nas compras do tablet — gerada dos próprios modelos 3D
+    (`Editor/FotosModelos.cs` já fotografa modelos), sem baixar nada.
+10E. ⬜ **Cidade maior** (dono: 6 a 10 vezes maior e com mais clientes): mais quarteirões e ruas a partir da planta `Cidade/Bairro.cs`,
+    mais casas do pacote CC-BY já baixado, sempre medindo o FPS (placa de 4 GB).
 11. ⬜ **CFTV**: câmeras, DVR/NVR, cabo e fonte; posicionar vendo a área certa; acesso pelo celular do cliente.
 12. ⬜ **Nobreak e energia**: bateria morta apitando, dimensionar e instalar; queda de energia e raio queimando
     switch/fonte de quem não tem proteção.

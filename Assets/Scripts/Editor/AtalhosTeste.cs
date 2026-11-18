@@ -554,7 +554,7 @@ public static partial class AtalhosTeste
     [MenuItem(Menu + "Escritório: bancada (fazer cabo)", false, 105)]
     static void Bancada()
     {
-        var b = Object.FindAnyObjectByType<Bancada>();
+        var b = global::Bancada.DeCabos();
         if (b == null) return;
         Ir(b.transform.position + b.transform.forward * 1.1f + Vector3.up * 1.1f, b.transform.position + Vector3.up * 0.9f);
     }

@@ -10,7 +10,7 @@ public static class NotebookCliente
     public static Equipamento Garantir()
     {
         if (atual != null) return atual;
-        foreach (var e in Object.FindObjectsByType<Equipamento>())
+        foreach (var e in Object.FindObjectsByType<Equipamento>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             if (e.tipoEquipamento == TipoEquipamento.Notebook) return atual = e;
         var go = new GameObject("Notebook_Cliente");
         var eq = go.AddComponent<Equipamento>();
@@ -27,6 +27,12 @@ public static class NotebookCliente
     public static void Posicionar(SalaCliente sala)
     {
         var nb = Garantir();
+        // Etapa 10B: o notebook só vai para a mesa quando o chamado é dele (antes ficava ao lado do computador
+        // em todo atendimento e parecia bug para quem testava)
+        bool precisa = MissionManager.Instance != null && MissionManager.Instance.chamadoAtivo != null &&
+                       MissionManager.Instance.chamadoAtivo.equipamento == TipoEquipamento.Notebook;
+        if (nb.gameObject.activeSelf != precisa) nb.gameObject.SetActive(precisa);
+        if (!precisa) return;
         if (sala == null || sala.ancoraComputador == null) return;
         Equipamento pc = null;
         foreach (var e in Object.FindObjectsByType<Equipamento>())

@@ -7,13 +7,45 @@ public partial class GameUI
 {
     readonly Dictionary<int, int> margemProjeto = new Dictionary<int, int>();
 
+    // Etapa 10B: a aba era uma página só, comprida, com tudo junto. Agora abre num menu de seções; cada seção tem
+    // "« Voltar" (pedido do colega testador: sem jeito de voltar atrás depois de clicar numa opção).
+    string secaoNegocios;
+
     void MontarAbaNegocios()
     {
-        MontarFoco();
-        MontarProjetos();
-        MontarLicitacoes();
-        MontarParcerias();
-        MontarProdutosProprios();
+        if (string.IsNullOrEmpty(secaoNegocios)) { MontarMenuNegocios(); return; }
+        UIFactory.Botao(tabletConteudo, "«  Voltar para Negócios", () => { secaoNegocios = null; tabletConteudo.anchoredPosition = Vector2.zero; AtualizarTablet(); }, UIFactory.CartaoClaro, 320, 44, 18);
+        switch (secaoNegocios)
+        {
+            case "foco": MontarFoco(); break;
+            case "projetos": MontarProjetos(); break;
+            case "licitacoes": MontarLicitacoes(); break;
+            case "parcerias": MontarParcerias(); break;
+            case "produtos": MontarProdutosProprios(); break;
+            default: secaoNegocios = null; MontarMenuNegocios(); break;
+        }
+    }
+
+    void MontarMenuNegocios()
+    {
+        Secao("NEGÓCIOS");
+        var pm = ProjetosManager.Instance;
+        int pedidos = pm != null ? pm.projetos.FindAll(p => p.etapa == 0).Count : 0;
+        int andamento = pm != null ? pm.projetos.FindAll(p => p.etapa >= 2 && p.etapa < 5).Count : 0;
+        var itens = new[]
+        {
+            ("foco", "Foco da empresa", FocoEmpresa.Nomes[(int)FocoEmpresa.atual]),
+            ("projetos", "Projetos de infraestrutura", $"{pedidos} pedido(s) de orçamento · {andamento} em andamento"),
+            ("licitacoes", "Licitações", "editais de órgãos públicos"),
+            ("parcerias", "Parcerias com fornecedores", "descontos e produtos novos"),
+            ("produtos", "Produtos próprios", "desenvolver e vender o seu sistema"),
+        };
+        foreach (var (id, nome, resumo) in itens)
+        {
+            string sec = id;
+            UIFactory.Botao(tabletConteudo, $"<b>{nome}</b>\n<size=75%><color=#9AA6B8>{resumo}</color></size>",
+                () => { secaoNegocios = sec; tabletConteudo.anchoredPosition = Vector2.zero; AtualizarTablet(); }, sec == "projetos" && pedidos > 0 ? UIFactory.Hex("#1F3A2C") : UIFactory.Cartao, 760, 70, 21);
+        }
     }
 
     void MontarFoco()

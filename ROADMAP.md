@@ -267,8 +267,22 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
       280 passando.
     - Falta: ícones nas abas do tablet e um tema claro/escuro; a janela de manutenção e a OS seguem com o visual de antes
       (só ganharam os cantos arredondados).
-10E. ⬜ **Cidade maior** (dono: 6 a 10 vezes maior e com mais clientes): mais quarteirões e ruas a partir da planta `Cidade/Bairro.cs`,
-    mais casas do pacote CC-BY já baixado, sempre medindo o FPS (placa de 4 GB).
+10E. ⬜ **Cidade maior** (dono: 6 a 10 vezes maior e com mais clientes). Hoje o bairro tem 124 x 89 m (~1,1 ha) e é um
+    "H deitado" escrito à mão em `Cidade/Bairro.cs` (3 ruas fixas: Acácias, Ipê Amarelo, Jacarandás), com o trânsito
+    (`RotasTransito`, 6 pontas fixas), o GPS, o semáforo/PARE, os pedestres e os testes presos a essas 3 ruas. Crescer
+    6–10x pede trocar o "H" por uma **malha de ruas** genérica. Dividido em três, cada uma testada e com exe:
+    - 10E-1 ⬜ **Malha de ruas genérica, mesmo tamanho**: `Bairro` vira uma lista de ruas (leste-oeste e norte-sul) e
+      cruzamentos, com as 3 ruas de hoje nas mesmas posições (nada sai do lugar); rotas do trânsito, GPS ("vire à
+      direita", por caminho mais curto no grafo das ruas), semáforo/PARE por cruzamento, faixas e pedestres lendo da
+      malha; testes da planta e do trânsito reescritos sobre a malha. Pronto quando o jogo fica igual, mas sem nada
+      preso às 3 ruas.
+    - 10E-2 ⬜ **Cidade ~6x** (~330 x 230 m, grade de quarteirões em volta do bairro atual): ruas novas, ~100 casas e
+      sobrados com os modelos CC-BY já baixados (variações de cor, muro e portão), praça, comércios de fachada; desempenho
+      para placa de 4 GB: distância de corte por camada, occlusion culling, luz de poste só perto; medir FPS nos pontos
+      de sempre e em 3 novos (meta: não cair abaixo de 60 no editor).
+    - 10E-3 ⬜ **Mais clientes**: 6 a 9 prédios de cliente com interior (cópias das 3 salas com outro layout/cor/móveis),
+      cada cliente com o seu endereço (`SalaCliente.Para` por endereço), vagas, GPS, atalhos e fotos.
+    Depois, se o FPS deixar, subir para ~10x.
 11. ⬜ **CFTV**: câmeras, DVR/NVR, cabo e fonte; posicionar vendo a área certa; acesso pelo celular do cliente.
 12. ⬜ **Nobreak e energia**: bateria morta apitando, dimensionar e instalar; queda de energia e raio queimando
     switch/fonte de quem não tem proteção.

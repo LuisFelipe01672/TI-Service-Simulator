@@ -13,6 +13,10 @@ public partial class EquipamentoPecas
     float nbTopo = 0.019f;          // altura do tampo do teclado (o modelo 3D é mais fino que as primitivas)
     bool nbModelo;                  // usando o modelo do Sketchfab (ModelosUsados.notebook)
     int nbLimpezasVistas, nbTrocasVistas;
+    // Etapa 10C: peças que só aparecem nas animações (parafusos da tampa de baixo, capinha da tecla na unha)
+    Transform[] nbParafusos;
+    Transform nbCapinha, nbCarregador, nbLedCarregadorT;
+    Vector3 nbCarregadorPos, nbLedCarregadorPos, nbBateriaPos, nbTampaFundoPos;
     static Material mNbCarcaca, mNbTeclado, mNbBateria, mNbPoeira, mNbMetal, mNbFita;
 
     void MontarNotebook()
@@ -87,6 +91,30 @@ public partial class EquipamentoPecas
         PecaEquipamento.Criar(nbVisual, eq, "saida_ar", "Saída de ar", new Vector3(-0.175f, 0.01f, 0.05f), new Vector3(0.03f, 0.03f, 0.1f));
         PecaEquipamento.Criar(transform, eq, "carregador", "Carregador", new Vector3(0.3f, 0.02f, 0.04f), new Vector3(0.13f, 0.05f, 0.08f));
         TrocarPeloModelo();
+
+        // Etapa 10C: 10 parafusos na tampa de baixo (cabeça para baixo: com o notebook virado, ficam para cima)
+        nbParafusos = new Transform[10];
+        for (int i = 0; i < 10; i++)
+        {
+            float x = i < 5 ? -0.15f + i * 0.075f : -0.15f + (i - 5) * 0.075f;
+            float z = i < 5 ? -0.1f : 0.1f;
+            var pz = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pz.name = "ParafusoFundo" + i;
+            Destroy(pz.GetComponent<Collider>());
+            pz.transform.SetParent(nbVisual, false);
+            pz.transform.localPosition = new Vector3(x, -0.005f, z);
+            pz.transform.localScale = new Vector3(0.006f, 0.0015f, 0.006f);
+            pz.GetComponent<Renderer>().sharedMaterial = mNbMetal;
+            nbParafusos[i] = pz.transform;
+        }
+        nbCapinha = Cubo(nbVisual, "CapinhaTeclaA", new Vector3(nbTeclaA.localPosition.x, nbTopo + 0.0015f, nbTeclaA.localPosition.z), new Vector3(0.016f, 0.003f, 0.016f), mNbTeclado).transform;
+        nbCapinha.gameObject.SetActive(false);
+        nbCarregador = transform.Find("Carregador");
+        nbLedCarregadorT = nbLedCarregador.transform;
+        if (nbCarregador != null) nbCarregadorPos = nbCarregador.localPosition;
+        nbLedCarregadorPos = nbLedCarregadorT.localPosition;
+        nbBateriaPos = nbBateria.localPosition;
+        nbTampaFundoPos = nbTampaFundo.localPosition;
     }
 
     // Modelo "Laptop" (Aullwen, CC-BY; ver CREDITOS.md): a base no lugar da base de primitivas e a tela dentro da
@@ -164,18 +192,45 @@ public partial class EquipamentoPecas
         bool ligado = e == null || e.nbLigado;
         bool virado = e != null && e.nbTampaFundoAberta;
 
+        // Etapa 10C: animações enquanto o técnico segura E (AnimacaoPecas)
+        bool abrindo = AnimacaoPecas.Segurando(eq, "nb_abrir", out float pAbrir);
+        bool fechando = !abrindo && AnimacaoPecas.Segurando(eq, "nb_fechar", out pAbrir);
+
         // Tampa: aberta 15° para trás; tombando com a dobradiça quebrada; fechada para virar o notebook
         float alvo = virado ? -90f : e != null && e.nbDobradicaQuebrada ? 52f + Mathf.Sin(Time.time * 0.7f) * 3f : 15f;
+        if (abrindo) alvo = -90f;
         nbAnguloTampa = Mathf.MoveTowards(nbAnguloTampa, alvo, 120f * Time.deltaTime);
         nbPivoTampa.localRotation = Quaternion.Euler(nbAnguloTampa, 0f, 0f);
-        if (nbDobradicaEsq != null) nbDobradicaEsq.localRotation = Quaternion.Euler(e != null && e.nbDobradicaQuebrada ? 25f : 0f, 0f, 0f);
+        float dobr = e != null && e.nbDobradicaQuebrada ? 25f : 0f;
+        if (AnimacaoPecas.Segurando(eq, "nb_dobradica", out float pDob))
+            dobr = 25f * (1f - AnimacaoPecas.Trecho(pDob, 0.3f, 0.8f)) + Mathf.Sin(pDob * 40f) * 4f * (1f - pDob);
+        if (nbDobradicaEsq != null) nbDobradicaEsq.localRotation = Quaternion.Euler(dobr, 0f, 0f);
 
         // Virar de barriga para cima (e desvirar) com a tampa de baixo
-        nbVirado = Mathf.MoveTowards(nbVirado, virado && nbAnguloTampa < -80f ? 180f : 0f, 240f * Time.deltaTime);
+        float alvoVirado = virado && nbAnguloTampa < -80f ? 180f : 0f;
+        if (abrindo && nbAnguloTampa < -80f) alvoVirado = 180f;
+        if (fechando && pAbrir > 0.85f) alvoVirado = 0f;
+        nbVirado = Mathf.MoveTowards(nbVirado, alvoVirado, 240f * Time.deltaTime);
         nbVisual.localPosition = new Vector3(0f, nbVirado > 1f ? nbTopo + 0.008f : 0f, 0f);
         float balanco = e != null && e.nbBateriaEstufada && !virado ? Mathf.Sin(Time.time * 2.2f) * 1.2f : 0f;
         nbVisual.localRotation = Quaternion.Euler(balanco, 0f, nbVirado);
-        nbTampaFundo.gameObject.SetActive(!(virado && nbVirado > 170f));
+
+        // Tampa de baixo e os 10 parafusos: abrindo, um por um giram e sobem, e a tampa sai; fechando, ao contrário
+        float tampaFora = virado ? 1f : 0f;                // 0 = no lugar, 1 = fora
+        float parafFora = virado ? 1f : 0f;
+        if (abrindo) { parafFora = AnimacaoPecas.Trecho(pAbrir, 0.35f, 0.88f); tampaFora = AnimacaoPecas.Trecho(pAbrir, 0.88f, 1f); }
+        if (fechando) { tampaFora = 1f - AnimacaoPecas.Trecho(pAbrir, 0f, 0.25f); parafFora = 1f - AnimacaoPecas.Trecho(pAbrir, 0.25f, 0.82f); }
+        nbTampaFundo.gameObject.SetActive(tampaFora < 0.999f);
+        nbTampaFundo.localPosition = nbTampaFundoPos + new Vector3(0.06f * tampaFora, -0.04f * tampaFora, 0f);   // -y = para cima com ele virado
+        for (int i = 0; i < nbParafusos.Length; i++)
+        {
+            float solto = Mathf.Clamp01(parafFora * nbParafusos.Length - i);   // um de cada vez
+            var pz = nbParafusos[i];
+            bool mostra = nbVirado > 90f && solto < 0.999f && tampaFora < 0.5f;
+            if (pz.gameObject.activeSelf != mostra) pz.gameObject.SetActive(mostra);
+            pz.localPosition = new Vector3(pz.localPosition.x, -0.005f - 0.01f * solto, pz.localPosition.z);
+            pz.localRotation = Quaternion.Euler(0f, solto * 900f, 0f);
+        }
 
         // Bateria estufada: teclado e touchpad levantados; a bateria (por baixo) abaulada
         bool estufada = e != null && e.nbBateriaEstufada;
@@ -183,21 +238,67 @@ public partial class EquipamentoPecas
         nbTouchpad.gameObject.SetActive(!nbModelo || estufada);   // no modelo, o touchpad de primitiva só aparece quando levanta
         nbTouchpad.localRotation = Quaternion.Euler(estufada ? -4f : 0f, 0f, 0f);
         if (!nbModelo) nbPlacaTeclado.localPosition = new Vector3(0f, estufada ? 0.0215f : 0.0195f, 0.025f);
-        nbBateria.gameObject.SetActive(e == null || !e.nbBateriaFora);
+        // Bateria: tirando, ela sobe (com o notebook virado, -y é para cima) e sai para o lado; pondo, ao contrário
+        float batFora = e != null && e.nbBateriaFora ? 1f : 0f;
+        if (AnimacaoPecas.Segurando(eq, "nb_bateria_tirar", out float pBat)) batFora = AnimacaoPecas.Trecho(pBat, 0.25f, 1f);
+        else if (AnimacaoPecas.Segurando(eq, "nb_bateria_por", out pBat)) batFora = 1f - AnimacaoPecas.Trecho(pBat, 0f, 0.75f);
+        nbBateria.gameObject.SetActive(batFora < 0.999f);
+        nbBateria.localPosition = nbBateriaPos + new Vector3(0f, -0.03f * Mathf.Min(1f, batFora * 2f), -0.16f * Mathf.Max(0f, batFora * 2f - 1f));
         nbBateria.localScale = new Vector3(0.24f, estufada ? 0.016f : 0.006f, 0.07f);
 
         // Tecla A sem a capinha; poeira na grade e na ventoinha
         bool semCapa = e != null && e.nbTeclaSemCapa;
         nbTeclaA.gameObject.SetActive(nbModelo ? semCapa : !semCapa);   // modelo: aparece o buraco; primitivas: some a tecla
+        // A capinha sai na unha (espátula) e volta com um clique
+        float capa = -1f;
+        if (AnimacaoPecas.Segurando(eq, "nb_tecla_tirar", out float pCap)) capa = pCap;
+        else if (AnimacaoPecas.Segurando(eq, "nb_tecla_por", out pCap)) capa = 1f - pCap;
+        if (nbCapinha.gameObject.activeSelf != capa >= 0f) nbCapinha.gameObject.SetActive(capa >= 0f);
+        if (capa >= 0f)
+        {
+            if (!nbModelo) nbTeclaA.gameObject.SetActive(false);
+            nbCapinha.localPosition = new Vector3(nbTeclaA.localPosition.x - 0.03f * capa, nbTopo + 0.0015f + 0.02f * Mathf.Sin(capa * Mathf.PI * 0.5f), nbTeclaA.localPosition.z);
+            nbCapinha.localRotation = Quaternion.Euler(-40f * capa, 0f, 0f);
+        }
         bool poeira = e != null && e.nbPoeira > 0.7f;
+        bool limpandoVent = AnimacaoPecas.Segurando(eq, "nb_limpar", out float pLim);
         nbPoeiraVent.gameObject.SetActive(poeira);
         var pv = nbVisual.Find("Ventoinha/PoeiraVentoinha");
-        if (pv != null) pv.gameObject.SetActive(e != null && e.nbPoeira > 0.3f);
+        if (pv != null)
+        {
+            pv.gameObject.SetActive((e != null && e.nbPoeira > 0.3f) || limpandoVent);
+            pv.localScale = new Vector3(0.9f, limpandoVent ? Mathf.Lerp(0.6f, 0.02f, pLim) : 0.6f, 0.9f);
+        }
 
-        // Moldura solta em cima da mesa
+        // Moldura solta em cima da mesa; soltando com a espátula ela desgruda da tela e vem para a frente
         bool moldura = e != null && e.nbMolduraAberta;
-        if (!nbModelo) nbMoldura.gameObject.SetActive(!moldura);
-        nbMolduraSolta.gameObject.SetActive(moldura);
+        float mold = -1f;
+        if (AnimacaoPecas.Segurando(eq, "nb_moldura_tirar", out float pMol)) mold = pMol;
+        else if (AnimacaoPecas.Segurando(eq, "nb_moldura_por", out pMol)) mold = 1f - pMol;
+        if (mold >= 0f)
+        {
+            nbMoldura.gameObject.SetActive(true);
+            nbMoldura.localPosition = new Vector3(0f, 0.112f + 0.03f * mold, -0.0025f - 0.06f * mold);
+            nbMolduraSolta.gameObject.SetActive(false);
+        }
+        else
+        {
+            nbMoldura.localPosition = new Vector3(0f, 0.112f, -0.0025f);
+            if (!nbModelo) nbMoldura.gameObject.SetActive(!moldura);
+            else if (nbMoldura.gameObject.activeSelf) nbMoldura.gameObject.SetActive(false);
+            nbMolduraSolta.gameObject.SetActive(moldura);
+        }
+
+        // Carregador: o velho sai da mesa e o universal novo entra no lugar
+        if (nbCarregador != null)
+        {
+            float fora = 0f;
+            if (AnimacaoPecas.Segurando(eq, "nb_carregador", out float pCar))
+                fora = AnimacaoPecas.Trecho(pCar, 0f, 0.45f) * (1f - AnimacaoPecas.Trecho(pCar, 0.55f, 1f));
+            Vector3 d = new Vector3(0.25f * fora, 0.05f * fora, 0f);
+            nbCarregador.localPosition = nbCarregadorPos + d;
+            nbLedCarregadorT.localPosition = nbLedCarregadorPos + d;
+        }
 
         // Carregador: fita isolante no cabo ruim, luz verde só carregando
         nbFita.gameObject.SetActive(e != null && e.nbCarregadorRuim);

@@ -6,6 +6,7 @@ using UnityEngine;
 public static class NotebookCliente
 {
     static Equipamento atual;
+    static readonly System.Collections.Generic.List<Renderer> tirados = new System.Collections.Generic.List<Renderer>();
 
     public static Equipamento Garantir()
     {
@@ -27,6 +28,9 @@ public static class NotebookCliente
     public static void Posicionar(SalaCliente sala)
     {
         var nb = Garantir();
+        // Etapa 10C: o que foi tirado da mesa da última vez volta para o lugar
+        foreach (var r in tirados) if (r != null) r.enabled = true;
+        tirados.Clear();
         // Etapa 10B: o notebook só vai para a mesa quando o chamado é dele (antes ficava ao lado do computador
         // em todo atendimento e parecia bug para quem testava)
         bool precisa = MissionManager.Instance != null && MissionManager.Instance.chamadoAtivo != null &&
@@ -74,7 +78,22 @@ public static class NotebookCliente
             if (achou) break;
         }
         if (alvo == Vector3.zero) alvo = new Vector3(centro.x, yMesa, centro.z) + direita * (lado * 0.55f) + frente * 0.12f;
-        if (!achou) Debug.LogWarning("[Salas] Notebook: nenhum lugar livre na mesa; ficou ao lado do monitor.");
+        if (!achou)
+        {
+            // Mesa cheia: o cliente abre espaço (telefone, bloquinhos e enfeites pequenos saem de baixo do notebook)
+            var area = new Bounds(alvo + Vector3.up * 0.1f, new Vector3(0.44f, 0.18f, 0.44f));
+            foreach (var r in renderers)
+            {
+                if (r == null || !r.enabled || r.transform.IsChildOf(nb.transform)) continue;
+                var b = r.bounds;
+                if (b.max.y < alvo.y + 0.012f || b.size.x > 0.5f || b.size.z > 0.5f || b.size.y > 0.5f) continue;
+                if (r.GetComponentInParent<Equipamento>() != null || r.GetComponentInParent<Interactable>() != null) continue;
+                if (!b.Intersects(area)) continue;
+                r.enabled = false;
+                tirados.Add(r);
+            }
+            Debug.Log($"[Salas] Notebook: mesa cheia, o cliente tirou {tirados.Count} objeto(s) pequeno(s) para abrir espaço.");
+        }
         // O Visual do notebook tem a frente (lado do teclado) em -z: -z do notebook = para onde a tela olha
         nb.transform.SetPositionAndRotation(alvo, Quaternion.LookRotation(-frente, Vector3.up));
         Physics.SyncTransforms();

@@ -228,4 +228,57 @@ public partial class EquipamentoPecas
         }
         tinhaLacre = e.cartuchoNaMaoComLacre;
     }
+
+    // ---------- Etapa 10C: papel atolado e cilindro, andando com a barra do E (AnimacaoPecas) ----------
+    Transform impFolhaAtolada, impCilindro;
+    static Material mCilindroVelho, mCilindroNovo;
+
+    void AnimarPecasImpressora()
+    {
+        var traseira = visual != null ? visual.Find("Peca_traseira") : null;
+        var cart = visual != null ? (visual.Find("Peca_cartucho") ?? (dobradica != null ? dobradica.Find("Peca_cartucho") : null)) : null;
+
+        // Folha amassada sai pela tampa de trás, devagar
+        bool puxando = AnimacaoPecas.Segurando(eq, "imp_papel", out float p);
+        if (puxando && impFolhaAtolada == null && traseira != null)
+        {
+            mFolha ??= Mat(new Color(0.96f, 0.96f, 0.94f));
+            impFolhaAtolada = Cubo(visual, "FolhaAtolada", Vector3.zero, new Vector3(0.2f, 0.004f, 0.18f), mFolha).transform;
+        }
+        if (impFolhaAtolada != null)
+        {
+            impFolhaAtolada.gameObject.SetActive(puxando);
+            if (puxando)
+            {
+                Vector3 o = traseira.localPosition + new Vector3(0f, -0.08f, -0.12f);
+                impFolhaAtolada.localPosition = o + new Vector3(0f, 0.02f * p, 0.26f * AnimacaoPecas.Trecho(p, 0.15f, 1f));
+                impFolhaAtolada.localRotation = Quaternion.Euler(12f + 8f * Mathf.Sin(p * 25f), 6f * Mathf.Sin(p * 13f), 4f);
+            }
+        }
+
+        // Cilindro (unidade de imagem): o velho sobe, o novo (verde mais vivo) desce no lugar
+        bool trocando = AnimacaoPecas.Segurando(eq, "imp_cilindro", out p);
+        if (trocando && impCilindro == null && cart != null)
+        {
+            mCilindroVelho ??= Mat(new Color(0.12f, 0.3f, 0.16f));
+            mCilindroNovo ??= Mat(new Color(0.1f, 0.55f, 0.25f));
+            var c = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            c.name = "CilindroNaMao";
+            Destroy(c.GetComponent<Collider>());
+            c.transform.SetParent(cart.parent, false);
+            c.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            c.transform.localScale = new Vector3(0.05f, 0.15f, 0.05f);
+            impCilindro = c.transform;
+        }
+        if (impCilindro != null)
+        {
+            impCilindro.gameObject.SetActive(trocando);
+            if (trocando)
+            {
+                float fora = AnimacaoPecas.Trecho(p, 0f, 0.45f) * (1f - AnimacaoPecas.Trecho(p, 0.55f, 1f));
+                impCilindro.localPosition = cart.localPosition + new Vector3(0f, 0.02f + 0.22f * fora, -0.05f * fora);
+                Pintar(impCilindro.GetComponent<Renderer>(), p > 0.5f ? mCilindroNovo : mCilindroVelho);
+            }
+        }
+    }
 }

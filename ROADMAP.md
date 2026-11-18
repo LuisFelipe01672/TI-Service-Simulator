@@ -235,10 +235,23 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
     - aba **Negócios** virou um menu (Foco, Projetos, Licitações, Parcerias, Produtos próprios) e cada seção tem
       "« Voltar para Negócios".
     - Atalhos *Teste (Play)/Consertos* 1–3 (fotos). 276 testes passando.
-10C. ⬜ **Animação em toda troca de peça** (foco pedido pelo dono): levantar ação por ação o que ainda é só texto
-    (memória: abrir as travas, puxar e encaixar o pente; disco, fonte, cooler e pasta térmica, bateria da placa;
-    notebook inteiro, que hoje não tem nenhuma animação; peças da impressora) e animar com PrimeTween, mãos/ferramenta
-    quando fizer sentido.
+10C. ✅ **Animação em toda troca de peça** (18/11/2026) — as peças andam **junto com a barra enquanto o técnico segura
+    E** (`Manutencao/AnimacaoPecas.cs`: tabela rótulo » animação; soltou antes do fim, as peças voltam):
+    - **computador**: os 2 parafusos da tampa giram e saem antes de o gabinete virar (e voltam ao fechar); a poeira
+      encolhe enquanto o ar sopra; as travas brancas da memória abrem, o pente sai do slot, sobe e volta (o novo é mais
+      verde); a fonte e o disco deslizam para fora e para dentro (o SSD entra no lugar do HD); os 4 parafusos do cooler
+      soltam um de cada vez em X e o cooler sai; a pasta velha some com o pano e a nova cresce num grão;
+    - **notebook** (antes não tinha nenhuma animação): fecha a tela, vira, os 10 parafusos da tampa de baixo saem um
+      por um e a tampa sai (fechar: ao contrário); a bateria sobe e desliza para fora / entra; a poeira da ventoinha
+      some; a capinha da tecla sai na espátula e volta; a moldura desgruda da tela; a dobradiça volta para o lugar; o
+      carregador velho sai e o novo entra;
+    - **impressora**: a folha amassada sai devagar pela tampa de trás; o cilindro velho sobe e o novo desce;
+    - **ferramenta na mão** na frente da câmera: chave Phillips girando, lata de ar comprimido soltando poeira, pano
+      esfregando, seringa de pasta com o êmbolo descendo, espátula alavancando;
+    - mesa cheia no chamado de notebook: o cliente tira o telefone/bloquinhos de baixo do notebook (voltam depois).
+    - Testes `TestesAnimacao`; atalhos *Teste (Play)/Animações* 1–4 (fotos em `Builds/Capturas/animacoes`). 278 passando.
+    - Falta: os usados da bancada (outro visual, `UsadoVisual`) e ações instantâneas (tirar o cartucho, gaveta) seguem
+      com as animações de antes; mãos de verdade (hoje só a ferramenta aparece).
 10D. ⬜ **Visual do tablet e do computador + imagens na loja**: novo layout (cartões, ícones, cores) para o tablet e
     o TI OS; foto de cada item na Loja e nas compras do tablet — gerada dos próprios modelos 3D
     (`Editor/FotosModelos.cs` já fotografa modelos), sem baixar nada.

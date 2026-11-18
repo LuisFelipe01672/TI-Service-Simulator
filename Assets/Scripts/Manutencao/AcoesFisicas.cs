@@ -32,6 +32,9 @@ public static partial class AcoesFisicas
     {
         var lista = new ListaAcoes();
         RegistroEquipamentos.De(tipo).Acoes(e, lista);
+        // Etapa 10C: ações demoradas ganham a animação das peças (AnimacaoPecas, pela tabela de rótulos)
+        foreach (var a in lista)
+            if (a.animacao == null && a.segurar > 0f) a.animacao = AnimacaoPecas.Id(a.rotulo);
         return lista;
     }
 

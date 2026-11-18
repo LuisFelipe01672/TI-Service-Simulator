@@ -282,6 +282,7 @@ public partial class EquipamentoPecas : MonoBehaviour
         var e = MissionManager.Instance != null ? MissionManager.Instance.Estado : null;
         AtualizarTestador(e);
         AtualizarFerramentas(e);
+        AnimacaoPecas.AtualizarMao();
 
         if (eq.tipoEquipamento == TipoEquipamento.Impressora)
         {
@@ -294,6 +295,7 @@ public partial class EquipamentoPecas : MonoBehaviour
             Pintar(painel, ligada ? (e != null && e.impCartuchoPresente && e.impToner > 0.1f ? mVerde : mLaranja) : mApagado);
             AtualizarLcd(e, ligada);
             AtualizarDetalhesImpressora(e, ligada);
+            AnimarPecasImpressora();
             AtualizarLocacao(e);
         }
         else if (eq.tipoEquipamento == TipoEquipamento.Roteador)

@@ -210,7 +210,7 @@ public class TestesPlantaCenario
     public void Vagas_ForaDaFaixaEPertoDaPorta()
     {
         var faixas = new List<Rect>();
-        foreach (float x in new[] { 0f, Bairro.IpeX - Bairro.MeiaPista - 2f, Bairro.JacarandasX + Bairro.MeiaPista + 2f })
+        foreach (float x in Bairro.FaixasPedestreX)
             faixas.Add(Rect.MinMaxRect(x - 1.5f, Bairro.AcaciasAsfaltoZ1, x + 1.5f, Bairro.AcaciasAsfaltoZ0));
         foreach (float x in new[] { Bairro.IpeX, Bairro.JacarandasX })
             faixas.Add(Rect.MinMaxRect(x - Bairro.MeiaPista, Bairro.AcaciasAsfaltoZ1, x + Bairro.MeiaPista, Bairro.AcaciasAsfaltoZ0));   // cruzamento
@@ -241,5 +241,23 @@ public class TestesPlantaCenario
         // guia rebaixada: dá para ir do asfalto da Jacarandás ao terreno sem subir calçada
         var meio = new Vector2(Bairro.FrenteLesteJacarandas - 0.5f, (Bairro.PostoZ0 + Bairro.PostoZ1) / 2f);
         Assert.IsTrue(Bairro.Pedacos().Any(p => p.tipo == TipoPiso.Asfalto && p.area.Contains(meio)), "Falta a guia rebaixada na frente do posto.");
+    }
+
+    // Etapa 9D: semáforo da Jacarandás e placas de PARE da Ipê ficam na calçada da esquina (fora do asfalto e dos
+    // cômodos), à direita de quem chega
+    [Test]
+    public void Transito_PostesNasEsquinas()
+    {
+        var comodos = Comodos();
+        foreach (int k in new[] { RotasTransito.CruzamentoIpe, RotasTransito.CruzamentoJacarandas })
+            foreach (var d in new[] { Vector3.right, Vector3.left, Vector3.forward, Vector3.back })
+            {
+                float canto = Bairro.MeiaPista + 0.6f;
+                Vector3 p = RotasTransito.CentroCruzamento(k) + RotasTransito.Direita(d) * canto - d * canto;
+                var xz = new Vector2(p.x, p.z);
+                bool calcada = Bairro.Pedacos().Any(r => r.tipo == TipoPiso.Calcada && r.area.Contains(xz));
+                Assert.IsTrue(calcada, $"Poste do cruzamento {k} (chegando por {d}) fora da calçada: {p}.");
+                foreach (var c in comodos) Assert.IsFalse(c.Planta.Contains(xz), $"Poste do cruzamento {k} dentro de {c.nome}.");
+            }
     }
 }

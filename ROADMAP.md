@@ -173,7 +173,33 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
        108 × 125 (igual à 9B); dirigindo de casa à loja 194 FPS. 248 testes passando.
      - Falta: velocímetro do painel com ponteiro (hoje o número fica no HUD), interior escuro à noite, o carro não
        tem seta nem limpador; trânsito e pedestres ficam para a 9D.
-   - 9D ⬜ Vida na rua: trânsito simples, pedestres, dia/noite; clima (chuva atrasa serviço externo) mais tarde.
+   - 9D ✅ Vida na rua (17/11/2026), tudo leve e sem física complexa:
+     - **Trânsito** (`Cidade/RotasTransito.cs`, `CarroNPC.cs`, `VidaNaRua.cs`): carros dos vizinhos com o mesmo hatch do
+       técnico (malha única, 6 cores comuns, placa Mercosul fictícia sorteada) entram por uma ponta da rua e saem por
+       outra, sempre nascendo e sumindo fora da vista. Mão direita, curva nos cruzamentos, param atrás de outro carro,
+       de pedestre e do técnico (buzinam se ele não sai), na faixa de pedestre ocupada, no **PARE** da Ipê (para de vez e
+       espera brecha na Acácias) e no **semáforo** da Jacarandás (verde/amarelo/vermelho, nunca os dois eixos abertos);
+       conversão à esquerda espera quem vem de frente. Carro do técnico parado no meio-fio: desviam por fora, rente,
+       quando a contramão está livre.
+     - **Pedestres** (`Pedestre.cs`) nas calçadas a 85 cm da fachada, pela direita, desviando do técnico, uns dos outros
+       e do orelhão; só atravessam a Acácias na faixa e esperam os carros pararem. Personagens do Mixamo (fora do Git)
+       andando; sem eles, boneco de cápsulas balançando pernas e braços.
+     - **Dia e noite**: postes acendem às 17h30 (luz de verdade só nos 8 mais perto da câmera; a lâmpada de todos
+       brilha); 84 janelas das casas, sobrados e do hospital acendem aos poucos ao anoitecer e apagam depois das 22h
+       (`JanelasNoturnas.cs`, medidas pelas fotos ortográficas das fachadas); faróis e lanternas dos carros (farol que
+       ilumina só nos 3 mais perto); movimento por hora (pico 7h–9h30 e 17h–19h30, cheio no comercial, pouco à noite,
+       menos no fim de semana).
+     - Testes `TestesTransito` (rotas no asfalto e na mão certa, paradas fora do cruzamento e da zebra, semáforo, vez
+       no cruzamento, calçadas, carro parando diante de pedestre/faixa/fila) + poste e PARE na esquina
+       (`TestesPlantaCenario`). Atalhos *Teste (Play)/Rua* 1–5 (fiscal de batidas, gente fora da calçada, técnico no
+       meio da rua, carro estacionado, fotos de dia/noite, FPS).
+     - Medido no editor (90 s de trânsito cheio): 0 batidas, ninguém fora do asfalto/calçada, folga mínima de 2,7 m até
+       o técnico; 5 carros desviaram do carro estacionado em 70 s. FPS (sem × com movimento): porta 165 × 146, esquina
+       da Ipê 116 × 108, Jacarandás 160 × 135; à noite 155 × 130, 106 × 97, 155 × 131 (antes do corte dos postes a
+       noite parada era 72 na esquina da Ipê). Exe 254 → 255 MB. 260 testes passando.
+     - Fica para depois: **clima** (chuva atrasando serviço externo, pista molhada, guarda-chuva) — não sai barato
+       (partículas, materiais molhados, regra de atraso nas OS); seta e farol alto nos carros dos vizinhos;
+       ônibus/moto; pedestres entrando nas casas e lojas; os carros não "veem" o técnico dirigindo na contramão.
 10. ⬜ **Wi-Fi corporativo**: posicionar access point, sinal fraco nos cantos (mapa de calor), rede de visitantes separada.
 11. ⬜ **CFTV**: câmeras, DVR/NVR, cabo e fonte; posicionar vendo a área certa; acesso pelo celular do cliente.
 12. ⬜ **Nobreak e energia**: bateria morta apitando, dimensionar e instalar; queda de energia e raio queimando
@@ -193,6 +219,8 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
      - a conferir jogando (9C): dirigir no teclado, caixa da locação e lote de usados no porta-malas, galão.
      - bairro (fotos da 9B): prédios como caixas lisas (fachada da clínica), brilho estranho nas janelas escuras,
        ruas terminando de repente com a borda do mapa visível.
+     - rua (9D): carro dos vizinhos parado no fim da rua à vista espera até 8 s antes de sumir; o orelhão fica
+       colado no caminho de quem anda pela calçada norte (dá para passar, mas apertado).
 
 Ideias para a leva 3 (avaliar depois): servidor/NAS e backup 3-2-1 com teste de restauração; firewall/VPN;
 queda do link da operadora; trabalho em altura e forro; ferramentas de rede (punch-down, escada, passa-fio);

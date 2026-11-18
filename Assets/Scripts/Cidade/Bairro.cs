@@ -109,7 +109,11 @@ public static class Bairro
     // Estaciona-se junto ao meio-fio, no sentido da mão (no Brasil, mão direita): do lado norte das Acácias o carro
     // fica virado para o oeste, do lado sul para o leste; na Jacarandás (lado leste) para o norte; na Ipê (lado oeste)
     // para o sul. 'centro' é o meio do carro no asfalto; 'giro' é para onde a frente aponta (graus, 0 = norte).
-    public const float DistMeioFio = 1.1f;   // do meio-fio ao meio do carro (1,7 m de largura + uns 25 cm)
+    public const float DistMeioFio = 1.1f;
+
+    // Faixas de pedestre atravessando a Rua das Acácias (centro em x): perto da Ipê, em frente ao escritório e perto
+    // da Jacarandás. O cenário pinta, os carros param antes e os pedestres atravessam por elas (Etapa 9D).
+    public static float[] FaixasPedestreX => new[] { IpeX - MeiaPista - 2f, 0f, JacarandasX + MeiaPista + 2f };   // do meio-fio ao meio do carro (1,7 m de largura + uns 25 cm)
 
     public struct Vaga { public TipoEndereco tipo; public Vector3 centro; public float giro; }
 

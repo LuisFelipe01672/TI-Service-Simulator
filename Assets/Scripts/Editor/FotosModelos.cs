@@ -11,6 +11,57 @@ public static class FotosModelos
         "Casa_Comum_Brasileira", "Casa_Terrea", "Sobrado_Porta_Enrolar", "Sobrado_Tijolo", "Predio_Hospital", "Orelhao",
     };
 
+    // Fotos ortográficas da fachada de um imóvel de cada modelo do bairro (80 px por metro, enquadrando os limites do
+    // modelo), em Builds/Capturas/Fachadas: servem para medir onde ficam as janelas (luz acesa à noite, Etapa 9D).
+    [MenuItem("TI Service/Teste gráfico/Fotos das fachadas (ortográficas)")]
+    static void FotosFachadas()
+    {
+        var viz = GameObject.Find("Cenario/Vizinhanca");
+        if (viz == null) { Debug.LogWarning("[Fotos] Monte o cenário antes."); return; }
+        string pasta = Path.Combine(Application.dataPath, "../Builds/Capturas/Fachadas");
+        Directory.CreateDirectory(pasta);
+        var feitos = new System.Collections.Generic.HashSet<string>();
+        var camGo = new GameObject("CamFotoFachada");
+        var cam = camGo.AddComponent<Camera>();
+        cam.orthographic = true;
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = new Color(1f, 0f, 1f);
+        cam.farClipPlane = 80f;
+        const float pxm = 80f;
+        foreach (Transform t in viz.transform)
+        {
+            if (feitos.Contains(t.name)) continue;
+            var rs = t.GetComponentsInChildren<Renderer>();
+            if (rs.Length == 0) continue;
+            var b = rs[0].bounds; foreach (var r in rs) b.Encapsulate(r.bounds);
+            Vector3 dir = MontarCenario.FachadaDe(b.center);
+            if (dir == Vector3.zero) continue;
+            feitos.Add(t.name);
+            Vector3 direita = Vector3.Cross(Vector3.up, -dir);
+            float largura = Mathf.Abs(Vector3.Dot(b.size, new Vector3(Mathf.Abs(direita.x), 0f, Mathf.Abs(direita.z))));
+            int w = Mathf.RoundToInt(largura * pxm), h = Mathf.RoundToInt(b.size.y * pxm);
+            var rt = new RenderTexture(w, h, 24);
+            cam.targetTexture = rt;
+            cam.orthographicSize = b.size.y / 2f;
+            float fundo = Mathf.Abs(Vector3.Dot(b.extents, new Vector3(Mathf.Abs(dir.x), 0f, Mathf.Abs(dir.z))));
+            cam.nearClipPlane = 0.01f; cam.farClipPlane = fundo * 2f + 0.6f;
+            camGo.transform.SetPositionAndRotation(b.center + dir * (fundo + 0.3f), Quaternion.LookRotation(-dir));
+            cam.Render();
+            var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+            RenderTexture.active = rt;
+            tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            tex.Apply();
+            RenderTexture.active = null;
+            File.WriteAllBytes(Path.Combine(pasta, t.name + ".png"), tex.EncodeToPNG());
+            Debug.Log($"[Fotos] Fachada {t.name}: {largura:F2} x {b.size.y:F2} m ({w}x{h} px), base y {b.min.y:F2}, frente para {dir}");
+            Object.DestroyImmediate(tex);
+            cam.targetTexture = null;
+            rt.Release();
+        }
+        Object.DestroyImmediate(camGo);
+        Debug.Log("[Fotos] Fachadas em Builds/Capturas/Fachadas");
+    }
+
     // Fotos do bairro montado na cena aberta (sem Play): vista de cima e da calçada, em Builds/Capturas/Bairro
     [MenuItem("TI Service/Teste gráfico/Fotos do bairro (cena aberta)")]
     static void FotosBairro()

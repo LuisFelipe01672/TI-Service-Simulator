@@ -66,9 +66,7 @@ public static partial class MontarCenario
             for (float z = Bairro.AcaciasAsfaltoZ0 - 0.4f; z > Bairro.AcaciasAsfaltoZ1 + 0.3f; z -= 0.8f)
                 Caixa(rua, "Faixa_Pedestre", new Vector3(x, 0.012f, z), new Vector3(3f, 0.005f, 0.4f), mFaixa, 1f, false, false);
         }
-        Zebra(0f);
-        Zebra(Bairro.IpeX - Bairro.MeiaPista - 2f);
-        Zebra(Bairro.JacarandasX + Bairro.MeiaPista + 2f);
+        foreach (float xf in Bairro.FaixasPedestreX) Zebra(xf);
 
         MontarPostes(rua);
     }

@@ -6,6 +6,7 @@ using UnityEngine;
 // Planta do cenário (sem abrir a cena): os cômodos montados pelo MontarCenario não podem se sobrepor nem cair na rua,
 // e o bairro (Cidade/Bairro.cs) precisa levar a pé de qualquer endereço a qualquer outro.
 // Nasceu de um erro real: o banheiro foi calculado antes da posição da casa e apareceu na frente da porta do escritório.
+// Etapa 10E-1: os testes das ruas (sobreposição, ligação, postes nas esquinas) rodam no bairro e na grade 3 x 3.
 public class TestesPlantaCenario
 {
     struct Comodo
@@ -76,21 +77,23 @@ public class TestesPlantaCenario
         Assert.That(loja.Planta.yMax, Is.EqualTo(Bairro.FrenteSulAcacias).Within(0.05f), "Loja: a frente não encosta na calçada sul.");
     }
 
+    static IEnumerable<MalhaRuas> Malhas() => TestesTransito.Malhas();
+
     // Pedaços de rua e calçada não se sobrepõem (piso em cima de piso pisca na tela)
-    [Test]
-    public void Ruas_SemSobreposicao()
+    [TestCaseSource(nameof(Malhas))]
+    public void Ruas_SemSobreposicao(MalhaRuas m)
     {
-        var p = Bairro.Pedacos();
+        var p = m.Pedacos();
         for (int i = 0; i < p.Count; i++)
             for (int j = i + 1; j < p.Count; j++)
                 Assert.IsFalse(Encolher(p[i].area, 0.01f).Overlaps(p[j].area), $"{p[i].tipo} da {p[i].rua} {p[i].area} sobre {p[j].tipo} da {p[j].rua} {p[j].area}.");
     }
 
     // Dá para ir a pé de qualquer pedaço de rua a qualquer outro (sem ilha de calçada solta)
-    [Test]
-    public void Ruas_TodasLigadas()
+    [TestCaseSource(nameof(Malhas))]
+    public void Ruas_TodasLigadas(MalhaRuas m)
     {
-        var p = Bairro.Pedacos();
+        var p = m.Pedacos();
         var visto = new bool[p.Count];
         var fila = new Queue<int>();
         visto[0] = true; fila.Enqueue(0);
@@ -102,7 +105,30 @@ public class TestesPlantaCenario
                 if (!visto[j] && a.Overlaps(p[j].area)) { visto[j] = true; fila.Enqueue(j); }
         }
         for (int j = 0; j < p.Count; j++)
-            Assert.IsTrue(visto[j], $"{p[j].tipo} da {p[j].rua} em {p[j].area} não se liga ao resto das ruas.");
+            Assert.IsTrue(visto[j], $"[{m}] {p[j].tipo} da {p[j].rua} em {p[j].area} não se liga ao resto das ruas.");
+    }
+
+    // Os pedaços cobrem cada rua inteira: asfalto de ponta a ponta e calçada dos dois lados fora dos cruzamentos
+    [TestCaseSource(nameof(Malhas))]
+    public void Ruas_CobertasDePontaAPonta(MalhaRuas m)
+    {
+        var p = m.Pedacos();
+        bool Tem(TipoPiso t, Vector3 q) => p.Any(x => x.tipo == t && x.area.Contains(new Vector2(q.x, q.z)));
+        for (int i = 0; i < m.ruas.Count; i++)
+        {
+            var r = m.ruas[i];
+            for (float a = r.ini + 0.2f; a < r.fim - 0.2f; a += 0.5f)
+            {
+                Assert.IsTrue(Tem(TipoPiso.Asfalto, r.Ponto(a)), $"[{m}] {r} sem asfalto em {r.Ponto(a)}.");
+                bool cruzamento = m.CruzamentosDa(i).Any(k => Mathf.Abs(a - r.Ao(m.cruzamentos[k].centro)) < m.Transversal(k, i).FrentePos - m.Transversal(k, i).eixo + 0.3f);
+                if (cruzamento) continue;
+                foreach (int lado in new[] { -1, 1 })
+                {
+                    var q = r.Ponto(a, (lado > 0 ? (r.AsfaltoPos + r.FrentePos) / 2f : (r.AsfaltoNeg + r.FrenteNeg) / 2f) - r.eixo);
+                    Assert.IsTrue(Tem(TipoPiso.Calcada, q) || m.rebaixos.Any(x => x.rua == i && x.lado == lado && a > x.a0 && a < x.a1), $"[{m}] {r} sem calçada em {q}.");
+                }
+            }
+        }
     }
 
     // Todo endereço do GPS existe uma vez só e fica em cima de uma calçada
@@ -189,19 +215,13 @@ public class TestesPlantaCenario
             var v = Bairro.VagaDe(t);
             var r = AreaDoCarro(v);
             Assert.IsTrue(CantosNoAsfalto(r), $"A vaga de {t} ({r}) sai do asfalto.");
-            // Acácias: lado norte virado para o oeste; lado sul para o leste. Norte-sul: leste para o norte, oeste para o sul.
-            if (Mathf.Abs(v.centro.z - Bairro.AcaciasCentroZ) < Bairro.MeiaPista)
-            {
-                bool norte = v.centro.z > Bairro.AcaciasCentroZ;
-                Assert.AreEqual(norte ? 270f : 90f, v.giro, 0.1f, $"Vaga de {t} na contramão.");
-                float meioFio = norte ? Bairro.AcaciasAsfaltoZ0 : Bairro.AcaciasAsfaltoZ1;
-                Assert.That(Mathf.Abs(v.centro.z - meioFio), Is.EqualTo(Bairro.DistMeioFio).Within(0.05f), $"Vaga de {t} longe do meio-fio.");
-            }
-            else
-            {
-                bool leste = v.centro.x > (Mathf.Abs(v.centro.x - Bairro.IpeX) < 5f ? Bairro.IpeX : Bairro.JacarandasX);
-                Assert.AreEqual(leste ? 0f : 180f, v.giro, 0.1f, $"Vaga de {t} na contramão.");
-            }
+            // Mão direita: o meio-fio fica à direita de quem está estacionado; o carro fica encostado nele
+            var m = Bairro.Malha;
+            var rua = m.ruas[m.IndiceRuaMaisProxima(v.centro)];
+            float lat = rua.Lateral(v.centro);
+            var frente = new Vector3(Mathf.Sin(v.giro * Mathf.Deg2Rad), 0f, Mathf.Cos(v.giro * Mathf.Deg2Rad));
+            Assert.Greater(Vector3.Dot(RotasTransito.Direita(frente), rua.Normal * Mathf.Sign(lat)), 0.99f, $"Vaga de {t} na contramão.");
+            Assert.That(rua.meiaPista - Mathf.Abs(lat), Is.EqualTo(Bairro.DistMeioFio).Within(0.05f), $"Vaga de {t} longe do meio-fio.");
         }
     }
 
@@ -209,11 +229,18 @@ public class TestesPlantaCenario
     [Test]
     public void Vagas_ForaDaFaixaEPertoDaPorta()
     {
+        var m = Bairro.Malha;
         var faixas = new List<Rect>();
-        foreach (float x in Bairro.FaixasPedestreX)
-            faixas.Add(Rect.MinMaxRect(x - 1.5f, Bairro.AcaciasAsfaltoZ1, x + 1.5f, Bairro.AcaciasAsfaltoZ0));
-        foreach (float x in new[] { Bairro.IpeX, Bairro.JacarandasX })
-            faixas.Add(Rect.MinMaxRect(x - Bairro.MeiaPista, Bairro.AcaciasAsfaltoZ1, x + Bairro.MeiaPista, Bairro.AcaciasAsfaltoZ0));   // cruzamento
+        foreach (var fx in m.faixas)
+        {
+            var r = m.ruas[fx.rua];
+            faixas.Add(r.Area(fx.pos - 1.5f, fx.pos + 1.5f, r.AsfaltoNeg, r.AsfaltoPos));
+        }
+        foreach (var c in m.cruzamentos)   // cruzamento
+        {
+            float mx = m.ruas[c.ruaNS].meiaPista, mz = m.ruas[c.ruaLO].meiaPista;
+            faixas.Add(Rect.MinMaxRect(c.centro.x - mx, c.centro.z - mz, c.centro.x + mx, c.centro.z + mz));
+        }
         foreach (var e in Bairro.Enderecos)
         {
             var v = Bairro.VagaDe(e.tipo);
@@ -243,21 +270,36 @@ public class TestesPlantaCenario
         Assert.IsTrue(Bairro.Pedacos().Any(p => p.tipo == TipoPiso.Asfalto && p.area.Contains(meio)), "Falta a guia rebaixada na frente do posto.");
     }
 
-    // Etapa 9D: semáforo da Jacarandás e placas de PARE da Ipê ficam na calçada da esquina (fora do asfalto e dos
-    // cômodos), à direita de quem chega
-    [Test]
-    public void Transito_PostesNasEsquinas()
+    // Etapa 9D: semáforos e placas de PARE ficam na calçada da esquina (fora do asfalto e dos cômodos), à direita de
+    // quem chega — em todo cruzamento da malha
+    [TestCaseSource(nameof(Malhas))]
+    public void Transito_PostesNasEsquinas(MalhaRuas m)
     {
-        var comodos = Comodos();
-        foreach (int k in new[] { RotasTransito.CruzamentoIpe, RotasTransito.CruzamentoJacarandas })
+        var comodos = m == Bairro.Malha ? Comodos() : new List<Comodo>();
+        var rede = RotasTransito.Calcadas(m);
+        for (int k = 0; k < m.cruzamentos.Count; k++)
             foreach (var d in new[] { Vector3.right, Vector3.left, Vector3.forward, Vector3.back })
             {
-                float canto = Bairro.MeiaPista + 0.6f;
-                Vector3 p = RotasTransito.CentroCruzamento(k) + RotasTransito.Direita(d) * canto - d * canto;
+                Vector3 p = MontarCenario.EsquinaDireita(m, k, d);
                 var xz = new Vector2(p.x, p.z);
-                bool calcada = Bairro.Pedacos().Any(r => r.tipo == TipoPiso.Calcada && r.area.Contains(xz));
-                Assert.IsTrue(calcada, $"Poste do cruzamento {k} (chegando por {d}) fora da calçada: {p}.");
+                bool calcada = m.Pedacos().Any(r => r.tipo == TipoPiso.Calcada && r.area.Contains(xz));
+                Assert.IsTrue(calcada, $"[{m}] Poste do cruzamento {m.cruzamentos[k].nome} (chegando por {d}) fora da calçada: {p}.");
                 foreach (var c in comodos) Assert.IsFalse(c.Planta.Contains(xz), $"Poste do cruzamento {k} dentro de {c.nome}.");
+                // e não fica no caminho do pedestre de quem anda junto à fachada (a 85 cm dela)
+                foreach (var n in rede.nos) Assert.Greater(Vector2.Distance(xz, new Vector2(n.pos.x, n.pos.z)), 0.4f, $"[{m}] Poste em cima do caminho do pedestre em {p}.");
             }
+    }
+
+    // A frente dos imóveis do bairro olha para a rua mais perto (janelas que acendem à noite)
+    [Test]
+    public void Fachadas_ViradasParaARua()
+    {
+        Assert.AreEqual(Vector3.back, MontarCenario.FachadaDe(new Vector3(-10f, 0f, 2f)), "Lote ao norte da Acácias.");
+        Assert.AreEqual(Vector3.forward, MontarCenario.FachadaDe(new Vector3(-11f, 0f, -20f)), "Lote ao sul da Acácias.");
+        Assert.AreEqual(Vector3.right, MontarCenario.FachadaDe(new Vector3(-36f, 0f, 22f)), "Hospital, a oeste da Ipê.");
+        Assert.AreEqual(Vector3.left, MontarCenario.FachadaDe(new Vector3(-16f, 0f, 28f)), "Lote a leste da Ipê.");
+        Assert.AreEqual(Vector3.right, MontarCenario.FachadaDe(new Vector3(16f, 0f, 27f)), "Lote a oeste da Jacarandás.");
+        Assert.AreEqual(Vector3.left, MontarCenario.FachadaDe(new Vector3(36f, 0f, -40f)), "Lote a leste da Jacarandás.");
+        Assert.AreEqual(Vector3.zero, MontarCenario.FachadaDe(new Vector3(100f, 0f, 100f)), "Fora do mapa não é lote.");
     }
 }

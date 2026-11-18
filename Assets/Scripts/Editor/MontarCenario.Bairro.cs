@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-// Parte do MontarCenario (Etapa 9B): o bairro. Ruas e calçadas saem da planta (Cidade/Bairro.cs); postes de
+// Parte do MontarCenario (Etapa 9B): o bairro. Ruas, calçadas, zebras e postes saem da malha (Bairro.Malha); postes de
 // concreto com cruzeta, transformador e fios caindo em curva; casas e sobrados do Sketchfab (CC-BY) nos lotes;
 // fachada dos prédios com interior (platibanda, caixa d'água azul e placa); muro com portão na casa do jogador.
 // Tudo andando: sem teleporte. As salas dos clientes ficam nos seus endereços (Bairro.Centro*).
@@ -49,24 +49,34 @@ public static partial class MontarCenario
                 Caixa(rua, "Calcada", new Vector3(c.x, 0.05f, c.y), new Vector3(p.area.width, 0.14f, p.area.height), mCalcada, 1.5f);
         }
 
-        // Faixa central tracejada: Acácias (sem os cruzamentos e a faixa de pedestre) e as ruas norte-sul
-        float zc = Bairro.AcaciasCentroZ;
-        bool PertoDeCruzamento(float x) => Mathf.Abs(x - Bairro.IpeX) < Bairro.MeiaPista + 2f || Mathf.Abs(x - Bairro.JacarandasX) < Bairro.MeiaPista + 2f;
-        for (float x = -Bairro.LimiteX + 1.5f; x < Bairro.LimiteX - 1f; x += 3f)
-            if (Mathf.Abs(x) > 2.5f && !PertoDeCruzamento(x))
-                Caixa(rua, "Faixa_Central", new Vector3(x, 0.012f, zc), new Vector3(1.5f, 0.005f, 0.12f), mFaixa, 1f, false, false);
-        foreach (float xr in new[] { Bairro.IpeX, Bairro.JacarandasX })
-            for (float z = Bairro.LimiteSul + 1.5f; z < Bairro.LimiteNorte - 1f; z += 3f)
-                if (z < Bairro.AcaciasAsfaltoZ1 - 2f || z > Bairro.AcaciasAsfaltoZ0 + 2f)
-                    Caixa(rua, "Faixa_Central", new Vector3(xr, 0.012f, z), new Vector3(0.12f, 0.005f, 1.5f), mFaixa, 1f, false, false);
-
-        // Faixas de pedestre: escritório → casa, e nas esquinas das Acácias
-        void Zebra(float x)
+        // Faixa central tracejada em cada rua da malha, fora dos cruzamentos e das zebras (Etapa 10E-1)
+        var m = Bairro.Malha;
+        for (int i = 0; i < m.ruas.Count; i++)
         {
-            for (float z = Bairro.AcaciasAsfaltoZ0 - 0.4f; z > Bairro.AcaciasAsfaltoZ1 + 0.3f; z -= 0.8f)
-                Caixa(rua, "Faixa_Pedestre", new Vector3(x, 0.012f, z), new Vector3(3f, 0.005f, 0.4f), mFaixa, 1f, false, false);
+            var r = m.ruas[i];
+            var cruz = m.CruzamentosDa(i);
+            bool Livre(float a)
+            {
+                foreach (int k in cruz) if (Mathf.Abs(a - r.Ao(m.cruzamentos[k].centro)) < m.Transversal(k, i).meiaPista + 2f) return false;
+                foreach (var fx in m.faixas) if (fx.rua == i && Mathf.Abs(a - fx.pos) <= 2.5f) return false;
+                return true;
+            }
+            var tam = r.lesteOeste ? new Vector3(1.5f, 0.005f, 0.12f) : new Vector3(0.12f, 0.005f, 1.5f);
+            for (float a = r.ini + 1.5f; a < r.fim - 1f; a += 3f)
+                if (Livre(a)) { var p = r.Ponto(a); Caixa(rua, "Faixa_Central", new Vector3(p.x, 0.012f, p.z), tam, mFaixa, 1f, false, false); }
         }
-        foreach (float xf in Bairro.FaixasPedestreX) Zebra(xf);
+
+        // Faixas de pedestre (zebras): listras de 40 cm atravessando a rua
+        foreach (var fx in m.faixas)
+        {
+            var r = m.ruas[fx.rua];
+            var tam = r.lesteOeste ? new Vector3(3f, 0.005f, 0.4f) : new Vector3(0.4f, 0.005f, 3f);
+            for (float l = r.meiaPista - 0.4f; l > -r.meiaPista + 0.3f; l -= 0.8f)
+            {
+                var p = r.Ponto(fx.pos, l);
+                Caixa(rua, "Faixa_Pedestre", new Vector3(p.x, 0.012f, p.z), tam, mFaixa, 1f, false, false);
+            }
+        }
 
         MontarPostes(rua);
     }
@@ -77,18 +87,22 @@ public static partial class MontarCenario
     {
         var postes = new GameObject("Postes").transform;
         postes.SetParent(rua, false);
-        float zNorte = Bairro.AcaciasAsfaltoZ0 + 0.35f, zSul = Bairro.AcaciasAsfaltoZ1 - 0.35f;
-        float xIpe = Bairro.IpeX + Bairro.MeiaPista + 0.35f, xJac = Bairro.JacarandasX - Bairro.MeiaPista - 0.35f;
-        float[] xs = { -58f, -47f, -35f, -18f, -8f, 8f, 18f, 35f, 49f, 58f };
-        float[] zs = { -44f, -32f, -21f, 3f, 15f, 27f, 39f };
-
-        var linhas = new List<List<Vector3>>
+        // Uma fileira de postes por calçada com poste (Rua.ladosPostes), junto ao meio-fio, braço para a rua
+        var m = Bairro.Malha;
+        var linhas = new List<List<Vector3>>();
+        var paraRua = new List<Vector3>();
+        for (int i = 0; i < m.ruas.Count; i++)
         {
-            new List<Vector3>(), new List<Vector3>(), new List<Vector3>(), new List<Vector3>(),
-        };
-        foreach (float x in xs) { linhas[0].Add(new Vector3(x, 0, zNorte)); linhas[1].Add(new Vector3(x, 0, zSul)); }
-        foreach (float z in zs) { linhas[2].Add(new Vector3(xIpe, 0, z)); linhas[3].Add(new Vector3(xJac, 0, z)); }
-        Vector3[] paraRua = { Vector3.back, Vector3.forward, Vector3.left, Vector3.right };
+            var r = m.ruas[i];
+            var pos = r.postes ?? PostesPadrao(m, i);
+            foreach (int lado in r.ladosPostes)
+            {
+                var l = new List<Vector3>();
+                foreach (float a in pos) l.Add(r.Ponto(a, lado * (r.meiaPista + 0.35f)));
+                linhas.Add(l);
+                paraRua.Add(-lado * r.Normal);
+            }
+        }
 
         int n = 0;
         for (int l = 0; l < linhas.Count; l++)
@@ -106,6 +120,25 @@ public static partial class MontarCenario
                 ultimo = p;
             }
         }
+    }
+
+    // Postes a cada 12 m, longe dos cruzamentos e das zebras (ruas sem a lista feita à mão)
+    static float[] PostesPadrao(MalhaRuas m, int iRua)
+    {
+        var r = m.ruas[iRua];
+        var l = new List<float>();
+        for (float a = r.ini + 4f; a <= r.fim - 4f; a += 12f)
+        {
+            bool livre = true;
+            foreach (int k in m.CruzamentosDa(iRua))
+            {
+                var t = m.Transversal(k, iRua);
+                if (Mathf.Abs(a - r.Ao(m.cruzamentos[k].centro)) < t.meiaPista + Mathf.Max(t.calcadaNeg, t.calcadaPos) + 1f) livre = false;
+            }
+            foreach (var fx in m.faixas) if (fx.rua == iRua && Mathf.Abs(a - fx.pos) < 2.5f) livre = false;
+            if (livre) l.Add(a);
+        }
+        return l.ToArray();
     }
 
     // Poste de concreto (duplo T) com cruzeta de média tensão, cabos de telefone/internet mais baixos e o braço da
@@ -225,7 +258,7 @@ public static partial class MontarCenario
 
         // Orelhão na calçada perto do escritório, junto ao meio-fio (a calçada continua livre do lado das casas);
         // a colisão é a caixa inteira, para ninguém entrar no domo
-        ModeloReal(SF("Orelhao"), viz, new Vector3(-5f, 0.12f, Bairro.AcaciasAsfaltoZ0 + 0.7f), LadoOrelhao, 180f - FrenteOrelhao);
+        ModeloReal(SF("Orelhao"), viz, Bairro.Orelhao, LadoOrelhao, 180f - FrenteOrelhao);
 
         // Placas dos endereços sem interior (por enquanto só a fachada)
         if (fornecedor != null) PlacaFachada(viz, fornecedor, 270, "DISTRIBUIDORA DE PEÇAS", "Informática · Atacado", 3.2f);

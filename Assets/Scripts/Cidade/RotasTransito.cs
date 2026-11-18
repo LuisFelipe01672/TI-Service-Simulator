@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Etapa 9D (vida na rua): rotas dos carros e caminhos dos pedestres, calculados a partir da planta do Bairro.
+// Etapa 9D (vida na rua): rotas dos carros e caminhos dos pedestres, calculados a partir da malha de ruas.
 // Tudo aqui é puro (sem cena): os testes conferem que as rotas ficam no asfalto, na mão certa, e param antes dos
 // cruzamentos e das faixas de pedestre.
 //
-// O bairro é um "H deitado": a Rua das Acácias (leste-oeste) cortada pela Ipê Amarelo e pela Jacarandás. As 6 pontas
-// das ruas são a borda do mapa; os carros entram por uma ponta e saem por outra (nascem e somem fora da vista).
-// Mão direita (Brasil): indo para o leste, o carro anda na metade sul das Acácias; indo para o norte, na metade leste.
+// Etapa 10E-1: nada aqui conhece as ruas pelo nome. As pontas (fim de cada rua, na borda do mapa) vêm da MalhaRuas;
+// os carros entram por uma ponta e saem por outra (nascem e somem fora da vista) pelo caminho mais curto no grafo das
+// ruas, virando nos cruzamentos. Mão direita (Brasil): indo para o leste, o carro anda na metade sul da rua; indo para
+// o norte, na metade leste. Cada cruzamento tem PARE (para quem não vem pela principal) ou semáforo.
 public static class RotasTransito
 {
     public const float DeslocFaixa = 1.6f;                 // do eixo da rua ao meio da faixa
@@ -18,15 +19,10 @@ public static class RotasTransito
     public const float FolgaParada = 0.8f;                  // da frente do carro até a faixa/cruzamento quando para
     public const float MeiaFaixaPedestre = 1.5f;            // a zebra tem 3 m de largura
 
-    public enum Ponta { AcaciasOeste, AcaciasLeste, IpeSul, IpeNorte, JacarandasSul, JacarandasNorte }
     public enum Manobra { Reto, Direita, Esquerda }
     public enum TipoParada { Cruzamento, Faixa }
 
-    public const int CruzamentoIpe = 0, CruzamentoJacarandas = 1;   // Ipê: PARE na transversal; Jacarandás: semáforo
-    public static Vector3 CentroCruzamento(int i) => new Vector3(i == CruzamentoIpe ? Bairro.IpeX : Bairro.JacarandasX, 0f, Bairro.AcaciasCentroZ);
-
-    // Faixas de pedestre (todas atravessam a Rua das Acácias): mesma lista que o MontarCenario pinta
-    public static float[] FaixasX => Bairro.FaixasPedestreX;
+    public static Vector3 CentroCruzamento(MalhaRuas m, int i) => m.cruzamentos[i].centro;
 
     public struct Parada
     {
@@ -36,13 +32,13 @@ public static class RotasTransito
         public float sSaida;        // cruzamento: a traseira saiu (libera a vez)
         public Vector3 chegada;     // direção de quem chega (para saber o eixo do semáforo e quem é preferencial)
         public Manobra manobra;
-        public bool preferencial;   // vem pela Acácias (na Ipê, quem vem pela transversal para no PARE)
+        public bool preferencial;   // vem pela rua principal do cruzamento (no PARE, quem vem pela outra para)
     }
 
     // Caminho de um carro: polilinha com distância acumulada e velocidade máxima em cada ponto
     public class Caminho
     {
-        public Ponta de, para;
+        public int de, para;        // índices em MalhaRuas.pontas
         public readonly List<Vector3> pontos = new List<Vector3>();
         public readonly List<float> limite = new List<float>();
         public readonly List<float> acumulado = new List<float>();
@@ -111,36 +107,22 @@ public static class RotasTransito
         }
     }
 
-    // ---------------- Pontas e faixas ----------------
+    // ---------------- Pontas ----------------
 
-    static int Rua(Ponta p) => p <= Ponta.AcaciasLeste ? 0 : p <= Ponta.IpeNorte ? 1 : 2;   // 0 Acácias, 1 Ipê, 2 Jacarandás
-    static float EixoX(int rua) => rua == 1 ? Bairro.IpeX : Bairro.JacarandasX;
-
-    // Direção de quem entra pela ponta (para dentro do bairro)
-    public static Vector3 Entrando(Ponta p)
+    // Direção de quem entra pela ponta (para dentro do mapa)
+    public static Vector3 Entrando(MalhaRuas m, int ponta)
     {
-        switch (p)
-        {
-            case Ponta.AcaciasOeste: return Vector3.right;
-            case Ponta.AcaciasLeste: return Vector3.left;
-            case Ponta.IpeSul: case Ponta.JacarandasSul: return Vector3.forward;
-            default: return Vector3.back;
-        }
+        var p = m.pontas[ponta];
+        return m.ruas[p.rua].Dir * (p.lado < 0 ? 1f : -1f);
     }
 
     // Ponto do eixo da rua na ponta: o carro inteiro cabe antes da barreira do fim da rua
     public const float RecuoPonta = 4f;
-    public static Vector3 EixoNaPonta(Ponta p)
+    public static Vector3 EixoNaPonta(MalhaRuas m, int ponta)
     {
-        switch (p)
-        {
-            case Ponta.AcaciasOeste: return new Vector3(-Bairro.LimiteX + RecuoPonta, 0f, Bairro.AcaciasCentroZ);
-            case Ponta.AcaciasLeste: return new Vector3(Bairro.LimiteX - RecuoPonta, 0f, Bairro.AcaciasCentroZ);
-            case Ponta.IpeSul: return new Vector3(Bairro.IpeX, 0f, Bairro.LimiteSul + RecuoPonta);
-            case Ponta.IpeNorte: return new Vector3(Bairro.IpeX, 0f, Bairro.LimiteNorte - RecuoPonta);
-            case Ponta.JacarandasSul: return new Vector3(Bairro.JacarandasX, 0f, Bairro.LimiteSul + RecuoPonta);
-            default: return new Vector3(Bairro.JacarandasX, 0f, Bairro.LimiteNorte - RecuoPonta);
-        }
+        var p = m.pontas[ponta];
+        var r = m.ruas[p.rua];
+        return r.Ponto(p.lado < 0 ? r.ini + RecuoPonta : r.fim - RecuoPonta);
     }
 
     // Lado direito de quem anda na direção d (mão de direção)
@@ -150,85 +132,76 @@ public static class RotasTransito
     public static Vector3 NaFaixa(Vector3 eixo, Vector3 d) => eixo + Direita(d) * DeslocFaixa;
 
     // Distância do centro do cruzamento até onde a frente do carro para (antes da zebra, se houver uma no caminho)
-    public static float DistanciaParada(int cruzamento, Vector3 chegada)
+    public static float DistanciaParada(MalhaRuas m, int cruzamento, Vector3 chegada)
     {
-        float d = Bairro.MeiaPista + FolgaParada;
-        if (Mathf.Abs(chegada.x) > 0.5f)
+        var cz = m.cruzamentos[cruzamento];
+        bool lo = Mathf.Abs(chegada.x) > 0.5f;
+        int iRua = cz.Rua(lo);
+        var rua = m.ruas[iRua];
+        float d = m.ruas[cz.Rua(!lo)].meiaPista + FolgaParada;   // antes do asfalto da rua cruzada
+        float c = rua.Ao(cz.centro), sentido = Vector3.Dot(chegada, rua.Dir);
+        foreach (var f in m.faixas)
         {
-            float cx = CentroCruzamento(cruzamento).x;
-            foreach (float xf in FaixasX)
-            {
-                float rel = xf - cx;
-                if (Mathf.Abs(rel) < 9f && Mathf.Sign(rel) == -Mathf.Sign(chegada.x))
-                    d = Mathf.Max(d, Mathf.Abs(rel) + MeiaFaixaPedestre + FolgaParada);
-            }
+            if (f.rua != iRua) continue;
+            float rel = f.pos - c;
+            if (Mathf.Abs(rel) < 9f && Mathf.Sign(rel) == -Mathf.Sign(sentido))
+                d = Mathf.Max(d, Mathf.Abs(rel) + MeiaFaixaPedestre + FolgaParada);
         }
         return d;
     }
 
+    // O ponto p está em cima da zebra f? (margem > 0 aumenta a zebra, < 0 diminui)
+    public static bool SobreFaixa(MalhaRuas m, int f, Vector3 p, float margem) => m.SobreFaixa(f, p, MeiaFaixaPedestre, margem);
+
     // ---------------- Rotas ----------------
 
-    public static readonly Ponta[] Pontas = (Ponta[])System.Enum.GetValues(typeof(Ponta));
+    public static List<Caminho> TodasAsRotas() => TodasAsRotas(Bairro.Malha);
 
-    public static List<Caminho> TodasAsRotas()
+    public static List<Caminho> TodasAsRotas(MalhaRuas m)
     {
         var l = new List<Caminho>();
-        foreach (var a in Pontas)
-            foreach (var b in Pontas)
-                if (a != b) l.Add(Rota(a, b));
+        for (int a = 0; a < m.pontas.Count; a++)
+            for (int b = 0; b < m.pontas.Count; b++)
+                if (a != b)
+                {
+                    var c = Rota(m, a, b);
+                    if (c != null) l.Add(c);
+                }
         return l;
     }
 
     struct Curva { public int cruzamento; public Vector3 d1, d2; }
 
-    public static Caminho Rota(Ponta de, Ponta para)
+    // Rota de uma ponta a outra pelo caminho mais curto no grafo das ruas; null se não há caminho
+    public static Caminho Rota(MalhaRuas m, int de, int para)
     {
+        var nos = m.CaminhoEntrePontas(de, para);
+        if (nos == null || nos.Count < 2) return null;
         var c = new Caminho { de = de, para = para };
-        int r1 = Rua(de), r2 = Rua(para);
-        Vector3 dIn = Entrando(de), dOut = -Entrando(para);
+        Vector3 dIn = Entrando(m, de), dOut = -Entrando(m, para);
         var curvas = new List<Curva>();
-        // cruzamentos atravessados em linha reta (para as paradas)
-        var retos = new List<(int cruzamento, Vector3 d)>();
-
-        int Cruz(int rua) => rua == 1 ? CruzamentoIpe : CruzamentoJacarandas;
-
-        if (r1 == 0 && r2 == 0)
+        var retos = new List<(int cruzamento, Vector3 d)>();   // cruzamentos atravessados em linha reta (para as paradas)
+        Vector3 Sentido(int i)   // as ruas são retas em x ou z: o sentido é exato (sem erro de arredondamento)
         {
-            foreach (int k in OrdemAoLongo(dIn)) retos.Add((k, dIn));
+            var v = m.PosNo(nos[i + 1]) - m.PosNo(nos[i]);
+            return Mathf.Abs(v.x) > Mathf.Abs(v.z) ? new Vector3(Mathf.Sign(v.x), 0f, 0f) : new Vector3(0f, 0f, Mathf.Sign(v.z));
         }
-        else if (r1 == 0)
+        for (int i = 1; i + 1 < nos.Count; i++)
         {
-            int k = Cruz(r2);
-            foreach (int kk in OrdemAoLongo(dIn)) { if (kk == k) break; retos.Add((kk, dIn)); }
-            curvas.Add(new Curva { cruzamento = k, d1 = dIn, d2 = dOut });
-        }
-        else if (r2 == 0)
-        {
-            curvas.Add(new Curva { cruzamento = Cruz(r1), d1 = dIn, d2 = dOut });
-            int k = Cruz(r1);
-            bool depois = false;
-            foreach (int kk in OrdemAoLongo(dOut)) { if (depois) retos.Add((kk, dOut)); if (kk == k) depois = true; }
-        }
-        else if (r1 == r2)
-        {
-            retos.Add((Cruz(r1), dIn));
-        }
-        else
-        {
-            var meio = EixoX(r2) > EixoX(r1) ? Vector3.right : Vector3.left;
-            curvas.Add(new Curva { cruzamento = Cruz(r1), d1 = dIn, d2 = meio });
-            curvas.Add(new Curva { cruzamento = Cruz(r2), d1 = meio, d2 = dOut });
+            Vector3 d1 = i == 1 ? dIn : Sentido(i - 1), d2 = i + 2 == nos.Count ? dOut : Sentido(i);
+            if (Vector3.Dot(d1, d2) > 0.99f) retos.Add((nos[i], d1));
+            else curvas.Add(new Curva { cruzamento = nos[i], d1 = d1, d2 = d2 });
         }
 
         // Polilinha: começo, curvas (arco tangente às duas faixas) e fim
-        c.Add(NaFaixa(EixoNaPonta(de), dIn), VelCidade);
-        var arcos = new List<(Curva cv, Vector3 inicio, Vector3 fim, Manobra m)>();
+        c.Add(NaFaixa(EixoNaPonta(m, de), dIn), VelCidade);
+        var arcos = new List<(Curva cv, Manobra mb)>();
         foreach (var cv in curvas)
         {
-            Vector3 I = CentroCruzamento(cv.cruzamento);
+            Vector3 I = CentroCruzamento(m, cv.cruzamento);
             Vector3 canto = I + Direita(cv.d1) * DeslocFaixa + Direita(cv.d2) * DeslocFaixa;
-            var m = Vector3.Dot(cv.d2, Direita(cv.d1)) > 0.5f ? Manobra.Direita : Manobra.Esquerda;
-            float r = m == Manobra.Direita ? RaioDireita : RaioEsquerda;
+            var mb = Vector3.Dot(cv.d2, Direita(cv.d1)) > 0.5f ? Manobra.Direita : Manobra.Esquerda;
+            float r = mb == Manobra.Direita ? RaioDireita : RaioEsquerda;
             Vector3 centro = canto - cv.d1 * r + cv.d2 * r;
             float lim = Mathf.Sqrt(AcelLateral * r);
             const int n = 8;
@@ -237,20 +210,21 @@ public static class RotasTransito
                 float t = i / (float)n * Mathf.PI / 2f;
                 c.Add(centro + r * (-cv.d2 * Mathf.Cos(t) + cv.d1 * Mathf.Sin(t)), lim);
             }
-            arcos.Add((cv, canto - cv.d1 * r, canto + cv.d2 * r, m));
+            arcos.Add((cv, mb));
         }
-        c.Add(NaFaixa(EixoNaPonta(para), dOut), VelCidade);
+        c.Add(NaFaixa(EixoNaPonta(m, para), dOut), VelCidade);
 
         // Paradas nos cruzamentos (curvas e retos)
-        foreach (var a in arcos) AddParadaCruzamento(c, a.cv.cruzamento, a.cv.d1, a.cv.d2, a.m);
-        foreach (var rt in retos) AddParadaCruzamento(c, rt.cruzamento, rt.d, rt.d, Manobra.Reto);
+        foreach (var a in arcos) AddParadaCruzamento(m, c, a.cv.cruzamento, a.cv.d1, a.cv.d2, a.mb);
+        foreach (var rt in retos) AddParadaCruzamento(m, c, rt.cruzamento, rt.d, rt.d, Manobra.Reto);
 
-        // Paradas nas faixas de pedestre (só nos trechos pela Acácias)
-        for (int f = 0; f < FaixasX.Length; f++)
-            foreach (var d in new[] { Vector3.right, Vector3.left })
+        // Paradas nas faixas de pedestre (nos trechos que passam por cima delas, no sentido da rua)
+        for (int f = 0; f < m.faixas.Count; f++)
+        {
+            var rua = m.ruas[m.faixas[f].rua];
+            foreach (var d in new[] { rua.Dir, -rua.Dir })
             {
-                var eixo = new Vector3(FaixasX[f], 0f, Bairro.AcaciasCentroZ);
-                var meioZebra = NaFaixa(eixo, d);
+                var meioZebra = NaFaixa(rua.Ponto(m.faixas[f].pos), d);
                 float sz = c.Projetar(meioZebra, out float erro);
                 if (erro > 0.05f || Vector3.Dot(c.Direcao(sz), d) < 0.99f) continue;
                 c.paradas.Add(new Parada
@@ -260,29 +234,29 @@ public static class RotasTransito
                     sSaida = sz + MeiaFaixaPedestre + MeioComprimento,
                 });
             }
+        }
         c.paradas.Sort((x, y) => x.s.CompareTo(y.s));
         return c;
     }
 
-    static void AddParadaCruzamento(Caminho c, int k, Vector3 d1, Vector3 d2, Manobra m)
+    static void AddParadaCruzamento(MalhaRuas m, Caminho c, int k, Vector3 d1, Vector3 d2, Manobra mb)
     {
-        Vector3 I = CentroCruzamento(k);
-        float dist = DistanciaParada(k, d1);
+        Vector3 I = CentroCruzamento(m, k);
+        float dist = DistanciaParada(m, k, d1);
         Vector3 linha = NaFaixa(I, d1) - d1 * dist;
-        Vector3 saida = NaFaixa(I, d2) + d2 * (Bairro.MeiaPista + 0.5f);
+        // sai do cruzamento depois de passar o asfalto da rua que fica atravessada à saída
+        float meiaSaida = m.ruas[m.cruzamentos[k].Rua(Mathf.Abs(d2.x) <= 0.5f)].meiaPista;
+        Vector3 saida = NaFaixa(I, d2) + d2 * (meiaSaida + 0.5f);
         float sLinha = c.Projetar(linha, out _);
         float sSaida = c.Projetar(saida, out _);
         c.paradas.Add(new Parada
         {
-            tipo = TipoParada.Cruzamento, indice = k, chegada = d1, manobra = m,
+            tipo = TipoParada.Cruzamento, indice = k, chegada = d1, manobra = mb,
             s = sLinha - MeioComprimento,
             sSaida = sSaida + MeioComprimento,
-            preferencial = Mathf.Abs(d1.x) > 0.5f,
+            preferencial = m.cruzamentos[k].Principal(d1),
         });
     }
-
-    // Cruzamentos na ordem em que aparecem andando pela Acácias na direção d
-    static int[] OrdemAoLongo(Vector3 d) => d.x > 0 ? new[] { CruzamentoIpe, CruzamentoJacarandas } : new[] { CruzamentoJacarandas, CruzamentoIpe };
 
     // Duas manobras no mesmo cruzamento podem acontecer juntas? (mesma chegada, ou de frente sem ninguém virar à esquerda)
     public static bool Compativeis(Vector3 chegadaA, Manobra a, Vector3 chegadaB, Manobra b)
@@ -293,16 +267,17 @@ public static class RotasTransito
         return false;
     }
 
-    // ---------------- Semáforo da Jacarandás ----------------
+    // ---------------- Semáforo ----------------
+    // Um relógio só para todos os semáforos; o eixo principal do cruzamento tem o verde longo
     public enum Cor { Verde, Amarelo, Vermelho }
-    public const float VerdeAcacias = 16f, Amarelo = 3f, TodosVermelho = 1.5f, VerdeTransversal = 10f;
-    public static float Ciclo => VerdeAcacias + Amarelo + TodosVermelho + VerdeTransversal + Amarelo + TodosVermelho;
+    public const float VerdePrincipal = 16f, Amarelo = 3f, TodosVermelho = 1.5f, VerdeTransversal = 10f;
+    public static float Ciclo => VerdePrincipal + Amarelo + TodosVermelho + VerdeTransversal + Amarelo + TodosVermelho;
 
-    public static Cor CorSemaforo(bool eixoAcacias, float tempo)
+    public static Cor CorSemaforo(bool eixoPrincipal, float tempo)
     {
         float t = Mathf.Repeat(tempo, Ciclo);
-        float a0 = VerdeAcacias, a1 = a0 + Amarelo, a2 = a1 + TodosVermelho, b0 = a2 + VerdeTransversal, b1 = b0 + Amarelo;
-        if (eixoAcacias) return t < a0 ? Cor.Verde : t < a1 ? Cor.Amarelo : Cor.Vermelho;
+        float a0 = VerdePrincipal, a1 = a0 + Amarelo, a2 = a1 + TodosVermelho, b0 = a2 + VerdeTransversal, b1 = b0 + Amarelo;
+        if (eixoPrincipal) return t < a0 ? Cor.Verde : t < a1 ? Cor.Amarelo : Cor.Vermelho;
         if (t < a2 || t >= b1 + TodosVermelho) return Cor.Vermelho;
         return t < b0 ? Cor.Verde : t < b1 ? Cor.Amarelo : Cor.Vermelho;
     }
@@ -327,8 +302,9 @@ public static class RotasTransito
     public static bool FaroisAcesos(float hora) => hora >= 17.75f || hora < 6.25f;
 
     // ---------------- Calçadas (pedestres) ----------------
-    // Linhas a 85 cm da fachada (longe dos postes, que ficam no meio-fio). Três pedaços de bairro ligados pelas
-    // faixas de pedestre: a oeste da Ipê, entre as duas transversais e a leste da Jacarandás.
+    // Linhas a 85 cm da fachada (longe dos postes, que ficam no meio-fio), em volta de cada quarteirão: cada lado do
+    // quarteirão que dá para uma rua tem um caminho; as quinas são nós e o fim que dá na borda do mapa é uma ponta
+    // (onde o pedestre nasce e some). Os quarteirões se ligam só pelas faixas de pedestre.
     public struct NoCalcada { public Vector3 pos; public bool ponta; }
     public struct ArestaCalcada { public int a, b; public int faixa; /* -1 = calçada */ public Vector3 meioFio; /* lado da rua */ }
 
@@ -346,36 +322,80 @@ public static class RotasTransito
     }
 
     public const float AFachada = 0.85f;
+    const float GrudarNaQuina = 1f;   // zebra a menos disso da quina sai da própria quina
 
-    public static RedeCalcadas Calcadas()
+    public static RedeCalcadas Calcadas() => Calcadas(Bairro.Malha);
+
+    public static RedeCalcadas Calcadas(MalhaRuas m)
     {
         var r = new RedeCalcadas();
-        float zN = Bairro.FrenteNorteAcacias - AFachada, zS = Bairro.FrenteSulAcacias + AFachada;
-        float xIO = Bairro.FrenteOesteIpe + AFachada, xIL = Bairro.FrenteLesteIpe - AFachada;
-        float xJO = Bairro.FrenteOesteJacarandas + AFachada, xJL = Bairro.FrenteLesteJacarandas - AFachada;
-        float xFim = Bairro.LimiteX - 1f, zNorte = Bairro.LimiteNorte - 1f, zSul = Bairro.LimiteSul + 1f;
-        float y = 0.12f;
-        int No(float x, float z, bool ponta = false) { r.nos.Add(new NoCalcada { pos = new Vector3(x, y, z), ponta = ponta }); return r.nos.Count - 1; }
-        void Aresta(int a, int b, Vector3 meioFio, int faixa = -1) => r.arestas.Add(new ArestaCalcada { a = a, b = b, faixa = faixa, meioFio = meioFio });
+        const float y = 0.12f;
+        var porPos = new Dictionary<(int, int), int>();
+        var noDaFaixa = new Dictionary<(int, int), int>();   // (faixa, lado da rua) → nó
+        int No(Vector3 p, bool ponta)
+        {
+            var k = (Mathf.RoundToInt(p.x * 100f), Mathf.RoundToInt(p.z * 100f));
+            if (porPos.TryGetValue(k, out int i)) return i;
+            r.nos.Add(new NoCalcada { pos = new Vector3(p.x, y, p.z), ponta = ponta });
+            porPos[k] = r.nos.Count - 1;
+            return r.nos.Count - 1;
+        }
 
-        // Oeste da Ipê
-        int A = No(-xFim, zN, true), B = No(xIO, zN), a = No(-xFim, zS, true), b = No(xIO, zS);
-        int ipeON = No(xIO, zNorte, true), ipeOS = No(xIO, zSul, true);
-        Aresta(A, B, Vector3.back); Aresta(a, b, Vector3.forward);
-        Aresta(B, ipeON, Vector3.right); Aresta(b, ipeOS, Vector3.right);
-        // Meio (entre a Ipê e a Jacarandás), com a faixa do escritório (x = 0)
-        int C = No(xIL, zN), D = No(xJO, zN), c = No(xIL, zS), d = No(xJO, zS);
-        int Fn = No(Bairro.FaixasPedestreX[1], zN), Fs = No(Bairro.FaixasPedestreX[1], zS);
-        int ipeLN = No(xIL, zNorte, true), ipeLS = No(xIL, zSul, true), jacON = No(xJO, zNorte, true), jacOS = No(xJO, zSul, true);
-        Aresta(C, Fn, Vector3.back); Aresta(Fn, D, Vector3.back); Aresta(c, Fs, Vector3.forward); Aresta(Fs, d, Vector3.forward);
-        Aresta(C, ipeLN, Vector3.left); Aresta(c, ipeLS, Vector3.left); Aresta(D, jacON, Vector3.right); Aresta(d, jacOS, Vector3.right);
-        // Leste da Jacarandás
-        int E = No(xJL, zN), F = No(xFim, zN, true), e = No(xJL, zS), f = No(xFim, zS, true);
-        int jacLN = No(xJL, zNorte, true), jacLS = No(xJL, zSul, true);
-        Aresta(E, F, Vector3.back); Aresta(e, f, Vector3.forward);
-        Aresta(E, jacLN, Vector3.left); Aresta(e, jacLS, Vector3.left);
-        // Faixas de pedestre (atravessam a Acácias): perto da Ipê, do escritório e perto da Jacarandás
-        Aresta(B, b, Vector3.zero, 0); Aresta(Fn, Fs, Vector3.zero, 1); Aresta(E, e, Vector3.zero, 2);
+        // Caminho na calçada do lado 'lado' da rua (+1 norte/leste, -1 sul/oeste), de a0 a a1 ao longo dela
+        void Lado(int iRua, int lado, float a0, float a1, bool ponta0, bool ponta1)
+        {
+            var rua = m.ruas[iRua];
+            float t = lado > 0 ? rua.FrentePos - AFachada : rua.FrenteNeg + AFachada;
+            Vector3 meioFio = -lado * rua.Normal;
+            var pontos = new List<(float a, int faixa)> { (a0, -1), (a1, -1) };
+            for (int f = 0; f < m.faixas.Count; f++)
+            {
+                if (m.faixas[f].rua != iRua) continue;
+                float a = m.faixas[f].pos;
+                if (Mathf.Abs(a - a0) < GrudarNaQuina) a = a0;
+                else if (Mathf.Abs(a - a1) < GrudarNaQuina) a = a1;
+                if (a < a0 || a > a1) continue;
+                pontos.Add((a, f));
+            }
+            pontos.Sort((x, z) => x.a.CompareTo(z.a));
+            int anterior = -1;
+            float aAnterior = 0f;
+            foreach (var (a, f) in pontos)
+            {
+                Vector3 p = rua.lesteOeste ? new Vector3(a, 0f, t) : new Vector3(t, 0f, a);
+                int no = No(p, (a == a0 && ponta0) || (a == a1 && ponta1));
+                if (f >= 0) noDaFaixa[(f, lado)] = no;
+                if (anterior >= 0 && a - aAnterior > 0.01f) r.arestas.Add(new ArestaCalcada { a = anterior, b = no, faixa = -1, meioFio = meioFio });
+                anterior = no; aAnterior = a;
+            }
+        }
+
+        // Quarteirões: entre ruas norte-sul vizinhas (ou a borda) e leste-oeste vizinhas (ou a borda)
+        var ns = new List<int>(); var lo = new List<int>();
+        for (int i = 0; i < m.ruas.Count; i++) (m.ruas[i].lesteOeste ? lo : ns).Add(i);
+        ns.Sort((a, b) => m.ruas[a].eixo.CompareTo(m.ruas[b].eixo));
+        lo.Sort((a, b) => m.ruas[a].eixo.CompareTo(m.ruas[b].eixo));
+        var lim = m.limites;
+        for (int i = 0; i <= ns.Count; i++)
+        {
+            int esq = i > 0 ? ns[i - 1] : -1, dir = i < ns.Count ? ns[i] : -1;
+            float x0 = esq >= 0 ? m.ruas[esq].FrentePos - AFachada : lim.xMin + 1f;
+            float x1 = dir >= 0 ? m.ruas[dir].FrenteNeg + AFachada : lim.xMax - 1f;
+            for (int j = 0; j <= lo.Count; j++)
+            {
+                int sul = j > 0 ? lo[j - 1] : -1, norte = j < lo.Count ? lo[j] : -1;
+                float z0 = sul >= 0 ? m.ruas[sul].FrentePos - AFachada : lim.yMin + 1f;
+                float z1 = norte >= 0 ? m.ruas[norte].FrenteNeg + AFachada : lim.yMax - 1f;
+                if (sul >= 0) Lado(sul, 1, x0, x1, esq < 0, dir < 0);
+                if (norte >= 0) Lado(norte, -1, x0, x1, esq < 0, dir < 0);
+                if (esq >= 0) Lado(esq, 1, z0, z1, sul < 0, norte < 0);
+                if (dir >= 0) Lado(dir, -1, z0, z1, sul < 0, norte < 0);
+            }
+        }
+        // Travessias: a zebra liga as duas calçadas da rua
+        for (int f = 0; f < m.faixas.Count; f++)
+            if (noDaFaixa.TryGetValue((f, 1), out int n1) && noDaFaixa.TryGetValue((f, -1), out int n2))
+                r.arestas.Add(new ArestaCalcada { a = n1, b = n2, faixa = f, meioFio = Vector3.zero });
         return r;
     }
 }

@@ -162,7 +162,7 @@ public class CarroNPC : MonoBehaviour
     // Pode passar da linha de parada deste cruzamento agora?
     bool PodeEntrar(RotasTransito.Parada p, float d, VidaNaRua rua)
     {
-        if (p.indice == RotasTransito.CruzamentoJacarandas)
+        if (rua.Malha.cruzamentos[p.indice].controle == ControleCruzamento.Semaforo)
         {
             var cor = RotasTransito.CorSemaforo(p.preferencial, VidaNaRua.TempoSemaforo);
             if (cor == RotasTransito.Cor.Vermelho) { if (d > 0.2f || v < 2f) return false; }
@@ -170,7 +170,7 @@ public class CarroNPC : MonoBehaviour
         }
         else if (!p.preferencial)
         {
-            // PARE: para de vez na linha, depois espera brecha na Acácias
+            // PARE: para de vez na linha, depois espera brecha na rua principal
             if (!parouNoPare)
             {
                 if (d < 0.6f && v < 0.3f) parouNoPare = true;

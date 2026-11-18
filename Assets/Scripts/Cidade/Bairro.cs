@@ -9,6 +9,7 @@ using UnityEngine;
 // Coordenadas do mundo, em metros: x de oeste (-) a leste (+), z de sul (-) a norte (+).
 // O escritório do jogador fica na origem, com a porta para o sul, na Rua das Acácias (leste-oeste).
 // Duas ruas cortam a das Acácias: a Rua Ipê Amarelo (a oeste) e a Rua dos Jacarandás (a leste).
+// Etapa 10E-1: as ruas viraram uma MalhaRuas (Bairro.Malha); as constantes abaixo ficam como a planta dos lotes.
 //
 //            Ipê Amarelo          Jacarandás
 //     (clínica) |   (escritório)       |  (contabilidade)
@@ -148,77 +149,55 @@ public static class Bairro
     public static float RebaixoZ0 => PostoZ0 + 1f;
     public static float RebaixoZ1 => PostoZ1 - 1f;
 
-    // ---------------- Ruas e calçadas, em pedaços que não se sobrepõem ----------------
-    // Nos cruzamentos o asfalto passa reto e as esquinas ficam com a calçada da Rua das Acácias.
-    public static List<PedacoRua> Pedacos()
+    // ---------------- Malha de ruas (Etapa 10E-1) ----------------
+    // As 3 ruas de hoje numa MalhaRuas genérica (mesmas posições e larguras de antes). Trânsito, GPS, calçadas dos
+    // pedestres e a montagem do cenário leem daqui. Criada na primeira vez que alguém pede (nada de static readonly).
+    static MalhaRuas malha;
+    public static MalhaRuas Malha => malha ??= CriarMalha();
+
+    // Postes da rede elétrica (posição ao longo da rua; Acácias nas duas calçadas, Ipê do lado leste, Jacarandás do oeste)
+    static float[] PostesAcacias => new[] { -58f, -47f, -35f, -18f, -8f, 8f, 18f, 35f, 49f, 58f };
+    static float[] PostesTransversais => new[] { -44f, -32f, -21f, 3f, 15f, 27f, 39f };
+
+    static MalhaRuas CriarMalha()
     {
-        var lista = new List<PedacoRua>();
-        void Add(TipoPiso t, string rua, float x0, float z0, float x1, float z1)
+        var m = new MalhaRuas { nome = "bairro", limites = Rect.MinMaxRect(-LimiteX, LimiteSul, LimiteX, LimiteNorte) };
+        int acacias = m.AddRua(new Rua
         {
-            if (x1 - x0 > 0.01f && z1 - z0 > 0.01f)
-                lista.Add(new PedacoRua { tipo = t, rua = rua, area = Rect.MinMaxRect(x0, z0, x1, z1) });
-        }
-
-        float[] ruasNS = { IpeX, JacarandasX };
-        string[] nomesNS = { RuaIpe, RuaJacarandas };
-
-        // Acácias: asfalto inteiro; calçadas cortadas onde passa o asfalto das ruas norte-sul
-        Add(TipoPiso.Asfalto, RuaAcacias, -LimiteX, AcaciasAsfaltoZ1, LimiteX, AcaciasAsfaltoZ0);
-        float x = -LimiteX;
-        foreach (float c in ruasNS)
+            nome = RuaAcacias, lesteOeste = true, eixo = AcaciasCentroZ, ini = -LimiteX, fim = LimiteX,
+            meiaPista = (AcaciasAsfaltoZ0 - AcaciasAsfaltoZ1) / 2f,
+            calcadaPos = AcaciasCalcadaNorteZ0 - AcaciasAsfaltoZ0, calcadaNeg = AcaciasAsfaltoZ1 - AcaciasCalcadaSulZ1,
+            postes = PostesAcacias, ladosPostes = new[] { 1, -1 },
+        });
+        m.AddRua(new Rua
         {
-            Add(TipoPiso.Calcada, RuaAcacias, x, AcaciasAsfaltoZ0, c - MeiaPista, AcaciasCalcadaNorteZ0);
-            Add(TipoPiso.Calcada, RuaAcacias, x, AcaciasCalcadaSulZ1, c - MeiaPista, AcaciasAsfaltoZ1);
-            x = c + MeiaPista;
-        }
-        Add(TipoPiso.Calcada, RuaAcacias, x, AcaciasAsfaltoZ0, LimiteX, AcaciasCalcadaNorteZ0);
-        Add(TipoPiso.Calcada, RuaAcacias, x, AcaciasCalcadaSulZ1, LimiteX, AcaciasAsfaltoZ1);
-
-        // Norte-sul: asfalto sem o trecho do asfalto das Acácias; calçadas sem o trecho da Acácias inteira
-        for (int i = 0; i < ruasNS.Length; i++)
+            nome = RuaIpe, lesteOeste = false, eixo = IpeX, ini = LimiteSul, fim = LimiteNorte,
+            meiaPista = MeiaPista, calcadaNeg = Calcada, calcadaPos = Calcada, postes = PostesTransversais, ladosPostes = new[] { 1 },
+        });
+        int jacarandas = m.AddRua(new Rua
         {
-            float c = ruasNS[i];
-            string n = nomesNS[i];
-            Add(TipoPiso.Asfalto, n, c - MeiaPista, LimiteSul, c + MeiaPista, AcaciasAsfaltoZ1);
-            Add(TipoPiso.Asfalto, n, c - MeiaPista, AcaciasAsfaltoZ0, c + MeiaPista, LimiteNorte);
-            foreach (float lado in new[] { -1f, 1f })
-            {
-                float a = lado < 0 ? c - MeiaPista - Calcada : c + MeiaPista;
-                float b = a + Calcada;
-                Add(TipoPiso.Calcada, n, a, LimiteSul, b, AcaciasCalcadaSulZ1);
-                if (c == JacarandasX && lado > 0)
-                {
-                    // guia rebaixada na frente do posto: vira asfalto no nível da rua
-                    Add(TipoPiso.Calcada, n, a, AcaciasCalcadaNorteZ0, b, RebaixoZ0);
-                    Add(TipoPiso.Asfalto, n, a, RebaixoZ0, b, RebaixoZ1);
-                    Add(TipoPiso.Calcada, n, a, RebaixoZ1, b, LimiteNorte);
-                }
-                else Add(TipoPiso.Calcada, n, a, AcaciasCalcadaNorteZ0, b, LimiteNorte);
-            }
-        }
-        return lista;
+            nome = RuaJacarandas, lesteOeste = false, eixo = JacarandasX, ini = LimiteSul, fim = LimiteNorte,
+            meiaPista = MeiaPista, calcadaNeg = Calcada, calcadaPos = Calcada, postes = PostesTransversais, ladosPostes = new[] { -1 },
+        });
+        m.Fechar();
+        // Ipê: PARE para quem vem por ela; Jacarandás: semáforo (verde longo para a Acácias)
+        m.cruzamentos[m.CruzamentoDe(RuaAcacias, RuaIpe)].controle = ControleCruzamento.Pare;
+        m.cruzamentos[m.CruzamentoDe(RuaAcacias, RuaJacarandas)].controle = ControleCruzamento.Semaforo;
+        foreach (float x in FaixasPedestreX) m.faixas.Add(new FaixaPedestre { rua = acacias, pos = x });
+        // guia rebaixada na frente do posto (calçada leste da Jacarandás)
+        m.rebaixos.Add(new Rebaixo { rua = jacarandas, lado = 1, a0 = RebaixoZ0, a1 = RebaixoZ1 });
+        return m;
     }
+
+    // Orelhão na calçada perto do escritório, junto ao meio-fio (o cenário põe, os pedestres desviam)
+    public static Vector3 Orelhao => new Vector3(-5f, 0.12f, AcaciasAsfaltoZ0 + 0.7f);
+
+    // ---------------- Ruas e calçadas, em pedaços que não se sobrepõem ----------------
+    public static List<PedacoRua> Pedacos() => new List<PedacoRua>(Malha.Pedacos());
 
     // Ponto está em cima de rua ou calçada?
-    public static bool NaRua(Vector2 xz)
-    {
-        foreach (var p in Pedacos()) if (p.area.Contains(xz)) return true;
-        return false;
-    }
+    public static bool NaRua(Vector2 xz) => Malha.NaRua(xz);
 
     // Nome da rua mais próxima do ponto (para o GPS dizer onde o jogador está)
-    public static string RuaMaisProxima(Vector3 p)
-    {
-        string melhor = RuaAcacias;
-        float d = float.MaxValue;
-        foreach (var r in Pedacos())
-        {
-            if (r.tipo != TipoPiso.Asfalto) continue;
-            float dx = Mathf.Max(r.area.xMin - p.x, 0f, p.x - r.area.xMax);
-            float dz = Mathf.Max(r.area.yMin - p.z, 0f, p.z - r.area.yMax);
-            float dd = dx * dx + dz * dz;
-            if (dd < d) { d = dd; melhor = r.rua; }
-        }
-        return melhor;
-    }
+    public static string RuaMaisProxima(Vector3 p) => Malha.RuaMaisProxima(p);
 }

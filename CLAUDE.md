@@ -64,6 +64,9 @@ Roteiro de testes manuais: `ROTEIRO_TESTES_UNITY.md`. Créditos de assets: `CRED
   Mudou o script → rode o menu de novo (ele salva a cena). Não edite a cena à mão.
   Ao fim ele calcula a luz dos interiores (lightmap + sondas, `MontarCenario.Luz.cs`; espere `[Luz] Luz calculada` no log).
   Sol e lâmpadas mudam em tempo real (dia/noite, interruptores): só o rebote das lâmpadas é pré-calculado.
+- **Ruas**: `Cidade/MalhaRuas.cs` (lista de ruas, cruzamentos, faixas, pontas); o bairro é `Bairro.Malha`. Trânsito,
+  calçadas, GPS e a montagem da rua leem dela — rua nova entra na malha, não em código à parte. Testes de rua rodam
+  também na grade 3 x 3 (`MalhaRuas.Grade`).
 - **Peças de equipamento**: `Manutencao/PecaEquipamento.cs` (mirar + E / segurar E, raycast com
   `QueryTriggerInteraction.Collide`), ações em `Manutencao/AcoesFisicas.cs` filtradas por `peca`, montagem em
   `Manutencao/EquipamentoPecas.cs`.

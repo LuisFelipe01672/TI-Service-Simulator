@@ -87,6 +87,41 @@ public static partial class AtalhosTeste
         FocarJogo();
     }
 
+    // Etapa 10E-1: o GPS segue o caminho mais curto pelas ruas (aponta para o próximo cruzamento, não para o destino em
+    // linha reta). Põe o técnico em 5 pontos com destinos diferentes, confere a direção no texto e tira foto de cada um.
+    [MenuItem(MenuBairro + "4. GPS pelo caminho mais curto (direção e fotos)", false, 503)]
+    static void GpsPeloCaminho()
+    {
+        if (!Application.isPlaying || GPS.Instance == null) { Debug.LogWarning("[Bairro] Aperte Play antes."); return; }
+        GameUI.Instance?.FecharModal();
+        System.IO.Directory.CreateDirectory("Builds/Capturas/bairro");
+        var etapas = new List<Etapa>();
+        int n = 0, certos = 0;
+        void Ponto(string nome, TipoEndereco destino, Vector3 de, Vector3 olhar, string esperado)
+        {
+            int k = ++n;
+            etapas.Add(E(nome, () => { GPS.Instance.Definir(Bairro.De(destino), false); Ir(de, olhar); }));
+            etapas.Add(Esperar("GPS atualizar", 1.2f));
+            etapas.Add(E("conferir " + nome, () =>
+            {
+                string t = System.Text.RegularExpressions.Regex.Replace(GPS.Instance.Texto, "<.*?>", "").Replace("\n", " | ");
+                bool ok = t.Contains(esperado);
+                if (ok) certos++;
+                Debug.Log($"[GPS] {k}. {nome}: {(ok ? "OK" : "DIFERENTE")} (esperado '{esperado}') — {t}");
+                ScreenCapture.CaptureScreenshot($"Builds/Capturas/bairro/gps_caminho_{k}.png");
+            }));
+            etapas.Add(Esperar("foto", 0.5f));
+        }
+        // em linha reta a coleta fica à esquerda (sudoeste); pelas ruas, primeiro segue até a Ipê
+        Ponto("porta do escritório → coleta, olhando para o oeste", TipoEndereco.Coleta, new Vector3(0f, 1.1f, -4.4f), new Vector3(-30f, 1.5f, -4.4f), "siga em frente");
+        Ponto("na esquina da Ipê → coleta, olhando para o oeste", TipoEndereco.Coleta, new Vector3(-24f, 1.1f, -9.5f), new Vector3(-40f, 1.5f, -9.5f), "vire à esquerda");
+        Ponto("porta da clínica → fornecedor, olhando para o leste", TipoEndereco.Fornecedor, new Vector3(-42f, 1.1f, -4.4f), new Vector3(0f, 1.5f, -4.4f), "siga em frente");
+        Ponto("na esquina da Jacarandás → fornecedor, olhando para o leste", TipoEndereco.Fornecedor, new Vector3(24f, 1.1f, -9.5f), new Vector3(40f, 1.5f, -9.5f), "vire à direita");
+        Ponto("coleta → posto, olhando para o norte (pela Ipê)", TipoEndereco.Posto, new Vector3(-30.5f, 1.1f, -30f), new Vector3(-30.5f, 1.5f, 0f), "siga em frente");
+        etapas.Add(E("resultado", () => { GPS.Instance.Desligar(); Debug.Log($"[GPS] Fim: {certos} de {n} direções certas. Fotos em Builds/Capturas/bairro (gps_caminho_*)."); }));
+        Rodar("GPS pelas ruas", etapas);
+    }
+
     [MenuItem(MenuBairro + "1. Andar da casa ao escritório e aos 3 clientes", false, 500)]
     static void AndarPeloBairro()
     {

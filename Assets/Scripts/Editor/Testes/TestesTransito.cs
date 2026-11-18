@@ -5,95 +5,181 @@ using UnityEngine;
 
 // Etapa 9D (vida na rua): rotas dos carros dos vizinhos (no asfalto, na mão certa, parando antes dos cruzamentos e
 // das faixas), semáforo, vez no cruzamento, calçadas dos pedestres e o carro parando diante de obstáculo.
+// Etapa 10E-1: os testes da malha rodam no bairro de hoje e numa grade 3 x 3 (MalhaRuas.Grade), para garantir que
+// nada depende das 3 ruas do bairro.
 public class TestesTransito
 {
-    static List<Rect> Asfalto() => Bairro.Pedacos().Where(p => p.tipo == TipoPiso.Asfalto).Select(p => p.area).ToList();
-    static bool NoAsfalto(List<Rect> a, Vector3 p) => a.Any(r => r.Contains(new Vector2(p.x, p.z)));
-
-    [Test]
-    public void Rotas_TodasAsCombinacoes()
+    public static IEnumerable<MalhaRuas> Malhas()
     {
-        var rotas = RotasTransito.TodasAsRotas();
-        Assert.AreEqual(30, rotas.Count);
-        foreach (var r in rotas) Assert.Greater(r.Comprimento, 40f, $"Rota {r.de}→{r.para} curta demais.");
+        yield return Bairro.Malha;
+        yield return MalhaRuas.Grade(3, 3, 40f);
+    }
+
+    static List<Rect> Asfalto(MalhaRuas m) => m.Pedacos().Where(p => p.tipo == TipoPiso.Asfalto).Select(p => p.area).ToList();
+    static bool NoAsfalto(List<Rect> a, Vector3 p) => a.Any(r => r.Contains(new Vector2(p.x, p.z)));
+    static string Nome(MalhaRuas m, RotasTransito.Caminho r) =>
+        $"[{m}] {m.ruas[m.pontas[r.de].rua]} ({m.pontas[r.de].lado})→{m.ruas[m.pontas[r.para].rua]} ({m.pontas[r.para].lado})";
+
+    // Índice da ponta da rua 'nome' (lado -1: começo, a oeste/sul; +1: fim, a leste/norte)
+    public static int Ponta(MalhaRuas m, string nome, int lado)
+    {
+        int r = m.Indice(nome);
+        return m.pontas.FindIndex(p => p.rua == r && p.lado == lado);
+    }
+
+    [TestCaseSource(nameof(Malhas))]
+    public void Rotas_TodasAsCombinacoes(MalhaRuas m)
+    {
+        var rotas = RotasTransito.TodasAsRotas(m);
+        Assert.AreEqual(m.pontas.Count * (m.pontas.Count - 1), rotas.Count, "Falta rota entre duas pontas.");
+        foreach (var r in rotas) Assert.Greater(r.Comprimento, 40f, $"Rota {Nome(m, r)} curta demais.");
     }
 
     // O carro inteiro (meio, laterais e cantos da frente) fica em cima do asfalto o caminho todo, inclusive nas curvas
-    [Test]
-    public void Rotas_FicamNoAsfalto()
+    [TestCaseSource(nameof(Malhas))]
+    public void Rotas_FicamNoAsfalto(MalhaRuas m)
     {
-        var a = Asfalto();
-        foreach (var r in RotasTransito.TodasAsRotas())
+        var a = Asfalto(m);
+        foreach (var r in RotasTransito.TodasAsRotas(m))
             for (float s = 0f; s <= r.Comprimento; s += 0.5f)
             {
                 Vector3 p = r.Posicao(s), lado = RotasTransito.Direita(r.Direcao(s)) * RotasTransito.MeiaLargura;
                 Vector3 frente = r.Direcao(s) * RotasTransito.MeioComprimento;
                 foreach (var q in new[] { p, p + lado, p - lado, p + frente + lado * 0.8f, p + frente - lado * 0.8f })
-                    Assert.IsTrue(NoAsfalto(a, q), $"Rota {r.de}→{r.para} sai do asfalto em s={s:0.0} ({q}).");
+                    Assert.IsTrue(NoAsfalto(a, q), $"Rota {Nome(m, r)} sai do asfalto em s={s:0.0} ({q}).");
             }
     }
 
     // Mão direita: fora dos cruzamentos, o carro anda na metade direita da rua (como no Brasil)
-    [Test]
-    public void Rotas_NaMaoCerta()
+    [TestCaseSource(nameof(Malhas))]
+    public void Rotas_NaMaoCerta(MalhaRuas m)
     {
-        foreach (var r in RotasTransito.TodasAsRotas())
+        foreach (var r in RotasTransito.TodasAsRotas(m))
             for (float s = 0f; s <= r.Comprimento; s += 1f)
             {
                 Vector3 p = r.Posicao(s), d = r.Direcao(s);
-                bool perto = Mathf.Abs(p.z - Bairro.AcaciasCentroZ) < 6f && (Mathf.Abs(p.x - Bairro.IpeX) < 6f || Mathf.Abs(p.x - Bairro.JacarandasX) < 6f);
+                bool perto = m.cruzamentos.Any(c => Mathf.Abs(p.z - c.centro.z) < 6f && Mathf.Abs(p.x - c.centro.x) < 6f);
                 if (perto) continue;   // curva no cruzamento
-                Vector3 eixo;
-                if (Mathf.Abs(d.x) > 0.95f) eixo = new Vector3(p.x, 0f, Bairro.AcaciasCentroZ);
-                else if (Mathf.Abs(d.z) > 0.95f) eixo = new Vector3(Mathf.Abs(p.x - Bairro.IpeX) < Mathf.Abs(p.x - Bairro.JacarandasX) ? Bairro.IpeX : Bairro.JacarandasX, 0f, p.z);
-                else { Assert.Fail($"Rota {r.de}→{r.para} torta fora do cruzamento em s={s}."); continue; }
-                float lado = Vector3.Dot(p - eixo, RotasTransito.Direita(d));
-                Assert.That(lado, Is.EqualTo(RotasTransito.DeslocFaixa).Within(0.05f), $"Rota {r.de}→{r.para} na contramão em s={s} ({p}).");
+                bool lo = Mathf.Abs(d.x) > 0.95f;
+                if (!lo && Mathf.Abs(d.z) < 0.95f) { Assert.Fail($"Rota {Nome(m, r)} torta fora do cruzamento em s={s}."); continue; }
+                // rua por onde anda: a do mesmo sentido com o eixo mais perto
+                var rua = m.ruas.Where(x => x.lesteOeste == lo && x.Ao(p) >= x.ini && x.Ao(p) <= x.fim).OrderBy(x => Mathf.Abs(x.Lateral(p))).First();
+                float lado = Vector3.Dot(p - rua.Ponto(rua.Ao(p)), RotasTransito.Direita(d));
+                Assert.That(lado, Is.EqualTo(RotasTransito.DeslocFaixa).Within(0.05f), $"Rota {Nome(m, r)} na contramão em s={s} ({p}).");
             }
     }
 
     // Quem chega no cruzamento para com a frente fora dele e fora da zebra; atravessa cada cruzamento uma vez
-    [Test]
-    public void Rotas_ParamAntesDoCruzamentoEDaFaixa()
+    [TestCaseSource(nameof(Malhas))]
+    public void Rotas_ParamAntesDoCruzamentoEDaFaixa(MalhaRuas m)
     {
-        foreach (var r in RotasTransito.TodasAsRotas())
+        foreach (var r in RotasTransito.TodasAsRotas(m))
         {
             var cruz = r.paradas.Where(p => p.tipo == RotasTransito.TipoParada.Cruzamento).ToList();
-            Assert.AreEqual(cruz.Count, cruz.Select(p => p.indice).Distinct().Count(), $"Rota {r.de}→{r.para} passa duas vezes no mesmo cruzamento.");
-            Assert.Greater(cruz.Count, 0, $"Rota {r.de}→{r.para} sem cruzamento.");
+            Assert.AreEqual(cruz.Count, cruz.Select(p => p.indice).Distinct().Count(), $"Rota {Nome(m, r)} passa duas vezes no mesmo cruzamento.");
+            if (m.pontas[r.de].rua != m.pontas[r.para].rua || m.CruzamentosDa(m.pontas[r.de].rua).Count > 0)
+                Assert.Greater(cruz.Count, 0, $"Rota {Nome(m, r)} sem cruzamento.");
             foreach (var p in r.paradas)
             {
                 Vector3 frente = r.Posicao(p.s) + r.Direcao(p.s) * RotasTransito.MeioComprimento;
                 Assert.Less(p.s, p.sSaida);
-                Assert.Greater(p.s, 0f, $"Rota {r.de}→{r.para}: parada antes do começo.");
+                Assert.Greater(p.s, 0f, $"Rota {Nome(m, r)}: parada antes do começo.");
                 if (p.tipo == RotasTransito.TipoParada.Cruzamento)
-                    for (int k = 0; k < 2; k++)
+                    foreach (var c in m.cruzamentos)
                     {
-                        Vector3 rel = frente - RotasTransito.CentroCruzamento(k);
-                        bool dentro = Mathf.Abs(rel.x) < Bairro.MeiaPista && Mathf.Abs(rel.z) < Bairro.MeiaPista;
-                        Assert.IsFalse(dentro, $"Rota {r.de}→{r.para} para dentro do cruzamento {k} ({frente}).");
+                        Vector3 rel = frente - c.centro;
+                        bool dentro = Mathf.Abs(rel.x) < m.ruas[c.ruaNS].meiaPista && Mathf.Abs(rel.z) < m.ruas[c.ruaLO].meiaPista;
+                        Assert.IsFalse(dentro, $"Rota {Nome(m, r)} para dentro do cruzamento {c.nome} ({frente}).");
                     }
-                for (int f = 0; f < 3; f++)
-                    Assert.IsFalse(VidaNaRua.NaFaixa(f, frente, -0.1f), $"Rota {r.de}→{r.para} para em cima da faixa {f} ({frente}).");
+                for (int f = 0; f < m.faixas.Count; f++)
+                    Assert.IsFalse(RotasTransito.SobreFaixa(m, f, frente, -0.1f), $"Rota {Nome(m, r)} para em cima da faixa {f} ({frente}).");
             }
         }
+    }
+
+    // As rotas seguem o caminho mais curto pelas ruas: o comprimento fica perto da distância "em L" entre as pontas
+    [TestCaseSource(nameof(Malhas))]
+    public void Rotas_PeloCaminhoMaisCurto(MalhaRuas m)
+    {
+        foreach (var r in RotasTransito.TodasAsRotas(m))
+        {
+            Vector3 a = RotasTransito.EixoNaPonta(m, r.de), b = RotasTransito.EixoNaPonta(m, r.para);
+            var nos = m.CaminhoEntrePontas(r.de, r.para);
+            float pelasRuas = 0f;
+            for (int i = 1; i < nos.Count; i++) pelasRuas += (m.PosNo(nos[i]) - m.PosNo(nos[i - 1])).magnitude;
+            float manhattan = Mathf.Abs(a.x - b.x) + Mathf.Abs(a.z - b.z);
+            // a rota não é mais longa que o caminho pelas ruas, e o caminho não dá volta além de uma quadra para cada lado
+            // (pontas de ruas paralelas na mesma borda obrigam a ir até o cruzamento e voltar)
+            Assert.LessOrEqual(r.Comprimento, pelasRuas + 1f, $"Rota {Nome(m, r)} mais longa que o caminho pelas ruas.");
+            if (m.pontas[r.de].rua != m.pontas[r.para].rua)
+                Assert.That(pelasRuas - 2f * RotasTransito.RecuoPonta, Is.LessThanOrEqualTo(manhattan + 0.5f + 2f * MaiorQuadra(m)), $"Rota {Nome(m, r)} dá volta.");
+        }
+    }
+
+    static float MaiorQuadra(MalhaRuas m)
+    {
+        float maior = 0f;
+        foreach (var lo in new[] { true, false })
+        {
+            var e = m.ruas.Where(r => r.lesteOeste == lo).Select(r => r.eixo).OrderBy(x => x).ToList();
+            for (int i = 1; i < e.Count; i++) maior = Mathf.Max(maior, e[i] - e[i - 1]);
+        }
+        return maior;
     }
 
     [Test]
     public void Rotas_ManobrasEPreferencial()
     {
-        var reta = RotasTransito.Rota(RotasTransito.Ponta.AcaciasOeste, RotasTransito.Ponta.AcaciasLeste);
+        var m = Bairro.Malha;
+        var reta = RotasTransito.Rota(m, Ponta(m, Bairro.RuaAcacias, -1), Ponta(m, Bairro.RuaAcacias, 1));
         Assert.AreEqual(2, reta.paradas.Count(p => p.tipo == RotasTransito.TipoParada.Cruzamento));
         Assert.AreEqual(3, reta.paradas.Count(p => p.tipo == RotasTransito.TipoParada.Faixa), "Pela Acácias inteira passa nas 3 faixas.");
         Assert.IsTrue(reta.paradas.All(p => p.tipo != RotasTransito.TipoParada.Cruzamento || (p.preferencial && p.manobra == RotasTransito.Manobra.Reto)));
         // Ipê sul → Jacarandás norte: na Ipê vira à direita (para o leste), na Jacarandás vira à esquerda (para o norte)
-        var r = RotasTransito.Rota(RotasTransito.Ponta.IpeSul, RotasTransito.Ponta.JacarandasNorte);
+        var r = RotasTransito.Rota(m, Ponta(m, Bairro.RuaIpe, -1), Ponta(m, Bairro.RuaJacarandas, 1));
         var c = r.paradas.Where(p => p.tipo == RotasTransito.TipoParada.Cruzamento).OrderBy(p => p.s).ToList();
-        Assert.AreEqual(RotasTransito.CruzamentoIpe, c[0].indice);
+        Assert.AreEqual(m.CruzamentoDe(Bairro.RuaAcacias, Bairro.RuaIpe), c[0].indice);
         Assert.AreEqual(RotasTransito.Manobra.Direita, c[0].manobra);
         Assert.IsFalse(c[0].preferencial, "Quem vem pela Ipê para no PARE.");
         Assert.AreEqual(RotasTransito.Manobra.Esquerda, c[1].manobra);
         Assert.IsTrue(c[1].preferencial);
+        Assert.AreEqual(ControleCruzamento.Pare, m.cruzamentos[c[0].indice].controle);
+        Assert.AreEqual(ControleCruzamento.Semaforo, m.cruzamentos[c[1].indice].controle);
+    }
+
+    // A malha do bairro tem as 3 ruas de sempre, nos mesmos lugares (nada saiu do lugar com a troca do "H" fixo)
+    [Test]
+    public void Malha_BairroIgualAoH()
+    {
+        var m = Bairro.Malha;
+        Assert.AreEqual(3, m.ruas.Count);
+        Assert.AreEqual(2, m.cruzamentos.Count);
+        Assert.AreEqual(6, m.pontas.Count);
+        Assert.AreEqual(3, m.faixas.Count);
+        var ac = m.ruas[m.Indice(Bairro.RuaAcacias)];
+        Assert.That(ac.AsfaltoPos, Is.EqualTo(Bairro.AcaciasAsfaltoZ0).Within(0.001f));
+        Assert.That(ac.AsfaltoNeg, Is.EqualTo(Bairro.AcaciasAsfaltoZ1).Within(0.001f));
+        Assert.That(ac.FrentePos, Is.EqualTo(Bairro.FrenteNorteAcacias).Within(0.001f));
+        Assert.That(ac.FrenteNeg, Is.EqualTo(Bairro.FrenteSulAcacias).Within(0.001f));
+        Assert.That(m.ruas[m.Indice(Bairro.RuaIpe)].eixo, Is.EqualTo(Bairro.IpeX));
+        Assert.That(m.ruas[m.Indice(Bairro.RuaJacarandas)].eixo, Is.EqualTo(Bairro.JacarandasX));
+        Assert.AreEqual(new Vector3(Bairro.IpeX, 0f, Bairro.AcaciasCentroZ), m.cruzamentos[m.CruzamentoDe(Bairro.RuaAcacias, Bairro.RuaIpe)].centro);
+        Assert.AreEqual(new Vector3(Bairro.JacarandasX, 0f, Bairro.AcaciasCentroZ), m.cruzamentos[m.CruzamentoDe(Bairro.RuaAcacias, Bairro.RuaJacarandas)].centro);
+        // 6 pedaços de asfalto e 15 de calçada, como o "H" escrito à mão (com a guia rebaixada do posto)
+        Assert.AreEqual(6, m.Pedacos().Count(p => p.tipo == TipoPiso.Asfalto));
+        Assert.AreEqual(15, m.Pedacos().Count(p => p.tipo == TipoPiso.Calcada));
+    }
+
+    [Test]
+    public void Malha_Grade3x3()
+    {
+        var m = MalhaRuas.Grade(3, 3, 40f);
+        Assert.AreEqual(6, m.ruas.Count);
+        Assert.AreEqual(9, m.cruzamentos.Count);
+        Assert.AreEqual(12, m.pontas.Count);
+        Assert.AreEqual(1, m.cruzamentos.Count(c => c.controle == ControleCruzamento.Semaforo));
+        Assert.AreEqual(Vector3.zero, m.cruzamentos[4].centro, "O cruzamento do meio fica na origem.");
+        foreach (var r in m.ruas) Assert.AreEqual(3, m.CruzamentosDa(m.ruas.IndexOf(r)).Count);
     }
 
     [Test]
@@ -136,40 +222,63 @@ public class TestesTransito
         Assert.Greater(JanelasNoturnas.Acesas(20f), JanelasNoturnas.Acesas(23.8f));
     }
 
-    // Calçadas dos pedestres: nós e caminhos em cima da calçada; a única passagem pelo asfalto é a faixa de pedestre
-    [Test]
-    public void Calcadas_NaCalcadaOuNaFaixa()
+    // Guia rebaixada (posto): calçada que virou asfalto no nível da rua
+    static bool NoRebaixo(MalhaRuas m, Vector3 p)
     {
-        var pedacos = Bairro.Pedacos();
+        foreach (var rb in m.rebaixos)
+        {
+            var r = m.ruas[rb.rua];
+            float t0 = rb.lado > 0 ? r.AsfaltoPos : r.FrenteNeg, t1 = rb.lado > 0 ? r.FrentePos : r.AsfaltoNeg;
+            if (r.Area(rb.a0, rb.a1, t0, t1).Contains(new Vector2(p.x, p.z))) return true;
+        }
+        return false;
+    }
+
+    // Calçadas dos pedestres: nós e caminhos em cima da calçada; a única passagem pelo asfalto é a faixa de pedestre
+    [TestCaseSource(nameof(Malhas))]
+    public void Calcadas_NaCalcadaOuNaFaixa(MalhaRuas m)
+    {
+        var pedacos = m.Pedacos();
         bool Calcada(Vector3 p) => pedacos.Any(r => r.tipo == TipoPiso.Calcada && r.area.Contains(new Vector2(p.x, p.z)));
-        var rede = RotasTransito.Calcadas();
-        foreach (var n in rede.nos) Assert.IsTrue(Calcada(n.pos), $"Nó da calçada fora da calçada: {n.pos}.");
+        var rede = RotasTransito.Calcadas(m);
+        foreach (var n in rede.nos) Assert.IsTrue(Calcada(n.pos), $"[{m}] Nó da calçada fora da calçada: {n.pos}.");
         foreach (var a in rede.arestas)
         {
             Vector3 p0 = rede.nos[a.a].pos, p1 = rede.nos[a.b].pos;
             for (float t = 0f; t <= 1f; t += 0.02f)
             {
                 Vector3 p = Vector3.Lerp(p0, p1, t);
-                if (a.faixa >= 0) { Assert.IsTrue(Calcada(p) || VidaNaRua.NaFaixa(a.faixa, p, 0f), $"Travessia fora da zebra: {p}."); continue; }
-                // posto: a calçada leste da Jacarandás tem a guia rebaixada (asfalto no nível da rua)
-                bool rebaixo = p.x > Bairro.JacarandasX + Bairro.MeiaPista && p.z > Bairro.RebaixoZ0 && p.z < Bairro.RebaixoZ1;
-                if (rebaixo) continue;
-                Assert.IsTrue(Calcada(p), $"Caminho do pedestre fora da calçada: {p}.");
+                if (a.faixa >= 0) { Assert.IsTrue(Calcada(p) || RotasTransito.SobreFaixa(m, a.faixa, p, 0f), $"[{m}] Travessia fora da zebra: {p}."); continue; }
+                if (NoRebaixo(m, p)) continue;
+                Assert.IsTrue(Calcada(p), $"[{m}] Caminho do pedestre fora da calçada: {p}.");
                 foreach (float lat in new[] { -0.45f, 0.75f })
                 {
                     var q = p + a.meioFio * lat;
-                    bool qRebaixo = q.x > Bairro.JacarandasX + Bairro.MeiaPista && q.z > Bairro.RebaixoZ0 && q.z < Bairro.RebaixoZ1;
-                    Assert.IsTrue(qRebaixo || Calcada(q), $"Desvio lateral sai da calçada em {p}.");
+                    Assert.IsTrue(NoRebaixo(m, q) || Calcada(q), $"[{m}] Desvio lateral sai da calçada em {p}.");
                 }
             }
         }
-        Assert.AreEqual(3, rede.arestas.Count(a => a.faixa >= 0));
+        Assert.AreEqual(m.faixas.Count, rede.arestas.Count(a => a.faixa >= 0), $"[{m}] Faixa de pedestre sem as duas calçadas.");
+        Assert.Greater(rede.nos.Count(n => n.ponta), 0, $"[{m}] Sem ponta de calçada (onde o pedestre nasce).");
+        // toda ponta leva a algum lugar e todo nó tem saída
+        for (int i = 0; i < rede.nos.Count; i++) Assert.Greater(rede.Vizinhas(i).Count, 0, $"[{m}] Nó solto: {rede.nos[i].pos}.");
+    }
+
+    // A rede das calçadas do bairro é a mesma de antes (22 nós, 19 caminhos, 3 travessias)
+    [Test]
+    public void Calcadas_BairroComoAntes()
+    {
+        var rede = RotasTransito.Calcadas(Bairro.Malha);
+        Assert.AreEqual(22, rede.nos.Count);
+        Assert.AreEqual(19, rede.arestas.Count);
+        Assert.AreEqual(12, rede.nos.Count(n => n.ponta));
     }
 
     // Carro dos vizinhos freia e para antes de um pedestre parado na faixa dele, e para antes da zebra ocupada
     [Test]
     public void CarroNPC_ParaDianteDeObstaculo()
     {
+        var m = Bairro.Malha;
         var goRua = new GameObject("TesteRua");
         var rua = goRua.AddComponent<VidaNaRua>();
         var goCarro = new GameObject("TesteCarro");
@@ -178,7 +287,7 @@ public class TestesTransito
         var ped = goPed.AddComponent<Pedestre>();
         try
         {
-            var rota = RotasTransito.Rota(RotasTransito.Ponta.AcaciasLeste, RotasTransito.Ponta.AcaciasOeste);
+            var rota = RotasTransito.Rota(m, Ponta(m, Bairro.RuaAcacias, 1), Ponta(m, Bairro.RuaAcacias, -1));
             carro.Iniciar(rota, 2f, 1);
             rua.carros.Add(carro);
             // pedestre parado no meio da faixa do carro, 15 m à frente (antes do primeiro cruzamento)
@@ -193,15 +302,16 @@ public class TestesTransito
             Assert.AreEqual("Pedestre", carro.motivoParada);
 
             // sai o pedestre: o carro anda; zebra do escritório ocupada: para antes dela
+            int faixaEscritorio = m.faixas.FindIndex(f => Mathf.Abs(f.pos) < 0.01f);
             rua.pedestres.Clear();
-            rua.OcuparFaixa(1);
-            var pz = rota.paradas.First(p => p.tipo == RotasTransito.TipoParada.Faixa && p.indice == 1);
+            rua.OcuparFaixa(faixaEscritorio);
+            var pz = rota.paradas.First(p => p.tipo == RotasTransito.TipoParada.Faixa && p.indice == faixaEscritorio);
             for (int i = 0; i < 1200; i++) { rua.AtualizarObstaculos(); carro.Passo(0.05f, rua); }
             Assert.Less(carro.v, 0.05f, $"Não parou na faixa (s={carro.s:0.0}, motivo '{carro.motivoParada}').");
             Assert.That(carro.s, Is.LessThanOrEqualTo(pz.s + 0.05f), "Passou da linha da faixa ocupada.");
             Assert.That(carro.s, Is.GreaterThan(pz.s - 3f));
-            Assert.IsFalse(VidaNaRua.NaFaixa(1, carro.transform.position + carro.transform.forward * RotasTransito.MeioComprimento, 0f));
-            rua.SoltarFaixa(1);
+            Assert.IsFalse(rua.NaFaixa(faixaEscritorio, carro.transform.position + carro.transform.forward * RotasTransito.MeioComprimento, 0f));
+            rua.SoltarFaixa(faixaEscritorio);
             for (int i = 0; i < 100; i++) { rua.AtualizarObstaculos(); carro.Passo(0.05f, rua); }
             Assert.Greater(carro.s, pz.s + 1f, "Faixa livre e o carro não seguiu.");
         }
@@ -217,13 +327,14 @@ public class TestesTransito
     [Test]
     public void CarroNPC_ParaAtrasDeOutroCarro()
     {
+        var m = Bairro.Malha;
         var goRua = new GameObject("TesteRua");
         var rua = goRua.AddComponent<VidaNaRua>();
         var a = new GameObject("A").AddComponent<CarroNPC>();
         var b = new GameObject("B").AddComponent<CarroNPC>();
         try
         {
-            var rota = RotasTransito.Rota(RotasTransito.Ponta.IpeNorte, RotasTransito.Ponta.IpeSul);
+            var rota = RotasTransito.Rota(m, Ponta(m, Bairro.RuaIpe, 1), Ponta(m, Bairro.RuaIpe, -1));
             a.Iniciar(rota, 20f, 1); a.v = 0f;
             b.Iniciar(rota, 2f, 2);
             rua.carros.Add(a); rua.carros.Add(b);
@@ -237,5 +348,89 @@ public class TestesTransito
         {
             Object.DestroyImmediate(rua.gameObject); Object.DestroyImmediate(a.gameObject); Object.DestroyImmediate(b.gameObject);
         }
+    }
+
+    // Grade 3 x 3: um carro atravessa a cidade virando e parando nos PAREs, e chega no fim da rota
+    [Test]
+    public void CarroNPC_AtravessaAGrade()
+    {
+        var m = MalhaRuas.Grade(3, 3, 40f);
+        var goRua = new GameObject("TesteRua");
+        var rua = goRua.AddComponent<VidaNaRua>();
+        rua.UsarMalha(m);
+        var carro = new GameObject("TesteCarro").AddComponent<CarroNPC>();
+        try
+        {
+            // rota com curva e PARE (vindo pela transversal), sem semáforo (o relógio não anda no modo de edição)
+            var rota = RotasTransito.TodasAsRotas(m)
+                .Where(r => r.paradas.Any(p => p.tipo == RotasTransito.TipoParada.Cruzamento && !p.preferencial)
+                         && r.paradas.Any(p => p.tipo == RotasTransito.TipoParada.Cruzamento && p.manobra != RotasTransito.Manobra.Reto)
+                         && r.paradas.All(p => p.tipo != RotasTransito.TipoParada.Cruzamento || m.cruzamentos[p.indice].controle == ControleCruzamento.Pare))
+                .OrderByDescending(r => r.Comprimento).First();
+            carro.Iniciar(rota, 0f, 1);
+            rua.carros.Add(carro);
+            bool parouNoPare = false;
+            for (int i = 0; i < 4000 && !carro.chegouNoFim; i++)
+            {
+                rua.AtualizarObstaculos();
+                carro.Passo(0.05f, rua);
+                parouNoPare |= carro.parouNoPare;
+            }
+            Assert.IsTrue(carro.chegouNoFim, $"O carro travou em s={carro.s:0.0} de {rota.Comprimento:0.0} (motivo '{carro.motivoParada}').");
+            Assert.IsTrue(parouNoPare, "Passou pelo PARE sem parar.");
+            Assert.AreEqual(0, Enumerable.Range(0, m.cruzamentos.Count).Sum(k => rua.Reservas(k)), "Ficou cruzamento reservado.");
+        }
+        finally
+        {
+            Object.DestroyImmediate(goRua); Object.DestroyImmediate(carro.gameObject);
+        }
+    }
+
+    // ---------------- GPS: caminho mais curto pelas ruas ----------------
+
+    [Test]
+    public void GPS_CaminhoPeloBairro()
+    {
+        var m = Bairro.Malha;
+        Vector3 jac = m.cruzamentos[m.CruzamentoDe(Bairro.RuaAcacias, Bairro.RuaJacarandas)].centro;
+        Vector3 ipe = m.cruzamentos[m.CruzamentoDe(Bairro.RuaAcacias, Bairro.RuaIpe)].centro;
+        // da clínica (oeste) ao fornecedor (Jacarandás, ao sul): pela Acácias, virando na Jacarandás
+        var c = m.CaminhoMaisCurto(Bairro.De(TipoEndereco.Clinica).porta, Bairro.De(TipoEndereco.Fornecedor).porta);
+        Assert.AreEqual(4, c.Count, "Clínica → fornecedor: Acácias (passando a Ipê) e vira na Jacarandás.");
+        Assert.AreEqual(ipe, c[1]); Assert.AreEqual(jac, c[2]);
+        Assert.That(c[c.Count - 1].x, Is.EqualTo(Bairro.JacarandasX).Within(0.01f), "Não termina na Jacarandás.");
+        // na mesma rua, sem cruzamento no meio: direto
+        var d = m.CaminhoMaisCurto(Bairro.De(TipoEndereco.Escritorio).porta, Bairro.De(TipoEndereco.Casa).porta);
+        Assert.AreEqual(2, d.Count, "Escritório → casa é atravessar a rua.");
+        // da coleta (Ipê, ao sul) ao posto (Jacarandás, ao norte): Ipê → Acácias → Jacarandás
+        var e = m.CaminhoMaisCurto(Bairro.De(TipoEndereco.Coleta).porta, Bairro.De(TipoEndereco.Posto).porta);
+        Assert.AreEqual(4, e.Count);
+        Assert.AreEqual(ipe, e[1]); Assert.AreEqual(jac, e[2]);
+    }
+
+    [Test]
+    public void GPS_CaminhoNaGrade()
+    {
+        var m = MalhaRuas.Grade(3, 3, 40f);
+        // de um canto a outro: anda "em L" pelas ruas (nunca mais que a distância de Manhattan entre os eixos)
+        Vector3 de = new Vector3(-40f, 0f, -60f), para = new Vector3(60f, 0f, 40f);
+        var c = m.CaminhoMaisCurto(de, para);
+        float l = 0f;
+        for (int i = 1; i < c.Count; i++)
+        {
+            l += (c[i] - c[i - 1]).magnitude;
+            var v = c[i] - c[i - 1];
+            Assert.IsTrue(Mathf.Abs(v.x) < 0.01f || Mathf.Abs(v.z) < 0.01f, "Trecho do caminho fora das ruas (na diagonal).");
+        }
+        Assert.That(l, Is.EqualTo(Mathf.Abs(c[0].x - c[c.Count - 1].x) + Mathf.Abs(c[0].z - c[c.Count - 1].z)).Within(0.01f));
+        // o GPS aponta para o próximo cruzamento, não para o destino em linha reta
+        var prox = GPS.ProximoPonto(c, de, para, out float dist);
+        Assert.AreEqual(c[1], prox);
+        Assert.That(dist, Is.GreaterThanOrEqualTo(l - 0.01f));
+        Assert.AreEqual("siga em frente", GPS.Direcao(Vector3.forward, de, prox));
+        // em cima do cruzamento: já aponta para o seguinte
+        var c2 = m.CaminhoMaisCurto(c[1], para);
+        var prox2 = GPS.ProximoPonto(c2, c[1], para, out _);
+        Assert.Greater((prox2 - c[1]).magnitude, GPS.PertoDoPonto);
     }
 }

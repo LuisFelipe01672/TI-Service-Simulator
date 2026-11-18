@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 // Parte do MontarCenario (Etapa 9D, vida na rua): o molde do carro dos vizinhos (o mesmo hatch do técnico, numa malha
-// só, sem porta recortada nem física), o semáforo do cruzamento da Jacarandás, o PARE da Ipê e as linhas de retenção.
+// só, sem porta recortada nem física), o semáforo ou o PARE de cada cruzamento da malha e as linhas de retenção.
 // Quem põe os carros e os pedestres para circular é o Cidade/VidaNaRua.cs (em tempo de jogo).
 public static partial class MontarCenario
 {
@@ -15,8 +15,12 @@ public static partial class MontarCenario
         var pai = new GameObject("Transito").transform;
         pai.SetParent(raiz, false);
         MontarMoldeCarroNPC(pai);
-        MontarSemaforo(pai);
-        MontarPare(pai);
+        var m = Bairro.Malha;
+        for (int k = 0; k < m.cruzamentos.Count; k++)
+        {
+            if (m.cruzamentos[k].controle == ControleCruzamento.Semaforo) MontarSemaforo(pai, m, k);
+            else MontarPare(pai, m, k);
+        }
         MontarJanelasNoturnas();
     }
 
@@ -171,11 +175,30 @@ public static partial class MontarCenario
         carro.SetActive(false);   // molde: o VidaNaRua copia
     }
 
-    // ---------------- Semáforo (cruzamento da Jacarandás) ----------------
-
-    static void MontarSemaforo(Transform pai)
+    // Nome curto para a hierarquia ("Rua dos Jacarandás" → "Jacarandas", "Rua Ipê Amarelo" → "Ipe")
+    static string NomeCurto(string rua)
     {
-        var sem = new GameObject("Semaforo_Jacarandas").transform;
+        var p = rua.Split(' ');
+        string s = p[p.Length - 1] == "Amarelo" && p.Length > 1 ? p[p.Length - 2] : p[p.Length - 1];
+        var sb = new System.Text.StringBuilder();
+        foreach (char ch in s.Normalize(System.Text.NormalizationForm.FormD))
+            if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch) != System.Globalization.UnicodeCategory.NonSpacingMark) sb.Append(ch);
+        return sb.ToString();
+    }
+
+    // Poste na esquina à direita de quem chega pela direção d (na calçada, logo antes do cruzamento)
+    internal static Vector3 EsquinaDireita(MalhaRuas m, int k, Vector3 d)
+    {
+        float lado = m.RuaNaDirecao(k, d).meiaPista + 0.6f, frente = m.RuaNaDirecao(k, RotasTransito.Direita(d)).meiaPista + 0.6f;
+        return RotasTransito.CentroCruzamento(m, k) + RotasTransito.Direita(d) * lado - d * frente;
+    }
+
+    // ---------------- Semáforo ----------------
+
+    static void MontarSemaforo(Transform pai, MalhaRuas m, int k)
+    {
+        var cz = m.cruzamentos[k];
+        var sem = new GameObject("Semaforo_" + NomeCurto(m.ruas[cz.Rua(!cz.principalLesteOeste)].nome)).transform;
         sem.SetParent(pai, false);
         var mPoste = Mat("Semaforo_Poste", new Color(0.2f, 0.21f, 0.22f), 0.35f, 0.5f);
         var mCaixa = Mat("Semaforo_Caixa", new Color(0.05f, 0.05f, 0.05f), 0.3f);
@@ -190,12 +213,10 @@ public static partial class MontarCenario
         var acesos = new Material[3]; var apagados = new Material[3];
         for (int i = 0; i < 3; i++) { acesos[i] = Lente(nomes[i], cores[i], true); apagados[i] = Lente(nomes[i], cores[i], false); }
 
-        Vector3 I = RotasTransito.CentroCruzamento(RotasTransito.CruzamentoJacarandas);
         foreach (var d in new[] { Vector3.right, Vector3.left, Vector3.forward, Vector3.back })
         {
             // na esquina à direita de quem chega, virado para ele
-            float canto = Bairro.MeiaPista + 0.6f;
-            Vector3 pos = I + RotasTransito.Direita(d) * canto - d * canto;
+            Vector3 pos = EsquinaDireita(m, k, d);
             var p = new GameObject("Semaforo").transform;
             p.SetParent(sem, false);
             p.localPosition = pos + Vector3.up * 0.12f;
@@ -203,7 +224,7 @@ public static partial class MontarCenario
             Caixa(p, "Coluna", new Vector3(0f, 1.6f, 0f), new Vector3(0.11f, 3.2f, 0.11f), mPoste, 1f);
             Caixa(p, "Caixa", new Vector3(0f, 3.05f, 0f), new Vector3(0.32f, 0.92f, 0.22f), mCaixa, 1f, false);
             var luz = p.gameObject.AddComponent<SemaforoLuzes>();
-            luz.eixoAcacias = Mathf.Abs(d.x) > 0.5f;
+            luz.eixoPrincipal = cz.Principal(d);
             luz.acesos = acesos; luz.apagados = apagados;
             luz.lentes = new Renderer[3];
             for (int i = 0; i < 3; i++)
@@ -213,36 +234,38 @@ public static partial class MontarCenario
                 Caixa(p, "Pala", new Vector3(0f, y + 0.12f, 0.17f), new Vector3(0.24f, 0.02f, 0.12f), mCaixa, 1f, false, false);
             }
             // Linha de retenção (onde não há zebra antes do cruzamento)
-            LinhaRetencao(sem, RotasTransito.CruzamentoJacarandas, d);
+            LinhaRetencao(sem, m, k, d);
         }
     }
 
     // Faixa branca de 40 cm atravessando a mão de quem chega, logo à frente de onde o carro para
-    static void LinhaRetencao(Transform pai, int cruzamento, Vector3 d)
+    static void LinhaRetencao(Transform pai, MalhaRuas m, int cruzamento, Vector3 d)
     {
-        float dist = RotasTransito.DistanciaParada(cruzamento, d);
-        if (dist > Bairro.MeiaPista + RotasTransito.FolgaParada + 0.1f) return;   // a zebra já marca
-        Vector3 I = RotasTransito.CentroCruzamento(cruzamento);
-        Vector3 c = I + RotasTransito.Direita(d) * (Bairro.MeiaPista / 2f) - d * (dist - 0.45f);
-        Vector3 tam = Mathf.Abs(d.x) > 0.5f ? new Vector3(0.4f, 0.005f, Bairro.MeiaPista - 0.2f) : new Vector3(Bairro.MeiaPista - 0.2f, 0.005f, 0.4f);
+        float dist = RotasTransito.DistanciaParada(m, cruzamento, d);
+        float meia = m.RuaNaDirecao(cruzamento, d).meiaPista, cruzada = m.RuaNaDirecao(cruzamento, RotasTransito.Direita(d)).meiaPista;
+        if (dist > cruzada + RotasTransito.FolgaParada + 0.1f) return;   // a zebra já marca
+        Vector3 I = RotasTransito.CentroCruzamento(m, cruzamento);
+        Vector3 c = I + RotasTransito.Direita(d) * (meia / 2f) - d * (dist - 0.45f);
+        Vector3 tam = Mathf.Abs(d.x) > 0.5f ? new Vector3(0.4f, 0.005f, meia - 0.2f) : new Vector3(meia - 0.2f, 0.005f, 0.4f);
         Caixa(pai, "Linha_Retencao", new Vector3(c.x, 0.012f, c.z), tam, mFaixa, 1f, false, false);
     }
 
-    // ---------------- PARE (cruzamento da Ipê: quem vem pela Ipê para) ----------------
+    // ---------------- PARE (quem não vem pela rua principal do cruzamento para) ----------------
 
-    static void MontarPare(Transform pai)
+    static void MontarPare(Transform pai, MalhaRuas m, int k)
     {
-        var g = new GameObject("Pare_Ipe").transform;
+        var cz = m.cruzamentos[k];
+        var transversal = m.ruas[cz.Rua(!cz.principalLesteOeste)];
+        var g = new GameObject("Pare_" + NomeCurto(transversal.nome)).transform;
         g.SetParent(pai, false);
         var mVermelho = Mat("Placa_Pare", new Color(0.75f, 0.05f, 0.05f), 0.4f);
         var mPoste = Mat("Semaforo_Poste", new Color(0.2f, 0.21f, 0.22f), 0.35f, 0.5f);
-        Vector3 I = RotasTransito.CentroCruzamento(RotasTransito.CruzamentoIpe);
-        foreach (var d in new[] { Vector3.forward, Vector3.back })
+        Vector3 I = RotasTransito.CentroCruzamento(m, k);
+        foreach (var d in new[] { transversal.Dir, -transversal.Dir })
         {
-            float canto = Bairro.MeiaPista + 0.6f;
             var p = new GameObject("Placa_PARE").transform;
             p.SetParent(g, false);
-            p.localPosition = I + RotasTransito.Direita(d) * canto - d * canto + Vector3.up * 0.12f;
+            p.localPosition = EsquinaDireita(m, k, d) + Vector3.up * 0.12f;
             p.localRotation = Quaternion.LookRotation(-d);
             Caixa(p, "Coluna", new Vector3(0f, 1.15f, 0f), new Vector3(0.06f, 2.3f, 0.06f), mPoste, 1f);
             var oct = new GameObject("Octogono");
@@ -259,11 +282,11 @@ public static partial class MontarCenario
             t.rectTransform.sizeDelta = new Vector2(0.5f, 0.2f);
 
             // "PARE" pintado no asfalto e a linha de retenção
-            LinhaRetencao(g, RotasTransito.CruzamentoIpe, d);
-            float dist = RotasTransito.DistanciaParada(RotasTransito.CruzamentoIpe, d);
+            LinhaRetencao(g, m, k, d);
+            float dist = RotasTransito.DistanciaParada(m, k, d);
             var chao = new GameObject("Pintura_PARE").AddComponent<TextMeshPro>();
             chao.transform.SetParent(g, false);
-            Vector3 pc = I + RotasTransito.Direita(d) * (Bairro.MeiaPista / 2f) - d * (dist + 1.6f);
+            Vector3 pc = I + RotasTransito.Direita(d) * (transversal.meiaPista / 2f) - d * (dist + 1.6f);
             chao.transform.localPosition = new Vector3(pc.x, 0.015f, pc.z);
             chao.transform.localRotation = Quaternion.LookRotation(Vector3.down, d);
             chao.text = "PARE"; chao.color = new Color(0.92f, 0.92f, 0.9f); chao.fontStyle = FontStyles.Bold; chao.alignment = TextAlignmentOptions.Center;
@@ -296,16 +319,19 @@ public static partial class MontarCenario
     }
     // ---------------- Janelas acesas à noite ----------------
 
-    // Para onde fica a frente de um imóvel do bairro (a rua mais perto do centro dele): Vector3.zero se não for lote
-    public static Vector3 FachadaDe(Vector3 c)
+    // Para onde fica a frente de um imóvel (a fachada de rua mais perto do centro dele): Vector3.zero se não for lote
+    public static Vector3 FachadaDe(Vector3 c) => FachadaDe(Bairro.Malha, c);
+
+    public static Vector3 FachadaDe(MalhaRuas m, Vector3 c)
     {
         var opcoes = new List<(float d, Vector3 dir)>();
-        if (c.z > Bairro.FrenteNorteAcacias) opcoes.Add((c.z - Bairro.FrenteNorteAcacias, Vector3.back));
-        if (c.z < Bairro.FrenteSulAcacias) opcoes.Add((Bairro.FrenteSulAcacias - c.z, Vector3.forward));
-        if (c.x < Bairro.FrenteOesteIpe) opcoes.Add((Bairro.FrenteOesteIpe - c.x, Vector3.right));
-        if (c.x > Bairro.FrenteLesteIpe && c.x < 0f) opcoes.Add((c.x - Bairro.FrenteLesteIpe, Vector3.left));
-        if (c.x < Bairro.FrenteOesteJacarandas && c.x > 0f) opcoes.Add((Bairro.FrenteOesteJacarandas - c.x, Vector3.right));
-        if (c.x > Bairro.FrenteLesteJacarandas) opcoes.Add((c.x - Bairro.FrenteLesteJacarandas, Vector3.left));
+        foreach (var r in m.ruas)
+        {
+            float a = r.Ao(c), t = r.lesteOeste ? c.z : c.x;
+            if (a < r.ini || a > r.fim) continue;
+            if (t > r.FrentePos) opcoes.Add((t - r.FrentePos, -r.Normal));   // lote do lado norte/leste: olha para a rua
+            if (t < r.FrenteNeg) opcoes.Add((r.FrenteNeg - t, r.Normal));
+        }
         if (opcoes.Count == 0) return Vector3.zero;
         return opcoes.OrderBy(o => o.d).First().dir;
     }

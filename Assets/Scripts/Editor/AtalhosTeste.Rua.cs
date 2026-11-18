@@ -57,7 +57,7 @@ public static partial class AtalhosTeste
             foreach (var p in rua.pedestres)
             {
                 Vector3 pp = p.transform.position;
-                bool naFaixa = Enumerable.Range(0, 3).Any(f => VidaNaRua.NaFaixa(f, pp, 0.3f));
+                bool naFaixa = Enumerable.Range(0, rua.Malha.faixas.Count).Any(f => rua.NaFaixa(f, pp, 0.3f));
                 bool rebaixo = pp.x > Bairro.JacarandasX + Bairro.MeiaPista && pp.z > Bairro.RebaixoZ0 && pp.z < Bairro.RebaixoZ1;
                 if (!naFaixa && !rebaixo && !Em(calcada, pp)) pedForaCalcada++;
                 foreach (var c in cs) if (DentroDoCarro(c.transform, pp, 0.2f)) { pedDentroCarro++; break; }

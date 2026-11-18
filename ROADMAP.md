@@ -271,11 +271,30 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
     "H deitado" escrito à mão em `Cidade/Bairro.cs` (3 ruas fixas: Acácias, Ipê Amarelo, Jacarandás), com o trânsito
     (`RotasTransito`, 6 pontas fixas), o GPS, o semáforo/PARE, os pedestres e os testes presos a essas 3 ruas. Crescer
     6–10x pede trocar o "H" por uma **malha de ruas** genérica. Dividido em três, cada uma testada e com exe:
-    - 10E-1 ⬜ **Malha de ruas genérica, mesmo tamanho**: `Bairro` vira uma lista de ruas (leste-oeste e norte-sul) e
-      cruzamentos, com as 3 ruas de hoje nas mesmas posições (nada sai do lugar); rotas do trânsito, GPS ("vire à
-      direita", por caminho mais curto no grafo das ruas), semáforo/PARE por cruzamento, faixas e pedestres lendo da
-      malha; testes da planta e do trânsito reescritos sobre a malha. Pronto quando o jogo fica igual, mas sem nada
-      preso às 3 ruas.
+    - 10E-1 ✅ **Malha de ruas genérica, mesmo tamanho** (18/11/2026): `Cidade/MalhaRuas.cs` — lista de ruas
+      (leste-oeste/norte-sul, eixo, começo/fim, largura do asfalto e de cada calçada, postes), cruzamentos calculados
+      (PARE ou semáforo, rua principal), pontas, faixas de pedestre e guias rebaixadas. `Bairro.Malha` monta as 3 ruas
+      de hoje nas mesmas posições; `Bairro.Pedacos()` sai da malha. Lendo da malha: rotas dos carros (caminho mais
+      curto entre duas pontas no grafo das ruas), paradas/vez/semáforo/PARE por cruzamento, faixas, calçadas dos
+      pedestres (em volta de cada quarteirão), e a montagem (faixa central, zebras, postes, semáforos, PAREs, linhas de
+      retenção, barreiras do fim das ruas, frente das casas para as janelas noturnas, gramado, mapa do celular).
+      **GPS** agora vai pelo caminho mais curto nas ruas: aponta para o próximo cruzamento ("vire à esquerda" na
+      esquina) e mostra a distância pelo caminho.
+    - Conferido igual: foto antes × depois (mesmo código de comparação) dos 21 pedaços de rua, das 30 rotas (pontos,
+      limites e paradas) e da rede de calçadas — idênticos; cena remontada igual objeto por objeto, menos 4 traços da
+      faixa central (saíram 2 que ficavam em cima das zebras perto da Ipê e da Jacarandás; entrou 1 em cada transversal
+      logo ao norte da Acácias).
+    - Testes: `TestesTransito` e `TestesPlantaCenario` sobre a malha, cada teste de rua rodando no bairro **e numa
+      grade 3 x 3** (`MalhaRuas.Grade`: 6 ruas, 9 cruzamentos, 12 pontas, 132 rotas); novos: rotas pelo caminho mais
+      curto, ruas cobertas de ponta a ponta, carro atravessando a grade parando no PARE, GPS no bairro e na grade,
+      fachadas. 299 passando. Atalho novo *Teste (Play)/Bairro/4* (GPS pelo caminho: 5 de 5 direções certas, fotos
+      `Builds/Capturas/bairro/gps_caminho_*`). Fiscal do trânsito (80 s cheio): 0 batidas, ninguém fora do
+      asfalto/calçada.
+    - FPS no editor, igual à 9D (sem × com movimento): porta 171 × 151, esquina da Ipê 116 × 106, Jacarandás
+      156 × 157; à noite 158 × 136, 106 × 97, 157 × 129. Com × sem o bairro: quarto 175 × 194, porta 157 × 170,
+      esquina 110 × 121.
+    - Limites (para a 10E-2): rua termina na borda do mapa (sem "T" no meio do mapa); os pedestres só atravessam nas
+      faixas; um relógio só para todos os semáforos.
     - 10E-2 ⬜ **Cidade ~6x** (~330 x 230 m, grade de quarteirões em volta do bairro atual): ruas novas, ~100 casas e
       sobrados com os modelos CC-BY já baixados (variações de cor, muro e portão), praça, comércios de fachada; desempenho
       para placa de 4 GB: distância de corte por camada, occlusion culling, luz de poste só perto; medir FPS nos pontos

@@ -444,20 +444,20 @@ public static partial class MontarCenario
                 Caixa(f, "Barreira", pos, aoLongoDeX ? new Vector3(0.95f, 0.8f, 0.45f) : new Vector3(0.45f, 0.8f, 0.95f), i % 2 == 0 ? mZebra : mCalcada, 1f);
             }
         }
-        float zc = Bairro.AcaciasCentroZ, larg = 2f * Bairro.MeiaPista;
-        Barreira(new Vector3(-Bairro.LimiteX + 0.3f, 0f, zc), false, larg);
-        Barreira(new Vector3(Bairro.LimiteX - 0.3f, 0f, zc), false, larg);
-        foreach (float x in new[] { Bairro.IpeX, Bairro.JacarandasX })
+        // uma barreira em cada ponta da malha (fim de rua na borda do mapa)
+        var m = Bairro.Malha;
+        foreach (var pt in m.pontas)
         {
-            Barreira(new Vector3(x, 0f, Bairro.LimiteSul + 0.3f), true, larg);
-            Barreira(new Vector3(x, 0f, Bairro.LimiteNorte - 0.3f), true, larg);
+            var r = m.ruas[pt.rua];
+            Barreira(r.Ponto(pt.lado < 0 ? r.ini + 0.3f : r.fim - 0.3f), !r.lesteOeste, 2f * r.meiaPista);
         }
         // Muro invisível em volta (só colisão)
-        float w = 2f * Bairro.LimiteX + 4f, zMeio = (Bairro.LimiteSul + Bairro.LimiteNorte) / 2f, h = Bairro.LimiteNorte - Bairro.LimiteSul + 4f;
+        var lim = m.limites;
+        float w = lim.width + 4f, xMeio = lim.center.x, zMeio = lim.center.y, h = lim.height + 4f;
         void Invisivel(Vector3 c, Vector3 tam) { var g = new GameObject("Limite_Invisivel"); g.transform.SetParent(f, false); g.transform.localPosition = c; g.AddComponent<BoxCollider>().size = tam; }
-        Invisivel(new Vector3(0f, 2f, Bairro.LimiteSul - 2f), new Vector3(w, 4f, 0.5f));
-        Invisivel(new Vector3(0f, 2f, Bairro.LimiteNorte + 2f), new Vector3(w, 4f, 0.5f));
-        Invisivel(new Vector3(-Bairro.LimiteX - 2f, 2f, zMeio), new Vector3(0.5f, 4f, h));
-        Invisivel(new Vector3(Bairro.LimiteX + 2f, 2f, zMeio), new Vector3(0.5f, 4f, h));
+        Invisivel(new Vector3(xMeio, 2f, lim.yMin - 2f), new Vector3(w, 4f, 0.5f));
+        Invisivel(new Vector3(xMeio, 2f, lim.yMax + 2f), new Vector3(w, 4f, 0.5f));
+        Invisivel(new Vector3(lim.xMin - 2f, 2f, zMeio), new Vector3(0.5f, 4f, h));
+        Invisivel(new Vector3(lim.xMax + 2f, 2f, zMeio), new Vector3(0.5f, 4f, h));
     }
 }

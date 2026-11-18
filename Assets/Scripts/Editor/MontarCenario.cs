@@ -81,8 +81,9 @@ public static partial class MontarCenario
         }
 
         // Gramado sob o bairro inteiro (terrenos baldios e quintais; Cidade/Bairro.cs)
-        Caixa(raiz, "Gramado", new Vector3(0f, -0.07f, (Bairro.LimiteSul + Bairro.LimiteNorte) / 2f),
-            new Vector3(2f * Bairro.LimiteX + 4f, 0.1f, Bairro.LimiteNorte - Bairro.LimiteSul + 4f), mGrama, 4f);
+        var limites = Bairro.Malha.limites;
+        Caixa(raiz, "Gramado", new Vector3(limites.center.x, -0.07f, limites.center.y),
+            new Vector3(limites.width + 4f, 0.1f, limites.height + 4f), mGrama, 4f);
 
         portasAbrem = true;            // todas as portas abrem: chega-se andando pela rua (Etapa 9B)
         var spawn = MontarEscritorio();

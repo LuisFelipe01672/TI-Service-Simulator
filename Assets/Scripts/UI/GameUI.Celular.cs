@@ -209,14 +209,15 @@ public partial class GameUI
         var jogador = GameObject.FindWithTag("Player");
         var gps = GPS.Instance;
 
-        // Desenho: x de -LimiteX a +LimiteX, z de LimiteSul a LimiteNorte (norte para cima)
+        // Desenho: a borda do mapa da malha de ruas (norte para cima)
         const float largura = 380f;
-        float w = 2f * Bairro.LimiteX, h = Bairro.LimiteNorte - Bairro.LimiteSul;
+        var lim = Bairro.Malha.limites;
+        float w = lim.width, h = lim.height;
         float altura = largura * h / w;
         var mapa = UIFactory.Painel(celConteudo, "Mapa", UIFactory.Hex("#3E5A34"));   // terrenos (verde)
         var le = mapa.gameObject.AddComponent<LayoutElement>();
         le.preferredHeight = altura; le.preferredWidth = largura;
-        Vector2 Norm(float x, float z) => new Vector2((x + Bairro.LimiteX) / w, (z - Bairro.LimiteSul) / h);
+        Vector2 Norm(float x, float z) => new Vector2((x - lim.xMin) / w, (z - lim.yMin) / h);
         RectTransform Retangulo(string nome, Rect area, Color cor)
         {
             var r = UIFactory.Painel(mapa, nome, cor);

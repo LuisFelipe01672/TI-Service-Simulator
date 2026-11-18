@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 // Este gerente se cria sozinho quando a cena tem o molde do carro (montado pelo MontarCenario); cuida de:
 //   • quantos carros/pedestres circulam (pela hora do DiaManager: pico de manhã e à tarde, noite vazia);
 //   • nascer e sumir só fora da vista do jogador (nas pontas das ruas, que são a borda do mapa);
+//   • tudo lido da malha de ruas (Bairro.Malha; Etapa 10E-1): rotas, cruzamentos, faixas e calçadas;
 //   • obstáculos (outros carros, pedestres, o técnico a pé, o carro do técnico), a vez nos cruzamentos,
 //     o ciclo do semáforo e as faixas de pedestre ocupadas;
 //   • faróis de verdade só nos carros mais perto da câmera (o resto acende só a lâmpada).
@@ -26,9 +27,21 @@ public class VidaNaRua : MonoBehaviour
     readonly List<CarroNPC> carrosLivres = new List<CarroNPC>();
     readonly List<Pedestre> pedestresLivres = new List<Pedestre>();
     readonly List<Obstaculo> obst = new List<Obstaculo>();
-    readonly List<(CarroNPC carro, Vector3 chegada, RotasTransito.Manobra m)>[] reservas =
-        { new List<(CarroNPC, Vector3, RotasTransito.Manobra)>(), new List<(CarroNPC, Vector3, RotasTransito.Manobra)>() };
-    readonly int[] faixaOcupada = new int[3];
+    // Vez nos cruzamentos e faixas ocupadas: um por cruzamento/faixa da malha (Etapa 10E-1)
+    List<(CarroNPC carro, Vector3 chegada, RotasTransito.Manobra m)>[] reservas;
+    int[] faixaOcupada;
+    MalhaRuas malha;
+
+    // Malha de ruas por onde este gerente anda (o bairro; os testes podem trocar)
+    public MalhaRuas Malha { get { if (malha == null) UsarMalha(Bairro.Malha); return malha; } }
+
+    public void UsarMalha(MalhaRuas m)
+    {
+        malha = m;
+        reservas = new List<(CarroNPC, Vector3, RotasTransito.Manobra)>[m.cruzamentos.Count];
+        for (int i = 0; i < reservas.Length; i++) reservas[i] = new List<(CarroNPC, Vector3, RotasTransito.Manobra)>();
+        faixaOcupada = new int[m.faixas.Count];
+    }
 
     List<RotasTransito.Caminho> rotas;
     public RotasTransito.RedeCalcadas calcadas;
@@ -66,10 +79,10 @@ public class VidaNaRua : MonoBehaviour
 
     void Start()
     {
-        rotas = RotasTransito.TodasAsRotas();
-        calcadas = RotasTransito.Calcadas();
+        rotas = RotasTransito.TodasAsRotas(Malha);
+        calcadas = RotasTransito.Calcadas(Malha);
         pisoCalcada = new List<Rect>();
-        foreach (var p in Bairro.Pedacos()) if (p.tipo == TipoPiso.Calcada) pisoCalcada.Add(p.area);
+        foreach (var p in Malha.Pedacos()) if (p.tipo == TipoPiso.Calcada) pisoCalcada.Add(p.area);
         raizCarros = new GameObject("Carros_Vizinhos").transform;
         raizCarros.SetParent(transform, false);
         raizPedestres = new GameObject("Pedestres").transform;
@@ -244,11 +257,12 @@ public class VidaNaRua : MonoBehaviour
         var alvo = Alvo();
         if (carros.Count < alvo.carros)
         {
-            var de = RotasTransito.Pontas[Random.Range(0, RotasTransito.Pontas.Length)];
-            // mais carro passando reto pela Acácias do que entrando nas transversais
+            int de = Random.Range(0, Malha.pontas.Count);
+            // mais carro seguindo reto pela mesma rua do que virando
             var opcoes = rotas.FindAll(r => r.de == de);
+            if (opcoes.Count == 0) return;
             var c = opcoes[Random.Range(0, opcoes.Count)];
-            if (Random.value < 0.35f) { var reta = opcoes.Find(r => (int)r.para / 2 == (int)de / 2); if (reta != null) c = reta; }
+            if (Random.value < 0.35f) { var reta = opcoes.Find(r => Malha.pontas[r.para].rua == Malha.pontas[de].rua); if (reta != null) c = reta; }
             var p0 = c.Posicao(0f);
             if (LugarLivre(p0, 10f) && !Visivel(p0)) NovoCarro(c, 0f);
         }
@@ -362,8 +376,8 @@ public class VidaNaRua : MonoBehaviour
         // só passa por carro parado e encostado no meio-fio (não ultrapassa quem está andando ou parado no meio)
         var ct = CarroTecnico.Instance;
         if (ct == null || Mathf.Abs(ct.Velocidade) > 0.2f || Vector3.Dot(ct.transform.position - p, RotasTransito.Direita(f)) < 0.4f) return false;
-        for (int k = 0; k < 2; k++)
-            if ((p - RotasTransito.CentroCruzamento(k)).sqrMagnitude < 13f * 13f) return false;
+        foreach (var cz in Malha.cruzamentos)
+            if ((p - cz.centro).sqrMagnitude < 13f * 13f) return false;
         foreach (var c in carros)
         {
             if (c == eu) continue;
@@ -378,25 +392,28 @@ public class VidaNaRua : MonoBehaviour
 
     public void Reservar(CarroNPC c, RotasTransito.Parada p)
     {
+        _ = Malha;
         Liberar(c);
         reservas[p.indice].Add((c, p.chegada, p.manobra));
     }
 
     public void Liberar(CarroNPC c)
     {
+        if (reservas == null) return;
         foreach (var r in reservas) r.RemoveAll(x => x.carro == c);
     }
 
     public bool CruzamentoLivrePara(CarroNPC c, RotasTransito.Parada p)
     {
+        _ = Malha;
         foreach (var r in reservas[p.indice])
             if (r.carro != c && !RotasTransito.Compativeis(p.chegada, p.manobra, r.chegada, r.m)) return false;
         return true;
     }
 
-    public int Reservas(int cruzamento) => reservas[cruzamento].Count;
+    public int Reservas(int cruzamento) { _ = Malha; return reservas[cruzamento].Count; }
 
-    // Algum carro da preferencial (Acácias) chegando neste cruzamento a menos de 'dist'?
+    // Algum carro da preferencial (rua principal do cruzamento) chegando neste cruzamento a menos de 'dist'?
     public bool PreferencialChegando(int cruzamento, float dist)
     {
         foreach (var c in carros)
@@ -409,8 +426,11 @@ public class VidaNaRua : MonoBehaviour
         var ct = CarroTecnico.Instance;
         if (ct != null && Mathf.Abs(ct.Velocidade) > 1f)
         {
-            Vector3 rel = ct.transform.position - RotasTransito.CentroCruzamento(cruzamento);
-            if (Mathf.Abs(rel.z - 0f) < 6f && Mathf.Abs(rel.x) < dist && Vector3.Dot(ct.transform.forward * Mathf.Sign(ct.Velocidade), -rel) > 0f) return true;
+            var cz = Malha.cruzamentos[cruzamento];
+            var principal = Malha.ruas[cz.Rua(cz.principalLesteOeste)];
+            Vector3 rel = ct.transform.position - cz.centro;
+            float ao = Vector3.Dot(rel, principal.Dir), lado = Vector3.Dot(rel, principal.Normal);
+            if (Mathf.Abs(lado) < 6f && Mathf.Abs(ao) < dist && Vector3.Dot(ct.transform.forward * Mathf.Sign(ct.Velocidade), -rel) > 0f) return true;
         }
         return false;
     }
@@ -419,17 +439,13 @@ public class VidaNaRua : MonoBehaviour
 
     public bool FaixaOcupada(int f)
     {
+        _ = Malha;
         if (faixaOcupada[f] > 0) return true;
         if (jogador != null && !CarroTecnico.NoCarro && NaFaixa(f, jogador.transform.position, 0.3f)) return true;
         return false;
     }
 
-    public static bool NaFaixa(int f, Vector3 p, float margem)
-    {
-        float xf = Bairro.FaixasPedestreX[f];
-        return Mathf.Abs(p.x - xf) < RotasTransito.MeiaFaixaPedestre + margem
-            && p.z < Bairro.AcaciasAsfaltoZ0 + margem && p.z > Bairro.AcaciasAsfaltoZ1 - margem;
-    }
+    public bool NaFaixa(int f, Vector3 p, float margem) => RotasTransito.SobreFaixa(Malha, f, p, margem);
 
     // Pedestre pode começar a atravessar? (nenhum carro em cima da faixa nem chegando perto demais para parar)
     public bool PodeAtravessar(int f)
@@ -446,15 +462,16 @@ public class VidaNaRua : MonoBehaviour
         var ct = CarroTecnico.Instance;
         if (ct != null && Mathf.Abs(ct.Velocidade) > 1f)
         {
-            float xf = Bairro.FaixasPedestreX[f];
+            var fx = Malha.faixas[f];
+            var r = Malha.ruas[fx.rua];
             Vector3 pos = ct.transform.position;
-            if (Mathf.Abs(pos.z - Bairro.AcaciasCentroZ) < 5f && Mathf.Abs(pos.x - xf) < 16f) return false;
+            if (Mathf.Abs(r.Lateral(pos)) < 5f && Mathf.Abs(r.Ao(pos) - fx.pos) < 16f) return false;
         }
         return true;
     }
 
-    public void OcuparFaixa(int f) => faixaOcupada[f]++;
-    public void SoltarFaixa(int f) => faixaOcupada[f] = Mathf.Max(0, faixaOcupada[f] - 1);
+    public void OcuparFaixa(int f) { _ = Malha; faixaOcupada[f]++; }
+    public void SoltarFaixa(int f) { _ = Malha; faixaOcupada[f] = Mathf.Max(0, faixaOcupada[f] - 1); }
 
     // ---------------- Pedestres ----------------
 
@@ -476,7 +493,7 @@ public class VidaNaRua : MonoBehaviour
         if (jogador != null && !CarroTecnico.NoCarro && (jogador.transform.position - p).sqrMagnitude < 9f)
             saida.Add((jogador.transform.position, 0.4f, true));
         // orelhão na calçada perto do escritório
-        var orelhao = new Vector3(-5f, 0.12f, Bairro.AcaciasAsfaltoZ0 + 0.7f);
+        var orelhao = Bairro.Orelhao;
         if ((orelhao - p).sqrMagnitude < 9f) saida.Add((orelhao, 0.6f, false));
     }
 

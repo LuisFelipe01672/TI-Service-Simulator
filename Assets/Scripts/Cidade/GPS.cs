@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -5,6 +6,8 @@ using UnityEngine.UI;
 // GPS do celular (Etapa 9B): leva o técnico a pé até um endereço do bairro (Cidade/Bairro.cs), sem teleporte.
 // - Ao aceitar um chamado o destino vira o endereço do cliente; no app Mapa do celular dá para escolher outro.
 // - No canto inferior esquerdo: para onde ir, a rua, a distância e a direção ("vire à direita", "siga em frente").
+// - Etapa 10E-1: a direção segue o caminho mais curto pelas ruas (grafo da malha: cruzamentos e pontas), não a linha
+//   reta até o destino: aponta para o próximo cruzamento do caminho e a distância é a do caminho.
 // - No endereço, uma coluna de luz verde marca a porta (dá para ver por cima dos telhados).
 // - Chegando a 3 m da porta: "Você chegou" e o GPS desliga.
 // - Etapa 9C, dirigindo: o GPS guia até a vaga em frente ao endereço (um retângulo verde no asfalto, junto ao
@@ -15,6 +18,7 @@ public class GPS : MonoBehaviour
 
     public bool Ativo { get; private set; }
     public Endereco Destino { get; private set; }
+    public string Texto => texto != null ? texto.text : "";   // o que o painel mostra (atalhos de teste)
 
     Transform jogador, marcador, marcadorVaga;
     bool avisouVaga;
@@ -106,6 +110,22 @@ public class GPS : MonoBehaviour
     // Distância e direção do jogador até o destino (para o app Mapa e os testes)
     public float Distancia(Vector3 de) => Vector2.Distance(new Vector2(de.x, de.z), new Vector2(Destino.porta.x, Destino.porta.z));
 
+    // Próximo ponto para onde ir, seguindo o caminho pelas ruas (pontos no eixo, do lado de quem sai até o lado do
+    // destino), e quanto falta andando por ele. Pula os pontos já a menos de 'perto' metros (o cruzamento onde se está).
+    public const float PertoDoPonto = 6f;
+    public static Vector3 ProximoPonto(List<Vector3> caminho, Vector3 de, Vector3 alvo, out float distancia)
+    {
+        var pts = new List<Vector3>();
+        if (caminho != null) for (int i = 1; i < caminho.Count; i++) pts.Add(caminho[i]);   // o 1º é o próprio jogador levado à rua
+        pts.Add(alvo);
+        float Plano(Vector3 a, Vector3 b) => Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));
+        int k = 0;
+        while (k < pts.Count - 1 && Plano(de, pts[k]) < PertoDoPonto) k++;
+        distancia = Plano(de, pts[k]);
+        for (int i = k + 1; i < pts.Count; i++) distancia += Plano(pts[i - 1], pts[i]);
+        return pts[k];
+    }
+
     // "siga em frente", "vire à direita"... pelo ângulo entre o olhar e o destino
     public static string Direcao(Vector3 olhar, Vector3 de, Vector3 para)
     {
@@ -154,10 +174,12 @@ public class GPS : MonoBehaviour
         var cam = Camera.main != null ? Camera.main.transform : jogador;
         // Dirigindo, a direção é a do carro (não a da cabeça) e a distância é até a vaga
         Vector3 frente = dirigindo && CarroTecnico.Instance != null ? CarroTecnico.Instance.transform.forward : cam.forward;
-        string dir = dirigindo && d < 5f ? "estacione aqui" : Direcao(frente, jogador.position, alvo);
+        var caminho = Bairro.Malha.CaminhoMaisCurto(jogador.position, alvo);
+        Vector3 proximo = ProximoPonto(caminho, jogador.position, alvo, out float pelaRua);
+        string dir = dirigindo && d < 5f ? "estacione aqui" : Direcao(frente, jogador.position, proximo);
         string onde = Bairro.RuaMaisProxima(jogador.position);
         texto.text = $"<color=#3CCB7F><b>GPS</b></color>  {Destino.nome}\n" +
                      $"<size=85%>{Destino.Linha}{(dirigindo ? " · <color=#3CCB7F>vaga em frente</color>" : "")}</size>\n" +
-                     $"<b>{d:0} m</b> · {dir}  <color=#9AA6B8><size=80%>(você está na {onde})</size></color>";
+                     $"<b>{pelaRua:0} m</b> · {dir}  <color=#9AA6B8><size=80%>(você está na {onde})</size></color>";
     }
 }

@@ -17,15 +17,19 @@ public class TestesPlantaCenario
                                        largura + 2f * MontarCenario.T, profundidade + 2f * MontarCenario.T);
     }
 
-    static List<Comodo> Comodos() => new List<Comodo>
+    static List<Comodo> Comodos()
     {
-        new Comodo { nome = "Escritório", centro = Bairro.CentroEscritorio, largura = 6f, profundidade = 6f },
-        new Comodo { nome = "Casa", centro = MontarCenario.CentroCasa, largura = 8f, profundidade = 6f },
-        new Comodo { nome = "Banheiro", centro = MontarCenario.CentroBanheiro, largura = MontarCenario.LarguraBanheiro, profundidade = MontarCenario.ProfBanheiro },
-        new Comodo { nome = "Cliente (contabilidade)", centro = MontarCenario.CentroContabilidade, largura = 10f, profundidade = 8f },
-        new Comodo { nome = "Clínica", centro = MontarCenario.CentroClinica, largura = 10f, profundidade = 8f },
-        new Comodo { nome = "Loja", centro = MontarCenario.CentroLoja, largura = 10f, profundidade = 8f },
-    };
+        var l = new List<Comodo>
+        {
+            new Comodo { nome = "Escritório", centro = Bairro.CentroEscritorio, largura = 6f, profundidade = 6f },
+            new Comodo { nome = "Casa", centro = MontarCenario.CentroCasa, largura = 8f, profundidade = 6f },
+            new Comodo { nome = "Banheiro", centro = MontarCenario.CentroBanheiro, largura = MontarCenario.LarguraBanheiro, profundidade = MontarCenario.ProfBanheiro },
+        };
+        // prédios de cliente com interior (Etapa 3 e 10E-3)
+        foreach (var p in Bairro.Predios)
+            l.Add(new Comodo { nome = "Cliente " + p.nome, centro = p.centro, largura = PredioCliente.Largura, profundidade = PredioCliente.Profundidade });
+        return l;
+    }
 
     static Rect Encolher(Rect r, float m) => Rect.MinMaxRect(r.xMin + m, r.yMin + m, r.xMax - m, r.yMax - m);
 
@@ -71,10 +75,48 @@ public class TestesPlantaCenario
     [Test]
     public void Clientes_ComPortaNaCalcada()
     {
-        foreach (var c in Comodos().Where(c => c.nome.StartsWith("Cliente") || c.nome == "Clínica" || c.nome == "Escritório"))
-            Assert.That(c.Planta.yMin, Is.EqualTo(Bairro.FrenteNorteAcacias).Within(0.05f), $"{c.nome}: a frente não encosta na calçada norte.");
-        var loja = Comodos().First(c => c.nome == "Loja");
-        Assert.That(loja.Planta.yMax, Is.EqualTo(Bairro.FrenteSulAcacias).Within(0.05f), "Loja: a frente não encosta na calçada sul.");
+        Assert.That(Comodos()[0].Planta.yMin, Is.EqualTo(Bairro.FrenteNorteAcacias).Within(0.05f), "Escritório: a frente não encosta na calçada norte.");
+        var m = Bairro.Malha;
+        var pedacos = Bairro.Pedacos();
+        foreach (var p in Bairro.Predios)
+        {
+            var rua = m.ruas[m.Indice(p.rua)];
+            Assert.IsTrue(rua.lesteOeste, $"{p.nome}: prédio de cliente só em rua leste-oeste (giro 0 ou 180).");
+            if (p.giro < 90f) Assert.That(p.Planta.yMin, Is.EqualTo(rua.FrentePos).Within(0.05f), $"{p.nome}: a frente não encosta na calçada norte da {p.rua}.");
+            else Assert.That(p.Planta.yMax, Is.EqualTo(rua.FrenteNeg).Within(0.05f), $"{p.nome}: a frente não encosta na calçada sul da {p.rua}.");
+            // logo do lado de fora da porta já é calçada, e a porta fica no meio da fachada
+            var fora = p.Porta + (p.PontoGPS - p.Porta).normalized * 0.4f;
+            Assert.IsTrue(pedacos.Any(x => x.tipo == TipoPiso.Calcada && x.area.Contains(new Vector2(fora.x, fora.z))), $"{p.nome}: a porta não dá na calçada ({fora}).");
+            Assert.That(p.Porta.x, Is.EqualTo(p.centro.x).Within(0.01f));
+        }
+    }
+
+    // Etapa 10E-3: de 6 a 9 prédios novos, espalhados (várias ruas, longe uns dos outros), fora da praça, do posto e
+    // das casas postas à mão; cada um com objeto, endereço, placa e número próprios
+    [Test]
+    public void Clientes_PrediosNovosEspalhados()
+    {
+        bool Antigo(PredioCliente x) => x.objeto == "Cliente" || x.objeto == "Cliente_Clinica" || x.objeto == "Cliente_Loja";
+        var p = Bairro.Predios;
+        int novos = p.Count - 3;
+        Assert.That(novos, Is.InRange(6, 9), "A 10E-3 pede de 6 a 9 prédios novos.");
+        Assert.AreEqual(p.Count, p.Select(x => x.tipo).Distinct().Count(), "Endereço repetido.");
+        Assert.AreEqual(p.Count, p.Select(x => x.objeto).Distinct().Count(), "Objeto da sala repetido.");
+        Assert.AreEqual(p.Count, p.Select(x => x.placa).Distinct().Count(), "Placa repetida.");
+        Assert.GreaterOrEqual(p.Select(x => x.rua).Distinct().Count(), 5, "Prédios de cliente em poucas ruas.");
+        var cidade = Rect.MinMaxRect(-Bairro.LimiteX + 2f, Bairro.LimiteSul + 2f, Bairro.LimiteX - 2f, Bairro.LimiteNorte - 2f);
+        for (int i = 0; i < p.Count; i++)
+        {
+            Assert.IsFalse(p[i].Planta.Overlaps(Bairro.Praca), $"{p[i].nome} na praça.");
+            Assert.IsFalse(p[i].Planta.Overlaps(Bairro.TerrenoPosto), $"{p[i].nome} no posto.");
+            Assert.IsTrue(cidade.Contains(p[i].Planta.min) && cidade.Contains(p[i].Planta.max), $"{p[i].nome} fora da cidade.");
+            Assert.IsTrue(p[i].numero > 0 && !string.IsNullOrEmpty(p[i].placa) && p[i].palavras.Length > 0, $"{p[i].nome} sem número, placa ou ramo.");
+            for (int j = i + 1; j < p.Count; j++)
+                if (!(Antigo(p[i]) && Antigo(p[j])))   // os três de antes ficam como estavam (loja em frente à contabilidade)
+                    Assert.Greater(Vector3.Distance(p[i].centro, p[j].centro), 25f, $"{p[i].nome} e {p[j].nome} grudados.");
+        }
+        foreach (var l in Loteamento.Fixos())
+            foreach (var x in p) Assert.IsFalse(Encolher(x.Planta, 0.01f).Overlaps(l.Planta), $"{x.nome} em cima de uma casa de antes ({l.alinhamento}).");
     }
 
     static IEnumerable<MalhaRuas> Malhas() => TestesTransito.Malhas();
@@ -164,6 +206,7 @@ public class TestesPlantaCenario
         Conferir(TipoEndereco.Contabilidade, MontarCenario.CentroContabilidade + new Vector3(0f, 0f, -4f - MontarCenario.T));
         Conferir(TipoEndereco.Clinica, MontarCenario.CentroClinica + new Vector3(0f, 0f, -4f - MontarCenario.T));
         Conferir(TipoEndereco.Loja, MontarCenario.CentroLoja + new Vector3(0f, 0f, 4f + MontarCenario.T));   // girada: porta ao norte
+        foreach (var p in Bairro.Predios) Conferir(p.tipo, p.Porta);
         Conferir(TipoEndereco.Casa, MontarCenario.CentroCasa + new Vector3(1.5f, 0f, 3f + MontarCenario.T + 1.3f));   // portão no muro
     }
 
@@ -185,6 +228,36 @@ public class TestesPlantaCenario
         Assert.AreEqual(TipoEndereco.Contabilidade, Bairro.DoTipoSala(TipoSala.Contabilidade));
         Assert.AreEqual(TipoEndereco.Clinica, Bairro.DoTipoSala(TipoSala.Clinica));
         Assert.AreEqual(TipoEndereco.Loja, Bairro.DoTipoSala(TipoSala.Loja));
+        foreach (var p in Bairro.Predios)
+        {
+            Assert.AreEqual(p.tipo, Bairro.Predio(p.tipo).tipo);
+            Assert.AreEqual(p.nome, Bairro.De(p.tipo).nome, $"{p.tipo} sem endereço no GPS.");
+            Assert.IsFalse(string.IsNullOrEmpty(Bairro.Rotulo(p.tipo)), $"{p.tipo} sem rótulo no mapa.");
+        }
+    }
+
+    // Etapa 10E-3: de qualquer endereço dá para chegar a qualquer outro pelo GPS (caminho pelas ruas, sem atalho pelo
+    // meio dos quarteirões), e o fim do caminho fica na frente da porta
+    [Test]
+    public void Enderecos_TodosAlcancaveisPeloGPS()
+    {
+        var m = Bairro.Malha;
+        var e = Bairro.Enderecos;
+        foreach (var de in e)
+            foreach (var para in e)
+            {
+                if (de.tipo == para.tipo) continue;
+                var c = m.CaminhoMaisCurto(de.porta, para.porta);
+                Assert.IsNotNull(c, $"Sem caminho de {de.nome} a {para.nome}.");
+                Assert.GreaterOrEqual(c.Count, 2, $"Caminho vazio de {de.nome} a {para.nome}.");
+                // sem caminho no grafo das ruas o GPS cai numa linha reta: só vale na mesma rua
+                if (c.Count == 2)
+                    Assert.AreEqual(m.IndiceRuaMaisProxima(de.porta), m.IndiceRuaMaisProxima(para.porta), $"GPS de {de.nome} a {para.nome} em linha reta, sem passar pelas ruas.");
+                var fim = c[c.Count - 1];
+                Assert.Less(Vector2.Distance(new Vector2(fim.x, fim.z), new Vector2(para.porta.x, para.porta.z)), 12f, $"O GPS para {para.nome} termina longe da porta ({fim}).");
+                for (int i = 1; i < c.Count - 1; i++)
+                    Assert.IsTrue(Bairro.NaRua(new Vector2(c[i].x, c[i].z)), $"Caminho de {de.nome} a {para.nome} sai da rua em {c[i]}.");
+            }
     }
 
     // ---------------- Etapa 9C: vagas e posto ----------------

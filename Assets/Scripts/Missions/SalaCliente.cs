@@ -11,6 +11,7 @@ public enum TipoSala { Contabilidade, Clinica, Loja }
 public class SalaCliente : MonoBehaviour
 {
     public TipoSala tipo;
+    public TipoEndereco endereco = TipoEndereco.Contabilidade;   // prédio (Bairro.Predios)
     public Transform sala;          // objeto da sala (o centro do piso)
     public Transform chegada;       // onde o técnico entra (porta)
     public Transform recepcao;      // onde o contato espera o técnico
@@ -23,13 +24,29 @@ public class SalaCliente : MonoBehaviour
     // Sala onde os equipamentos estão agora
     public static SalaCliente Atual { get; private set; }
 
-    void OnEnable() { if (!todas.Contains(this)) todas.Add(this); }
+    void OnEnable() { if (!todas.Contains(this)) todas.Add(this); luzes = null; }
+
+    // Etapa 10E-3: dez salas de cliente na cidade. As lâmpadas (luz direta em tempo real; o rebote é pré-calculado e
+    // fica) só acendem com a câmera a menos de DistanciaLuzes do centro da sala.
+    public const float DistanciaLuzes = 45f;
+    Light[] luzes;
+    float proximaLuz;
+
+    void Update()
+    {
+        if (Time.unscaledTime < proximaLuz) return;
+        proximaLuz = Time.unscaledTime + 0.5f + (GetInstanceID() & 7) * 0.02f;
+        var cam = Camera.main;
+        if (cam == null || sala == null) return;
+        luzes ??= sala.GetComponentsInChildren<Light>(true);
+        bool perto = (cam.transform.position - Centro).sqrMagnitude < DistanciaLuzes * DistanciaLuzes;
+        foreach (var l in luzes) if (l != null && l.enabled != perto) l.enabled = perto;
+    }
     void OnDisable() { todas.Remove(this); if (Atual == this) Atual = null; }
 
     public Vector3 Centro => sala != null ? sala.position : transform.position;
 
-    public string Nome =>
-        tipo == TipoSala.Clinica ? "Clínica" : tipo == TipoSala.Loja ? "Loja" : "Escritório de contabilidade";
+    public string Nome => Bairro.EhCliente(endereco) ? Bairro.Predio(endereco).nome : endereco.ToString();
 
     public Transform Ancora(TipoEquipamento t)
     {
@@ -53,41 +70,39 @@ public class SalaCliente : MonoBehaviour
         }
     }
 
-    // ---------- Qual sala é de qual cliente ----------
+    // ---------- Qual sala é de qual cliente (Etapa 10E-3: um prédio fixo por empresa) ----------
 
-    static readonly string[] palavrasClinica =
-        { "clínica", "clinica", "hospital", "odonto", "laborat", "consult", "veterin", "dra.", "dr.", "saúde" };
-    static readonly string[] palavrasLoja =
-        { "loja", "farmácia", "farmacia", "ótica", "otica", "autopeças", "gráfica", "grafica", "papelaria", "mercado",
-          "padaria", "pet shop", "materiais", "magazine" };
-    static readonly string[] palavrasEscritorio =
-        { "contabil", "escritório", "escritorio", "advoca", "banco", "construtora", "imobili", "multinacional",
-          "indústria", "industria", "despachante", "agência", "agencia", "escola", "colégio", "transportadora", "hotel" };
-
-    // Pelo ramo no nome da empresa; nome sem pista fica sempre na mesma sala (soma dos caracteres)
-    public static TipoSala TipoDoCliente(string nome)
+    // Pelo ramo no nome da empresa (palavras de cada prédio em Bairro.Predios, os mais específicos primeiro);
+    // nome sem pista fica sempre no mesmo prédio (soma dos caracteres)
+    public static TipoEndereco EnderecoDoCliente(string nome)
     {
-        if (string.IsNullOrEmpty(nome)) return TipoSala.Contabilidade;
+        var predios = Bairro.Predios;
+        if (string.IsNullOrEmpty(nome)) return TipoEndereco.Contabilidade;
         string n = nome.ToLowerInvariant();
-        foreach (var p in palavrasClinica) if (n.Contains(p)) return TipoSala.Clinica;
-        foreach (var p in palavrasLoja) if (n.Contains(p)) return TipoSala.Loja;
-        foreach (var p in palavrasEscritorio) if (n.Contains(p)) return TipoSala.Contabilidade;
+        foreach (var p in predios)
+            foreach (var w in p.palavras)
+                if (n.Contains(w)) return p.tipo;
         int soma = 0;
         foreach (char c in n) soma += c;
-        return (TipoSala)(soma % 3);
+        return predios[soma % predios.Count].tipo;
     }
+
+    // Tipo (layout de base) da sala do cliente
+    public static TipoSala TipoDoCliente(string nome) => Bairro.Predio(EnderecoDoCliente(nome)).sala;
 
     public static SalaCliente Para(string nomeCliente)
     {
-        var tipo = TipoDoCliente(nomeCliente);
-        SalaCliente primeira = null;
+        var end = EnderecoDoCliente(nomeCliente);
+        var tipo = Bairro.Predio(end).sala;
+        SalaCliente doTipo = null, primeira = null;
         foreach (var s in todas)
         {
             if (s == null) continue;
-            if (s.tipo == tipo) return s;
-            if (primeira == null || s.tipo == TipoSala.Contabilidade) primeira = s;
+            if (s.endereco == end) return s;
+            if (doTipo == null && s.tipo == tipo) doTipo = s;
+            if (primeira == null || s.endereco == TipoEndereco.Contabilidade) primeira = s;
         }
-        return primeira;   // cena sem a sala desse tipo: a de contabilidade (ou a que houver)
+        return doTipo ?? primeira;   // cena sem esse prédio: uma sala do mesmo tipo, a de contabilidade ou a que houver
     }
 
     public static SalaCliente MaisProxima(Vector3 p)
@@ -125,6 +140,6 @@ public class SalaCliente : MonoBehaviour
         NotebookCliente.Posicionar(this);
         RackCliente.Posicionar(this);
         AccessPointCliente.Posicionar(this);
-        Debug.Log($"[Salas] Equipamentos na sala: {Nome}.");
+        Debug.Log($"[Salas] Equipamentos na sala: {Nome} ({endereco}).");
     }
 }

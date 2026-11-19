@@ -270,20 +270,7 @@ public partial class GameUI
         }
     }
 
-    static string RotuloCurto(TipoEndereco t)
-    {
-        switch (t)
-        {
-            case TipoEndereco.Casa: return "casa";
-            case TipoEndereco.Escritorio: return "escritório";
-            case TipoEndereco.Fornecedor: return "peças";
-            case TipoEndereco.Coleta: return "coleta";
-            case TipoEndereco.Contabilidade: return "contábil";
-            case TipoEndereco.Clinica: return "clínica";
-            case TipoEndereco.Loja: return "loja";
-            default: return "posto";
-        }
-    }
+    static string RotuloCurto(TipoEndereco t) => Bairro.Rotulo(t);
 
     // Banco: saldo e últimas movimentações do livro-caixa
     void CelBanco()

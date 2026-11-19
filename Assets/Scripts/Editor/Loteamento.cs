@@ -130,9 +130,8 @@ public static class Loteamento
         void Sala(string nome, Vector3 c, float w, float d, float folga) =>
             l.Add((nome, Rect.MinMaxRect(c.x - w / 2f - t - folga, c.z - d / 2f - t - folga, c.x + w / 2f + t + folga, c.z + d / 2f + t + folga)));
         Sala("Escritório", Bairro.CentroEscritorio, 6f, 6f, 0.5f);
-        Sala("Cliente (contabilidade)", MontarCenario.CentroContabilidade, 10f, 8f, 0.5f);
-        Sala("Clínica", MontarCenario.CentroClinica, 10f, 8f, 0.5f);
-        Sala("Loja", MontarCenario.CentroLoja, 10f, 8f, 0.5f);
+        // prédios de cliente com interior (Etapa 3 e 10E-3), com 1 m de folga (as paredes do lado ficam livres)
+        foreach (var p in Bairro.Predios) Sala(p.nome, p.centro, PredioCliente.Largura, PredioCliente.Profundidade, 1f);
         Sala("Banheiro", MontarCenario.CentroBanheiro, MontarCenario.LarguraBanheiro, MontarCenario.ProfBanheiro, 0.5f);
         // casa do jogador: do muro na calçada até o fundo
         var c = Bairro.CentroCasa;

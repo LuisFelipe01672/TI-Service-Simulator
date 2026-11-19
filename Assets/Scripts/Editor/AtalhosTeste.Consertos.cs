@@ -66,14 +66,14 @@ public static partial class AtalhosTeste
         EditorApplication.update += Passo;
     }
 
-    [MenuItem(MenuConsertos + "1. Fotos: roteador e mesa do computador nas 3 salas", false, 1200)]
+    [MenuItem(MenuConsertos + "1. Fotos: roteador e mesa do computador nas 10 salas", false, 1200)]
     static void FotosSalasConsertos()
     {
         if (Jogador() == null) return;
         var passos = new List<(System.Action, float, string)>();
         foreach (var cliente in clientesRede)
         {
-            string c = cliente, n = SalaCliente.TipoDoCliente(cliente).ToString().ToLowerInvariant();
+            string c = cliente, n = SalaCliente.EnderecoDoCliente(cliente).ToString().ToLowerInvariant();
             passos.Add((() => ChamadoNaSala(c, TipoEquipamento.Roteador, "Reiniciar roteador"), 2.5f, null));
             passos.Add((() => VisaoGeral(TipoEquipamento.Roteador), 1.2f, $"{n}_roteador_longe"));
             passos.Add((() => IrPerto(TipoEquipamento.Roteador, 0.9f), 1.0f, $"{n}_roteador_perto"));

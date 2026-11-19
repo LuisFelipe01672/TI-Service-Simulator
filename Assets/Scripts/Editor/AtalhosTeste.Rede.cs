@@ -8,7 +8,10 @@ public static partial class AtalhosTeste
 {
     const string MenuRede = Menu + "Rede física/";
 
-    static readonly string[] clientesRede = { "Escritório Modelo Ltda", "Clínica Bem Viver", "Loja do Bairro" };
+    // Um cliente por prédio (Etapa 10E-3: as dez salas); o atalho 8 passa para o próximo
+    static readonly string[] clientesRede = { "Escritório Modelo Ltda", "Clínica Bem Viver", "Loja do Bairro",
+        "Advocacia Mendes", "Imobiliária Lar Novo", "Escola Aprender", "Laboratório Vida", "Clínica Veterinária Patas",
+        "Farmácia Popular do Bairro", "Ótica Bom Olhar" };
     static int salaRede;
 
     static void EncherMochilaRede()
@@ -211,11 +214,12 @@ public static partial class AtalhosTeste
         Debug.Log("[Teste] Segurando o clipe no furo de reset por 10 s...");
     }
 
-    [MenuItem(MenuRede + "8. Trocar a sala dos próximos testes (contabilidade/clínica/loja)", false, 707)]
+    [MenuItem(MenuRede + "8. Trocar a sala dos próximos testes (passa pelas 10 salas)", false, 707)]
     static void RedeTrocarSala()
     {
         salaRede++;
-        Debug.Log($"[Teste] Próximas visitas de rede no cliente: {clientesRede[salaRede % clientesRede.Length]} (sala {SalaCliente.TipoDoCliente(clientesRede[salaRede % clientesRede.Length])}).");
+        string c = clientesRede[salaRede % clientesRede.Length];
+        Debug.Log($"[Teste] Próximas visitas de rede no cliente: {c} (prédio {Bairro.Predio(SalaCliente.EnderecoDoCliente(c)).nome}).");
     }
 
     // Fotos: rack bagunçado, organizando, organizado; pontos sendo passados; clipe no reset

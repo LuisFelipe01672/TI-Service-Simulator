@@ -92,6 +92,7 @@ public static partial class MontarCenario
         MontarCliente(spawn);          // escritório de contabilidade (Etapa 3: um de três clientes)
         MontarClinica(spawn);
         MontarLoja(spawn);
+        MontarClientesNovos(spawn);    // Etapa 10E-3: sete clientes novos pela cidade
         MontarRuaECasaDentro();
         // O jogo começa em casa, ao lado da cama (Fase 1A); sem casa, no escritório
         var spawnCasa = GameObject.Find("SpawnCasa");
@@ -747,7 +748,12 @@ public static partial class MontarCenario
     // Move um objeto que já existe na cena (com Equipamento/Notebook) e troca o cubo pelo visual novo
     static void PosicionarEquipamento(string nome, Transform pai, Vector3 posLocal, float rotY, Action<Transform> montarVisual)
     {
-        var go = GameObject.Find(nome);
+        // O objeto da raiz da cena (o modelo do visual pode ter o mesmo nome: GameObject.Find achava o "Roteador" de
+        // dentro do visual, e cada montagem empilhava um visual novo no antigo, com a cópia velha largada no chão)
+        GameObject go = null;
+        foreach (var raizCena in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+            if (raizCena.name == nome) { go = raizCena; break; }
+        if (go == null) go = GameObject.Find(nome);
         if (go == null) { Debug.LogWarning("[Cenário] Objeto não encontrado na cena: " + nome); return; }
         Undo.RecordObject(go.transform, "Posicionar " + nome);
 

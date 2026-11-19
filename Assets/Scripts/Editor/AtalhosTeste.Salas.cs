@@ -19,6 +19,131 @@ public static partial class AtalhosTeste
     [MenuItem(MenuSalas + "3c. Chamado na clínica (roteador)", false, 404)]
     static void ChamadoClinicaRot() => ChamadoNaSala("Clínica Gama", TipoEquipamento.Roteador);
 
+    // ---------- Etapa 10E-3: sete clientes novos com interior ----------
+    // Um nome por prédio novo (cada um cai sempre no mesmo prédio: SalaCliente.EnderecoDoCliente)
+    static readonly string[] clientesNovos = { "Advocacia Lambda", "Imobiliária Pi", "Escola Rô", "Laboratório Tau",
+                                               "Clínica Veterinária Ípsilon", "Farmácia Ômicron", "Ótica Sigma" };
+    static int clienteNovo;
+    static string ClienteNovo => clientesNovos[clienteNovo % clientesNovos.Length];
+
+    [MenuItem(MenuSalas + "7. Cliente novo: chamado de impressora", false, 440)]
+    static void ChamadoNovoImpressora() => ChamadoNaSala(ClienteNovo, TipoEquipamento.Impressora);
+    [MenuItem(MenuSalas + "8. Cliente novo: chamado de roteador", false, 441)]
+    static void ChamadoNovoRoteador() => ChamadoNaSala(ClienteNovo, TipoEquipamento.Roteador);
+    [MenuItem(MenuSalas + "9. Cliente novo: chamado de computador", false, 442)]
+    static void ChamadoNovoComputador() => ChamadoNaSala(ClienteNovo, TipoEquipamento.Computador);
+    [MenuItem(MenuSalas + "10. Passar para o próximo cliente novo", false, 443)]
+    static void ProximoClienteNovo()
+    {
+        clienteNovo++;
+        var p = Bairro.Predio(SalaCliente.EnderecoDoCliente(ClienteNovo));
+        Debug.Log($"[Teste] Cliente novo: {ClienteNovo} → {p.nome} ({p.rua}, {p.numero}).");
+    }
+
+    // Impressora (papel atolado) e roteador (reiniciar na tomada) resolvidos de ponta a ponta no cliente novo atual:
+    // aceita, faz as ações físicas, confere o defeito resolvido e assina a OS. Tudo no log ("[Teste] Ponta a ponta").
+    [MenuItem(MenuSalas + "13. Cliente novo: impressora e roteador de ponta a ponta", false, 446)]
+    static void PontaAPontaClienteNovo()
+    {
+        if (Jogador() == null) return;
+        string cliente = ClienteNovo;
+        var passos = new List<(System.Action, float, string)>();
+        string nome = SalaCliente.EnderecoDoCliente(cliente).ToString().ToLowerInvariant();
+        void Resolver(TipoEquipamento t, string solucao, string foto, params string[] acoes)
+        {
+            passos.Add((() => { ChamadoNaSala(cliente, t, solucao); IrPerto(t, 0.95f); }, 2.5f, null));
+            for (int i = 0; i < acoes.Length; i++)
+            {
+                string a = acoes[i];
+                // tirou da tomada: espera os 10 s antes de religar (como manda o roteiro do roteador)
+                // e, religado, espera ele iniciar (as luzes voltam) antes de conferir
+                float espera = a.StartsWith("Tirar da tomada") ? EstadoEquipamentos.SegundosParaReiniciarRoteador + 1f
+                             : a.StartsWith("Colocar de volta") ? EstadoEquipamentos.SegundosIniciandoRoteador + 1f : 1.2f;
+                passos.Add((() => ExecutarEm(t, a), espera, i == 0 ? $"{nome}_{foto}" : null));
+            }
+            passos.Add((() =>
+            {
+                var mm = MissionManager.Instance;
+                var ch = mm?.chamadoAtivo;
+                bool resolvido = ch != null && CatalogoProblemas.Resolvido(ch.problema, ch.estado);
+                bool ok = mm != null && mm.Verificar();
+                var os = ch?.os;
+                if (ok) { Sujeira.LimparTudo(); mm.FecharOSAssinada(); }
+                Debug.Log($"[Teste] Ponta a ponta {cliente} ({SalaCliente.Atual?.Nome}) — {t} / {solucao}: resolvido {resolvido}, OS {os?.numero} " +
+                          (ok ? $"assinada ({os?.estrelas} estrela(s))" : "NÃO fechou"));
+            }, 1.5f, null));
+        }
+        Resolver(TipoEquipamento.Impressora, "Retirar papel atolado", "imp_atolada",
+            "Abrir a tampa traseira e puxar o papel atolado", "Imprimir página de teste");
+        Resolver(TipoEquipamento.Roteador, "Reiniciar roteador", "rot_reiniciar",
+            "Tirar da tomada", "Colocar de volta na tomada");
+        SequenciaFotos("salas", passos);
+    }
+
+    // Leva o técnico à calçada na frente do cliente novo atual, olhando a fachada (como se tivesse chegado pelo GPS)
+    [MenuItem(MenuSalas + "11. Ir à porta do cliente novo", false, 444)]
+    static void IrAoClienteNovo()
+    {
+        if (Jogador() == null) return;
+        var p = Bairro.Predio(SalaCliente.EnderecoDoCliente(ClienteNovo));
+        IrAPorta(p);
+        Debug.Log($"[Teste] Na porta de {p.nome} ({p.rua}, {p.numero}) em {p.PontoGPS}.");
+        FocarJogo();
+    }
+
+    static void IrAPorta(PredioCliente p)
+    {
+        Vector3 fora = (p.PontoGPS - p.Porta).normalized;
+        fora.y = 0f;
+        Ir(p.PontoGPS + fora * 3.5f + Vector3.up * 0.1f, p.Porta + Vector3.up * 2.2f);
+    }
+
+    // Uma foto da fachada de cada prédio de cliente (da calçada da frente), em Builds/Capturas/salas/
+    [MenuItem(MenuSalas + "12. Fotografar a fachada de cada cliente", false, 445)]
+    static void FotografarFachadas()
+    {
+        if (Jogador() == null) return;
+        GameUI.Instance?.FecharModal();
+        System.IO.Directory.CreateDirectory("Builds/Capturas/salas");
+        var fotos = new List<(System.Action ir, string arquivo)>();
+        foreach (var p in Bairro.Predios)
+        {
+            var pr = p;
+            fotos.Add((() => IrAPorta(pr), $"fachada_{pr.tipo.ToString().ToLowerInvariant()}"));
+        }
+        Fotografar(fotos, "fachadas");
+    }
+
+    // Ir → esperar a câmera e as sondas assentarem → capturar (a captura sai no fim do quadro: só depois mover)
+    static void Fotografar(List<(System.Action ir, string arquivo)> fotos, string oQue)
+    {
+        int i = 0, espera = 0;
+        bool capturou = true;
+        void Passo()
+        {
+            if (!Application.isPlaying) { EditorApplication.update -= Passo; return; }
+            if (espera > 0) { espera--; return; }
+            if (!capturou)
+            {
+                ScreenCapture.CaptureScreenshot($"Builds/Capturas/salas/{fotos[i - 1].arquivo}.png");
+                capturou = true;
+                espera = 6;
+                return;
+            }
+            if (i >= fotos.Count)
+            {
+                EditorApplication.update -= Passo;
+                Debug.Log($"[Teste] {fotos.Count} fotos ({oQue}) em Builds/Capturas/salas.");
+                return;
+            }
+            fotos[i].ir();
+            i++;
+            capturou = false;
+            espera = 40;
+        }
+        EditorApplication.update += Passo;
+    }
+
     // Aceita um chamado do cliente 'nome' com um problema do equipamento pedido. O técnico chega na porta da sala
     // (para testar o contato levando até o equipamento: atalho 4).
     static void ChamadoNaSala(string nome, TipoEquipamento equipamento)
@@ -113,7 +238,7 @@ public static partial class AtalhosTeste
 
     // Uma foto de cada sala de cliente (do canto da porta, olhando o fundo) e uma de cada equipamento no lugar,
     // em Builds/Capturas/salas/
-    [MenuItem(MenuSalas + "5. Fotografar as três salas", false, 420)]
+    [MenuItem(MenuSalas + "5. Fotografar todas as salas de cliente", false, 420)]
     static void FotografarSalas()
     {
         if (Jogador() == null) return;
@@ -123,7 +248,7 @@ public static partial class AtalhosTeste
         foreach (var s in SalaCliente.Todas)
         {
             var sala = s;
-            string nome = sala.tipo.ToString().ToLowerInvariant();
+            string nome = sala.endereco.ToString().ToLowerInvariant();
             // Visão geral: perto da porta, de lado, olhando a diagonal da sala
             fotos.Add((() =>
             {

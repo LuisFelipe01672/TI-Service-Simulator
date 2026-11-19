@@ -220,9 +220,14 @@ public static partial class MontarCenario
 
         // Fachada dos prédios com interior
         Fachada("Escritorio", 6f, 6f, "ASSISTÊNCIA TÉCNICA", "Informática · Redes · Impressoras", false, new Color(0.95f, 0.92f, 0.86f));
-        Fachada("Cliente", 10f, 8f, "ESCRITÓRIO CONTÁBIL", "Contabilidade · Departamento pessoal", false, new Color(0.88f, 0.91f, 0.94f));
-        Fachada("Cliente_Clinica", 10f, 8f, "CLÍNICA", "Clínica médica · Exames", true, new Color(0.95f, 0.97f, 0.96f));
-        Fachada("Cliente_Loja", 10f, 8f, "PAPELARIA & VARIEDADES", "Material escolar · Presentes", false, new Color(0.97f, 0.9f, 0.74f));
+        // prédios de cliente: fachada com placa e o número ao lado da porta (Etapa 10E-3)
+        foreach (var p in Bairro.Predios)
+        {
+            Fachada(p.objeto, PredioCliente.Largura, PredioCliente.Profundidade, p.placa, p.subtitulo, p.doisAndares, p.corFachada);
+            var sala = raiz.Find(p.objeto);
+            if (sala != null)
+                Placa(sala, new Vector3(1.05f, 1.75f, -PredioCliente.Profundidade / 2f - T - 0.06f), Quaternion.identity, 0.5f, 0.2f, p.numero.ToString(), null);
+        }
         Fachada("Casa", 8f, 6f, null, null, false, new Color(0.96f, 0.88f, 0.76f));
         MuroDaCasa();
         NumeroNaFachada("Casa", 8f, 6f, "128", 1.5f + 1.1f);

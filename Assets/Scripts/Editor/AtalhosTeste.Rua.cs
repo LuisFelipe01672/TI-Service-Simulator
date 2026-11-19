@@ -226,6 +226,13 @@ public static partial class AtalhosTeste
         return $"lotes de desenho {rBatches.LastValue}, SetPass {rSetPass.LastValue}, triângulos {rTris.LastValue / 1000} mil, sombras {rSombras.LastValue}";
     }
 
+    // Ponto em coordenadas da sala de um prédio de cliente (porta ao sul local) para o mundo
+    static Vector3 NaSala(TipoEndereco t, float x, float y, float z)
+    {
+        var p = Bairro.Predio(t);
+        return p.centro + Quaternion.Euler(0f, p.giro, 0f) * new Vector3(x, y, z);
+    }
+
     // FPS na rua com e sem o movimento (carros e pedestres), de dia e de noite, em 3 pontos
     [MenuItem(MenuRua + "5. Medir FPS (com e sem movimento, dia e noite)", false, 704)]
     static void FpsRua()
@@ -240,6 +247,11 @@ public static partial class AtalhosTeste
             ("praça, olhando o coreto", new Vector3(34f, 1f, 80f), new Vector3(55f, 2f, 68f)),
             ("avenida Paineiras, olhando para o oeste", new Vector3(70f, 1f, 45.5f), new Vector3(-100f, 3f, 50f)),
             ("Palmeiras com Mangueiras, olhando o bairro", new Vector3(-84f, 1f, -74f), new Vector3(0f, 4f, -9f)),
+            // Etapa 10E-3: dentro de salas novas (do canto da porta, olhando o fundo) e a Acácias na frente da farmácia
+            ("dentro da advocacia", NaSala(TipoEndereco.Advocacia, -3.9f, 1f, -3.3f), NaSala(TipoEndereco.Advocacia, 2.5f, 1f, 2.8f)),
+            ("dentro da ótica", NaSala(TipoEndereco.Otica, -3.9f, 1f, -3.3f), NaSala(TipoEndereco.Otica, 2.5f, 1f, 2.8f)),
+            ("dentro da farmácia", NaSala(TipoEndereco.Farmacia, -3.9f, 1f, -3.3f), NaSala(TipoEndereco.Farmacia, 2.5f, 1f, 2.8f)),
+            ("Acácias na frente da farmácia, olhando para o leste", new Vector3(-100f, 1f, -4.6f), new Vector3(60f, 3f, -8f)),
         };
         var casos = new List<(float hora, bool movimento)> { (11f, false), (11f, true), (20.5f, false), (20.5f, true) };
         var etapas = new List<Etapa>();

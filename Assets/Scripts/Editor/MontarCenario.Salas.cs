@@ -239,6 +239,8 @@ public static partial class MontarCenario
         dados.transform.SetParent(sala, false);
         var s = dados.AddComponent<SalaCliente>();
         s.tipo = tipo;
+        // o prédio (endereço) pelo nome da sala na cena (Bairro.Predios)
+        foreach (var p in Bairro.Predios) if (p.objeto == sala.name) s.endereco = p.tipo;
         s.sala = sala;
         s.chegada = Ponto("Chegada", sala, new Vector3(0, 1f, -3.2f), 0);
         s.recepcao = Ponto("Recepcao", sala, new Vector3(recepcao.x, 0, recepcao.y), 180);

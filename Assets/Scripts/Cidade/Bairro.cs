@@ -26,7 +26,36 @@ using UnityEngine;
 //     (clínica) |   (escritório)       |  (contabilidade)
 //   ============+======================+============  Rua das Acácias
 //     (coleta)  |   (casa)             |  (loja / fornecedor)
-public enum TipoEndereco { Casa, Escritorio, Fornecedor, Coleta, Contabilidade, Clinica, Loja, Posto }
+// Etapa 10E-3: sete clientes novos com interior (os valores novos vão no fim: a ordem antiga não muda)
+public enum TipoEndereco { Casa, Escritorio, Fornecedor, Coleta, Contabilidade, Clinica, Loja, Posto,
+                           Advocacia, Imobiliaria, Escola, Laboratorio, Veterinaria, Farmacia, Otica }
+
+// Prédio de cliente com interior (sala de 10 x 8 m montada pelo MontarCenario). Cada empresa cai sempre no mesmo
+// prédio (SalaCliente.EnderecoDoCliente). 'giro' 0 = porta ao sul (prédio do lado norte da rua); 180 = porta ao norte.
+public struct PredioCliente
+{
+    public TipoEndereco tipo;
+    public TipoSala sala;            // layout de base (escritório, clínica ou loja): fala do contato e testes antigos
+    public string objeto;            // nome da sala na cena ("Cliente", "Cliente_Clinica"...)
+    public string nome, rotulo;      // como aparece no GPS e no mapa do celular
+    public string placa, subtitulo;  // placa luminosa sobre a porta
+    public string rua;
+    public int numero;
+    public Vector3 centro;
+    public float giro;
+    public Color corFachada;
+    public bool doisAndares;
+    public string[] palavras;        // ramo no nome da empresa que leva a este prédio
+
+    public const float Largura = 10f, Profundidade = 8f;
+    Vector3 Local(float x, float z) => centro + Quaternion.Euler(0f, giro, 0f) * new Vector3(x, 0f, z);
+    // Meio da porta, na linha da fachada (onde a calçada termina)
+    public Vector3 Porta => Local(0f, -(Profundidade / 2f + 0.15f));
+    // Ponto do GPS: na calçada, 90 cm na frente da porta
+    public Vector3 PontoGPS { get { var p = Local(0f, -(Profundidade / 2f + 0.15f + 0.9f)); p.y = 1f; return p; } }
+    // Planta por fora das paredes (giro 0 ou 180: mesmo retângulo)
+    public Rect Planta => new Rect(centro.x - Largura / 2f - 0.15f, centro.z - Profundidade / 2f - 0.15f, Largura + 0.3f, Profundidade + 0.3f);
+}
 
 public struct Endereco
 {
@@ -93,26 +122,102 @@ public static class Bairro
     public static Vector3 CentroLoja => new Vector3(42f, 0f, FrenteSulAcacias - T - 4f);
     public const float GiroLoja = 180f;
 
-    // ---------------- Endereços ----------------
-    public static List<Endereco> Enderecos => new List<Endereco>
+    // ---------------- Prédios de cliente (Etapa 3 e 10E-3) ----------------
+    // Os três de antes (Rua das Acácias, no bairro de antes) e sete novos nas ruas leste-oeste da cidade nova, todos
+    // com a fachada no alinhamento da calçada. Criada na primeira vez que alguém pede (lê a Malha).
+    static List<PredioCliente> predios;
+    public static List<PredioCliente> Predios => predios ??= CriarPredios();
+
+    // Prédio de 10 x 8 m numa rua leste-oeste: lado +1 = lado norte (porta ao sul), -1 = lado sul (porta ao norte)
+    static PredioCliente NaRua(string rua, float x, int lado)
     {
-        new Endereco { tipo = TipoEndereco.Casa, nome = "Sua casa", rua = RuaAcacias, numero = 128,
-                       porta = new Vector3(1.5f, 1f, FrenteSulAcacias + 0.9f) },
-        new Endereco { tipo = TipoEndereco.Escritorio, nome = "Seu escritório", rua = RuaAcacias, numero = 131,
-                       porta = new Vector3(0f, 1f, FrenteNorteAcacias - 0.9f) },
-        new Endereco { tipo = TipoEndereco.Contabilidade, nome = "Escritório de contabilidade", rua = RuaAcacias, numero = 187,
-                       porta = new Vector3(CentroContabilidade.x, 1f, FrenteNorteAcacias - 0.9f) },
-        new Endereco { tipo = TipoEndereco.Clinica, nome = "Clínica", rua = RuaAcacias, numero = 75,
-                       porta = new Vector3(CentroClinica.x, 1f, FrenteNorteAcacias - 0.9f) },
-        new Endereco { tipo = TipoEndereco.Loja, nome = "Loja (papelaria)", rua = RuaAcacias, numero = 190,
-                       porta = new Vector3(CentroLoja.x, 1f, FrenteSulAcacias + 0.9f) },
-        new Endereco { tipo = TipoEndereco.Fornecedor, nome = "Distribuidora de peças", rua = RuaJacarandas, numero = 95,
-                       porta = new Vector3(FrenteLesteJacarandas - 0.9f, 1f, PosFornecedorZ) },
-        new Endereco { tipo = TipoEndereco.Coleta, nome = "Ponto de coleta de lixo eletrônico", rua = RuaIpe, numero = 210,
-                       porta = new Vector3(FrenteOesteIpe + 0.9f, 1f, PosColetaZ) },
-        new Endereco { tipo = TipoEndereco.Posto, nome = "Posto de combustível", rua = RuaJacarandas, numero = 340,
-                       porta = new Vector3(BombaPosto.x - 1.6f, 1f, BombaPosto.z) },
-    };
+        var r = Malha.ruas[Malha.Indice(rua)];
+        float z = lado > 0 ? r.FrentePos + T + PredioCliente.Profundidade / 2f : r.FrenteNeg - T - PredioCliente.Profundidade / 2f;
+        return new PredioCliente { rua = rua, centro = new Vector3(x, 0f, z), giro = lado > 0 ? 0f : 180f };
+    }
+
+    static List<PredioCliente> CriarPredios()
+    {
+        var l = new List<PredioCliente>();
+        void Add(PredioCliente p, TipoEndereco t, TipoSala s, string objeto, string nome, string rotulo, int numero,
+                 string placa, string sub, Color cor, bool doisAndares, params string[] palavras)
+        {
+            p.tipo = t; p.sala = s; p.objeto = objeto; p.nome = nome; p.rotulo = rotulo; p.numero = numero;
+            p.placa = placa; p.subtitulo = sub; p.corFachada = cor; p.doisAndares = doisAndares; p.palavras = palavras;
+            l.Add(p);
+        }
+        // Ordem = ordem de procura das palavras: os ramos mais específicos antes ("Clínica Veterinária" é veterinária)
+        Add(NaRua(RuaSibipirunas, -100f, -1), TipoEndereco.Veterinaria, TipoSala.Clinica, "Cliente_Veterinaria", "Clínica veterinária", "veterinária", 154,
+            "VETERINÁRIA & PET SHOP", "Consultas · Vacinas · Banho e tosa", new Color(0.78f, 0.89f, 0.84f), false, "veterin", "pet shop");
+        Add(NaRua(RuaPalmeiras, 0f, 1), TipoEndereco.Laboratorio, TipoSala.Clinica, "Cliente_Laboratorio", "Laboratório de análises", "laboratório", 801,
+            "LABORATÓRIO", "Análises clínicas · Odontologia", new Color(0.9f, 0.95f, 0.97f), true, "laborat", "odonto", "consult", "dra.", "dr.");
+        Add(NaRua(RuaAcacias, CentroClinica.x, 1), TipoEndereco.Clinica, TipoSala.Clinica, "Cliente_Clinica", "Clínica", "clínica", 75,
+            "CLÍNICA", "Clínica médica · Exames", new Color(0.95f, 0.97f, 0.96f), true, "clínica", "clinica", "hospital", "saúde", "saude");
+        Add(NaRua(RuaAcacias, -100f, 1), TipoEndereco.Farmacia, TipoSala.Loja, "Cliente_Farmacia", "Farmácia", "farmácia", 33,
+            "FARMÁCIA", "Medicamentos · Perfumaria · Aferição de pressão", new Color(0.93f, 0.97f, 0.93f), false, "farmácia", "farmacia", "drogaria");
+        Add(NaRua(RuaAcacias, 100f, -1), TipoEndereco.Otica, TipoSala.Loja, "Cliente_Otica", "Ótica", "ótica", 348,
+            "ÓTICA", "Óculos de grau e de sol · Exame de vista", new Color(0.34f, 0.37f, 0.42f), false, "ótica", "otica");
+        Add(NaRua(RuaAcacias, CentroLoja.x, -1), TipoEndereco.Loja, TipoSala.Loja, "Cliente_Loja", "Loja (papelaria)", "loja", 190,
+            "PAPELARIA & VARIEDADES", "Material escolar · Presentes", new Color(0.97f, 0.9f, 0.74f), false,
+            "loja", "autopeças", "autopecas", "gráfica", "grafica", "papelaria", "mercado", "padaria", "materiais", "magazine");
+        Add(NaRua(AvPaineiras, -50f, 1), TipoEndereco.Advocacia, TipoSala.Contabilidade, "Cliente_Advocacia", "Escritório de advocacia", "advocacia", 411,
+            "ADVOCACIA & CONSULTORIA", "Cível · Trabalhista · Despachante", new Color(0.86f, 0.82f, 0.74f), true, "advoca", "despachante");
+        Add(NaRua(AvPaineiras, 100f, -1), TipoEndereco.Imobiliaria, TipoSala.Contabilidade, "Cliente_Imobiliaria", "Imobiliária", "imobiliária", 1250,
+            "IMOBILIÁRIA", "Venda · Aluguel · Lançamentos", new Color(0.8f, 0.87f, 0.93f), false, "imobili", "construtora");
+        Add(NaRua(RuaFlamboyants, 50f, 1), TipoEndereco.Escola, TipoSala.Contabilidade, "Cliente_Escola", "Escola de cursos", "escola", 523,
+            "ESCOLA & CURSOS", "Informática · Idiomas · Reforço escolar", new Color(0.98f, 0.87f, 0.55f), true,
+            "escola", "colégio", "colegio", "agência", "agencia", "curso");
+        Add(NaRua(RuaAcacias, CentroContabilidade.x, 1), TipoEndereco.Contabilidade, TipoSala.Contabilidade, "Cliente", "Escritório de contabilidade", "contábil", 187,
+            "ESCRITÓRIO CONTÁBIL", "Contabilidade · Departamento pessoal", new Color(0.88f, 0.91f, 0.94f), false,
+            "contabil", "escritório", "escritorio", "banco", "multinacional", "indústria", "industria", "transportadora", "hotel");
+        return l;
+    }
+
+    public static bool EhCliente(TipoEndereco t) => Predios.Exists(p => p.tipo == t);
+
+    public static PredioCliente Predio(TipoEndereco t)
+    {
+        foreach (var p in Predios) if (p.tipo == t) return p;
+        throw new System.ArgumentException($"{t} não é prédio de cliente");
+    }
+
+    // ---------------- Endereços ----------------
+    public static List<Endereco> Enderecos
+    {
+        get
+        {
+            var l = new List<Endereco>
+            {
+                new Endereco { tipo = TipoEndereco.Casa, nome = "Sua casa", rua = RuaAcacias, numero = 128,
+                               porta = new Vector3(1.5f, 1f, FrenteSulAcacias + 0.9f) },
+                new Endereco { tipo = TipoEndereco.Escritorio, nome = "Seu escritório", rua = RuaAcacias, numero = 131,
+                               porta = new Vector3(0f, 1f, FrenteNorteAcacias - 0.9f) },
+            };
+            foreach (var p in Predios)
+                l.Add(new Endereco { tipo = p.tipo, nome = p.nome, rua = p.rua, numero = p.numero, porta = p.PontoGPS });
+            l.Add(new Endereco { tipo = TipoEndereco.Fornecedor, nome = "Distribuidora de peças", rua = RuaJacarandas, numero = 95,
+                                 porta = new Vector3(FrenteLesteJacarandas - 0.9f, 1f, PosFornecedorZ) });
+            l.Add(new Endereco { tipo = TipoEndereco.Coleta, nome = "Ponto de coleta de lixo eletrônico", rua = RuaIpe, numero = 210,
+                                 porta = new Vector3(FrenteOesteIpe + 0.9f, 1f, PosColetaZ) });
+            l.Add(new Endereco { tipo = TipoEndereco.Posto, nome = "Posto de combustível", rua = RuaJacarandas, numero = 340,
+                                 porta = new Vector3(BombaPosto.x - 1.6f, 1f, BombaPosto.z) });
+            return l;
+        }
+    }
+
+    // Rótulo curto no mapa do celular
+    public static string Rotulo(TipoEndereco t)
+    {
+        switch (t)
+        {
+            case TipoEndereco.Casa: return "casa";
+            case TipoEndereco.Escritorio: return "escritório";
+            case TipoEndereco.Fornecedor: return "peças";
+            case TipoEndereco.Coleta: return "coleta";
+            case TipoEndereco.Posto: return "posto";
+            default: return EhCliente(t) ? Predio(t).rotulo : t.ToString().ToLowerInvariant();
+        }
+    }
 
     public const float PosFornecedorZ = -30f, PosColetaZ = -30f;
 
@@ -122,6 +227,7 @@ public static class Bairro
         return Enderecos[0];
     }
 
+    // Endereço do prédio de base de cada tipo de sala (os três de antes)
     public static TipoEndereco DoTipoSala(TipoSala s) =>
         s == TipoSala.Clinica ? TipoEndereco.Clinica : s == TipoSala.Loja ? TipoEndereco.Loja : TipoEndereco.Contabilidade;
 
@@ -140,14 +246,19 @@ public static class Bairro
     public static Vaga VagaDe(TipoEndereco t)
     {
         float zN = AcaciasAsfaltoZ0 - DistMeioFio, zS = AcaciasAsfaltoZ1 + DistMeioFio;
+        if (EhCliente(t))
+        {
+            // Na frente da porta, junto ao meio-fio do lado do prédio: lado norte virado para o oeste, sul para o leste
+            var p = Predio(t);
+            var r = Malha.ruas[Malha.Indice(p.rua)];
+            bool norte = p.giro < 90f;
+            return new Vaga { tipo = t, centro = new Vector3(p.centro.x, 0f, norte ? r.AsfaltoPos - DistMeioFio : r.AsfaltoNeg + DistMeioFio), giro = norte ? 270f : 90f };
+        }
         switch (t)
         {
             // escritório e casa: um pouco a leste da faixa de pedestre (não se para em cima da faixa)
             case TipoEndereco.Escritorio: return new Vaga { tipo = t, centro = new Vector3(4.6f, 0f, zN), giro = 270f };
             case TipoEndereco.Casa: return new Vaga { tipo = t, centro = new Vector3(5.6f, 0f, zS), giro = 90f };
-            case TipoEndereco.Contabilidade: return new Vaga { tipo = t, centro = new Vector3(CentroContabilidade.x, 0f, zN), giro = 270f };
-            case TipoEndereco.Clinica: return new Vaga { tipo = t, centro = new Vector3(CentroClinica.x, 0f, zN), giro = 270f };
-            case TipoEndereco.Loja: return new Vaga { tipo = t, centro = new Vector3(CentroLoja.x, 0f, zS), giro = 90f };
             case TipoEndereco.Fornecedor: return new Vaga { tipo = t, centro = new Vector3(JacarandasX + MeiaPista - DistMeioFio, 0f, PosFornecedorZ), giro = 0f };
             case TipoEndereco.Coleta: return new Vaga { tipo = t, centro = new Vector3(IpeX - MeiaPista + DistMeioFio, 0f, PosColetaZ), giro = 180f };
             default: return new Vaga { tipo = t, centro = VagaPosto, giro = 90f };

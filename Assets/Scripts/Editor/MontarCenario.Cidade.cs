@@ -470,6 +470,33 @@ public static partial class MontarCenario
         if (transito != null)
             foreach (var t in transito.GetComponentsInChildren<Transform>(true))
                 if (t.name.StartsWith("Pintura_PARE") || t.name == "Linha_Retencao" || t.name.StartsWith("Texto_PARE")) t.gameObject.layer = CamadaMiudo;
+        CamadasDasSalas();
+    }
+
+    // Etapa 10E-3: dez salas de cliente pela cidade. O que fica dentro (móveis e enfeites, não a casca nem a fachada)
+    // só se vê pelas janelas: miudezas somem a 55 m e móveis a 110 m. Equipamentos do chamado ficam como estão.
+    static void CamadasDasSalas()
+    {
+        int miudo = 0, detalhe = 0;
+        foreach (var p in Bairro.Predios)
+        {
+            var sala = raiz.Find(p.objeto);
+            if (sala == null) continue;
+            foreach (var r in sala.GetComponentsInChildren<Renderer>(true))
+            {
+                var t = r.transform;
+                if (EhCasca(t) || r.name == "Bloco_Fora" || r.GetComponent<TMP_Text>() != null) continue;
+                if (r.GetComponentInParent<Equipamento>() != null) continue;
+                bool fora = false;
+                for (var q = t; q != null && q != sala; q = q.parent)
+                    if (q.name == "Fachada" || q.name == "Placa" || q.name.StartsWith("Parede_")) { fora = true; break; }
+                if (fora) continue;
+                var tam = r.bounds.size;
+                if (Mathf.Max(tam.x, tam.y, tam.z) < 0.6f) { r.gameObject.layer = CamadaMiudo; miudo++; }
+                else { r.gameObject.layer = CamadaDetalhe; detalhe++; }
+            }
+        }
+        Debug.Log($"[Cenário] Salas de cliente: {miudo} miudezas (corte a 55 m) e {detalhe} móveis (corte a 110 m).");
     }
 
     // ---------------- Estáticos e occlusion culling ----------------

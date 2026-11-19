@@ -24,10 +24,13 @@ public partial class MissionManager : MonoBehaviour
     [Header("Locais")]
     public Transform[] locaisClientes;
 
-    // Cada nome leva a uma sala (SalaCliente.TipoDoCliente): contabilidade, clínica ou loja
-    static readonly string[] clientesFase1 = { "Contabilidade Alfa", "Escritório Beta", "Clínica Gama", "Papelaria Kappa" };
-    static readonly string[] clientesFase2 = { "Indústria Delta", "Construtora Épsilon", "Farmácia Zeta" };
-    static readonly string[] clientesFase3 = { "Banco Eta", "Hospital Theta", "Multinacional Iota" };
+    // Cada nome leva sempre ao mesmo prédio (SalaCliente.EnderecoDoCliente, Etapa 10E-3: dez prédios com interior)
+    static readonly string[] clientesFase1 = { "Contabilidade Alfa", "Escritório Beta", "Clínica Gama", "Papelaria Kappa",
+                                               "Advocacia Lambda", "Ótica Sigma", "Farmácia Ômicron" };
+    static readonly string[] clientesFase2 = { "Indústria Delta", "Construtora Épsilon", "Farmácia Zeta",
+                                               "Imobiliária Pi", "Escola Rô", "Laboratório Tau" };
+    static readonly string[] clientesFase3 = { "Banco Eta", "Hospital Theta", "Multinacional Iota",
+                                               "Clínica Veterinária Ípsilon", "Laboratório Fi", "Agência Psi" };
 
     private Transform jogador;
 
@@ -598,7 +601,7 @@ public partial class MissionManager : MonoBehaviour
         }
         if (sala != null && GPS.Instance != null)
         {
-            var e = Bairro.De(Bairro.DoTipoSala(sala.tipo));
+            var e = Bairro.De(sala.endereco);
             e.nome = chamadoAtivo.nomeCliente;   // o GPS mostra o nome do cliente, no endereço da sala dele
             GPS.Instance.Definir(e);
             return;

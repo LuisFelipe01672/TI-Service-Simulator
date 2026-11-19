@@ -70,6 +70,9 @@ Roteiro de testes manuais: `ROTEIRO_TESTES_UNITY.md`. Créditos de assets: `CRED
 - **Lotes da cidade**: `Editor/Loteamento.cs` (imóveis de antes + lotes gerados, puro, testado em `TestesPlantaCenario`);
   montagem em `MontarCenario.Cidade.cs` (muros, praça, camadas de corte `Cidade/CorteDistancia.cs`, estáticos e occlusion
   culling). Prédio novo com interior: reservar a área em `Loteamento.Reservados()`.
+- **Clientes com interior** (10 prédios, salas de 10 x 8 m): tabela em `Bairro.Predios` (endereço, rua, número, giro,
+  placa, ramos do nome); endereços, vagas, GPS, reservas, luz e fachadas saem dela. Cada empresa cai sempre no mesmo
+  prédio (`SalaCliente.EnderecoDoCliente`). Montagem em `MontarCenario.Salas.cs` (3 de antes) e `.ClientesNovos.cs`.
 - **Peças de equipamento**: `Manutencao/PecaEquipamento.cs` (mirar + E / segurar E, raycast com
   `QueryTriggerInteraction.Collide`), ações em `Manutencao/AcoesFisicas.cs` filtradas por `peca`, montagem em
   `Manutencao/EquipamentoPecas.cs`.

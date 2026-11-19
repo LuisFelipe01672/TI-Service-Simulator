@@ -28,9 +28,7 @@ public static partial class MontarCenario
             lista.Add(new Comodo { nome = nome, interior = new Bounds(centro + new Vector3(0, H / 2f, 0), new Vector3(largura, H, prof)) });
         }
         Add("Escritorio", Vector3.zero, 6f, 6f);
-        Add("Cliente", Bairro.CentroContabilidade, 10f, 8f);
-        Add("Cliente_Clinica", CentroClinica, 10f, 8f);
-        Add("Cliente_Loja", CentroLoja, 10f, 8f);
+        foreach (var p in Bairro.Predios) Add(p.objeto, p.centro, PredioCliente.Largura, PredioCliente.Profundidade);   // salas de cliente
         Add("Casa", CentroCasa, 8f, 6f);
         Add("Banheiro", CentroBanheiro, LarguraBanheiro, ProfBanheiro);
         return lista;

@@ -267,7 +267,7 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
       280 passando.
     - Falta: ícones nas abas do tablet e um tema claro/escuro; a janela de manutenção e a OS seguem com o visual de antes
       (só ganharam os cantos arredondados).
-10E. ⬜ **Cidade maior** (dono: 6 a 10 vezes maior e com mais clientes). Hoje o bairro tem 124 x 89 m (~1,1 ha) e é um
+10E. ✅ **Cidade maior** (dono: 6 a 10 vezes maior e com mais clientes). Hoje o bairro tem 124 x 89 m (~1,1 ha) e é um
     "H deitado" escrito à mão em `Cidade/Bairro.cs` (3 ruas fixas: Acácias, Ipê Amarelo, Jacarandás), com o trânsito
     (`RotasTransito`, 6 pontas fixas), o GPS, o semáforo/PARE, os pedestres e os testes presos a essas 3 ruas. Crescer
     6–10x pede trocar o "H" por uma **malha de ruas** genérica. Dividido em três, cada uma testada e com exe:
@@ -331,8 +331,51 @@ testada no Play, com testes automáticos, commit local e exe; push só com pedid
       - Falta / a fazer depois: baixar o custo da esquina da Ipê (LOD ou fachada simplificada para casas longe, menos
         objetos com sombra); árvores de verdade (as da praça são formas simples); pedestres não entram na praça;
         janelas noturnas das casas novas não foram conferidas uma a uma.
-    - 10E-3 ⬜ **Mais clientes**: 6 a 9 prédios de cliente com interior (cópias das 3 salas com outro layout/cor/móveis),
-      cada cliente com o seu endereço (`SalaCliente.Para` por endereço), vagas, GPS, atalhos e fotos.
+    - 10E-3 ✅ **Mais clientes** (18/11/2026): **7 prédios novos com interior** (10 no total), todos de 10 x 8 m (rack e
+      access point valem sem mudança), nas ruas leste-oeste da cidade nova, com fachada no alinhamento da calçada, placa
+      luminosa, número ao lado da porta, vaga na frente e luz pré-calculada. Tabela única em `Bairro.Predios`
+      (`PredioCliente`: endereço, tipo de sala de base, rua, número, centro, giro, placa, cor, ramos); endereços, vagas,
+      GPS, mapa do celular, reservas do `Loteamento`, luz (`Comodos`) e fachadas saem dela.
+      - Prédios novos (`Editor/MontarCenario.ClientesNovos.cs`): **escritório de advocacia** (Av. Paineiras, 411: piso de
+        madeira, mesa do advogado ao fundo, estantes de processos, mesa de reunião redonda, pendentes), **imobiliária**
+        (Paineiras, 1250, girada: vitrine, três corretores em fila, quadro de imóveis, painéis de LED), **escola de cursos**
+        (Flamboyants, 523: laboratório de informática com 8 micros, lousa branca, mesa do professor, calhas),
+        **laboratório de análises** (Palmeiras, 801: balcão alto verde-água, duas cabines de coleta com cortina, espera),
+        **clínica veterinária e pet shop** (Sibipirunas, 154, girada: ração nas prateleiras, mesa de inox, caixa),
+        **farmácia** (Acácias, 33: gôndolas, balcão dos remédios com faixa verde, placa "MEDICAMENTOS", cantinho da
+        pressão) e **ótica** (Acácias, 348, girada: painel de madeira com prateleiras de armações, balcões-vitrine de
+        vidro, tabela de letras do exame de vista). Só modelos que já estavam no projeto (nada baixado).
+      - **Cada empresa num prédio fixo** (`SalaCliente.EnderecoDoCliente`): pelo ramo no nome (veterinária, laboratório,
+        clínica, farmácia, ótica, loja, advocacia/despachante, imobiliária/construtora, escola/agência, escritório),
+        nome sem ramo pela soma dos caracteres; `SalaCliente.Para` acha a sala pelo endereço. Nomes novos nos chamados
+        das três fases (advocacia, ótica, farmácia, imobiliária, escola, laboratório, veterinária) — todo prédio recebe
+        cliente. GPS do chamado vai ao endereço do prédio com o nome do cliente.
+      - Desempenho: as lâmpadas das salas de cliente só acendem com a câmera a menos de 45 m (`SalaCliente`); móveis de
+        dentro nas camadas de corte (miudezas 55 m, móveis 110 m). Luz pré-calculada: **3 lightmaps, como antes**
+        (36–78 s de cálculo); cena de 46 MB (era 38 MB).
+      - **Bug antigo corrigido**: `PosicionarEquipamento` achava o "Roteador" de dentro do próprio visual
+        (`GameObject.Find`) e cada menu 3 empilhava um visual novo, deixando uma cópia do roteador no chão da sala.
+      - Testes: prédios sem sobreposição e espalhados (6 a 9 novos, ≥ 5 ruas, > 25 m entre os novos, fora da praça, do
+        posto e das casas de antes), porta na calçada de cada um, GPS na frente da porta, **todo endereço alcançável pelo
+        GPS a partir de qualquer outro**, vagas no asfalto/mão/fora da faixa para os novos, cada nome no prédio certo e
+        todo prédio com cliente. **341 passando** (eram 319).
+      - Play: impressora (papel atolado) resolvida com OS assinada **nas 7 salas novas**; roteador (reiniciar na tomada)
+        de ponta a ponta na advocacia e na ótica; **rack, cabeamento (4 pontos) e Wi-Fi** inteiros e assinados na
+        advocacia; rack e Wi-Fi na ótica (girada); rack achou parede livre com 4 pontos nas 7 salas; GPS do chamado da
+        farmácia (endereço, vaga, caminho). Atalhos novos *Teste (Play)/Salas/7 a 13* (chamado por equipamento no
+        cliente novo, trocar de cliente, ir à porta, fotos das fachadas, ponta a ponta) e *Rede física/8* passa pelas 10
+        salas. Fotos em `Builds/Capturas/salas` (`<endereço>_1_geral_a`... e `fachada_<endereço>`).
+      - FPS no editor (sem × com movimento, 11h; 20h30 entre parênteses): porta 125 × 99 (126 × 114), esquina da Ipê
+        67 × 61 (71 × 64), Jacarandás 93 × 92 (118 × 104), praça 149 × 135 (155 × 135), Paineiras 120 × 106 (125 × 115),
+        Palmeiras × Mangueiras 102 × 109 (130 × 118); novos: **dentro da advocacia 150 × 123 (143 × 137), dentro da
+        ótica 104 × 95 (128 × 116), dentro da farmácia 99 × 90 (124 × 112)**, Acácias na frente da farmácia olhando a
+        rua 78 × 74 (106 × 98). Nenhum abaixo de 60.
+      - **Causa dos ~110 avisos no console** (pendência da 10E-2): `BoxCollider does not support negative scale` nas
+        casas espelhadas dos lotes (`Cenario/Vizinhanca/Lote/Casa_E/...`), um por casa ao dar Play. Não corrigido aqui.
+      - Falta / a fazer depois: só o andar de cima e a platibanda levam a cor da fachada (o térreo é a parede da sala,
+        como nos 3 de antes); o contato andando até cada equipamento não foi seguido nas 7 salas (os caminhos foram
+        conferidos só no papel e nas fotos); computador e notebook não testados nas salas novas; a praça caiu de ~187
+        para ~149 FPS no editor (medida do editor oscila; conferir no exe).
     Depois, se o FPS deixar, subir para ~10x.
 11. ⬜ **CFTV**: câmeras, DVR/NVR, cabo e fonte; posicionar vendo a área certa; acesso pelo celular do cliente.
 12. ⬜ **Nobreak e energia**: bateria morta apitando, dimensionar e instalar; queda de energia e raio queimando
